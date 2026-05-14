@@ -1,0 +1,1599 @@
+
+# 1 "H:\MyDownloads\说明书&测试报告\开发包\SC8F096AD开发包\SC8F096_DEMO_C\SC8F096_Pwm_Demo\SC8F096_Pwm_Demo.c"
+
+# 26 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\include\htc.h"
+extern const char __xc8_OPTIM_SPEED;
+
+extern double __fpnormalize(double);
+
+
+# 13 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\include\xc8debug.h"
+#pragma intrinsic(__builtin_software_breakpoint)
+extern void __builtin_software_breakpoint(void);
+
+# 11 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\include\SC8F096AD.h"
+extern volatile unsigned char INDF @ 0x00;
+
+asm("INDF EQU 00H");
+
+
+
+
+extern volatile unsigned char OPTION_REG @ 0x01;
+
+asm("OPTION_REG EQU 01H");
+
+
+
+
+extern volatile unsigned char PCL @ 0x02;
+
+asm("PCL EQU 02H");
+
+
+
+
+extern volatile unsigned char STATUS @ 0x03;
+
+asm("STATUS EQU 03H");
+
+
+
+
+extern volatile unsigned char FSR @ 0x04;
+
+asm("FSR EQU 04H");
+
+
+
+
+extern volatile unsigned char TRISB @ 0x05;
+
+asm("TRISB EQU 05H");
+
+
+
+
+extern volatile unsigned char PORTB @ 0x06;
+
+asm("PORTB EQU 06H");
+
+
+
+
+extern volatile unsigned char WPDB @ 0x07;
+
+asm("WPDB EQU 07H");
+
+
+
+
+extern volatile unsigned char WPUB @ 0x08;
+
+asm("WPUB EQU 08H");
+
+
+
+
+extern volatile unsigned char IOCB @ 0x09;
+
+asm("IOCB EQU 09H");
+
+
+
+
+extern volatile unsigned char PCLATH @ 0x0A;
+
+asm("PCLATH EQU 0AH");
+
+
+
+
+extern volatile unsigned char INTCON @ 0x0B;
+
+asm("INTCON EQU 0BH");
+
+
+
+
+extern volatile unsigned char QCCON @ 0x0C;
+
+asm("QCCON EQU 0CH");
+
+
+
+
+extern volatile unsigned char PIR1 @ 0x0D;
+
+asm("PIR1 EQU 0DH");
+
+
+
+
+extern volatile unsigned char PIE1 @ 0x0E;
+
+asm("PIE1 EQU 0EH");
+
+
+
+
+extern volatile unsigned char CMP1CON0 @ 0x0F;
+
+asm("CMP1CON0 EQU 0FH");
+
+
+
+
+extern volatile unsigned char CMP1CON1 @ 0x10;
+
+asm("CMP1CON1 EQU 10H");
+
+
+
+
+extern volatile unsigned char PR2 @ 0x11;
+
+asm("PR2 EQU 11H");
+
+
+
+
+extern volatile unsigned char TMR2 @ 0x12;
+
+asm("TMR2 EQU 12H");
+
+
+
+
+extern volatile unsigned char T2CON @ 0x13;
+
+asm("T2CON EQU 13H");
+
+
+
+
+extern volatile unsigned char OSCCON @ 0x14;
+
+asm("OSCCON EQU 14H");
+
+
+
+
+extern volatile unsigned char PWMCON0 @ 0x15;
+
+asm("PWMCON0 EQU 15H");
+
+
+
+
+extern volatile unsigned char PWMCON1 @ 0x16;
+
+asm("PWMCON1 EQU 16H");
+
+
+
+
+extern volatile unsigned char PWMTL @ 0x17;
+
+asm("PWMTL EQU 17H");
+
+
+
+
+extern volatile unsigned char PWMTH @ 0x18;
+
+asm("PWMTH EQU 18H");
+
+
+
+
+extern volatile unsigned char PWMD0L @ 0x19;
+
+asm("PWMD0L EQU 19H");
+
+
+
+
+extern volatile unsigned char PWMD1L @ 0x1A;
+
+asm("PWMD1L EQU 1AH");
+
+
+
+
+extern volatile unsigned char PWMD4L @ 0x1B;
+
+asm("PWMD4L EQU 1BH");
+
+
+
+
+extern volatile unsigned char PWMT4L @ 0x1C;
+
+asm("PWMT4L EQU 1CH");
+
+
+
+
+extern volatile unsigned char PWMCON2 @ 0x1D;
+
+asm("PWMCON2 EQU 1DH");
+
+
+
+
+extern volatile unsigned char PWMDH @ 0x1E;
+
+asm("PWMDH EQU 1EH");
+
+
+
+
+extern volatile unsigned char PWM01DT @ 0x1F;
+
+asm("PWM01DT EQU 1FH");
+
+
+
+
+extern volatile unsigned char TMR0 @ 0x81;
+
+asm("TMR0 EQU 81H");
+
+
+
+
+extern volatile unsigned char TRISA @ 0x85;
+
+asm("TRISA EQU 85H");
+
+
+
+
+extern volatile unsigned char PORTA @ 0x86;
+
+asm("PORTA EQU 86H");
+
+
+
+
+extern volatile unsigned char WPDA @ 0x87;
+
+asm("WPDA EQU 87H");
+
+
+
+
+extern volatile unsigned char WPUA @ 0x88;
+
+asm("WPUA EQU 88H");
+
+
+
+
+extern volatile unsigned char IOCA @ 0x89;
+
+asm("IOCA EQU 89H");
+
+
+
+
+extern volatile unsigned char ANSEL3 @ 0x8C;
+
+asm("ANSEL3 EQU 8CH");
+
+
+
+
+extern volatile unsigned char EECON1 @ 0x8D;
+
+asm("EECON1 EQU 8DH");
+
+
+
+
+extern volatile unsigned char EECON2 @ 0x8E;
+
+asm("EECON2 EQU 8EH");
+
+
+
+
+extern volatile unsigned char EEDAT @ 0x8F;
+
+asm("EEDAT EQU 8FH");
+
+
+
+
+extern volatile unsigned char EEDATH @ 0x90;
+
+asm("EEDATH EQU 90H");
+
+
+
+
+extern volatile unsigned char EEADR @ 0x91;
+
+asm("EEADR EQU 91H");
+
+
+
+
+extern volatile unsigned char EEADRH @ 0x92;
+
+asm("EEADRH EQU 92H");
+
+
+
+
+extern volatile unsigned char ANSEL0 @ 0x93;
+
+asm("ANSEL0 EQU 93H");
+
+
+
+
+extern volatile unsigned char ANSEL1 @ 0x94;
+
+asm("ANSEL1 EQU 94H");
+
+
+
+
+extern volatile unsigned char ADCON0 @ 0x95;
+
+asm("ADCON0 EQU 95H");
+
+
+
+
+extern volatile unsigned char ADCON1 @ 0x96;
+
+asm("ADCON1 EQU 96H");
+
+
+
+
+extern volatile unsigned char ADRESL @ 0x98;
+
+asm("ADRESL EQU 98H");
+
+
+
+
+extern volatile unsigned char ADRESH @ 0x99;
+
+asm("ADRESH EQU 99H");
+
+
+
+
+extern volatile unsigned char CMP2CON0 @ 0x9A;
+
+asm("CMP2CON0 EQU 9AH");
+
+
+
+
+extern volatile unsigned char PWMD2L @ 0x9B;
+
+asm("PWMD2L EQU 9BH");
+
+
+
+
+extern volatile unsigned char PWMD3L @ 0x9C;
+
+asm("PWMD3L EQU 9CH");
+
+
+
+
+extern volatile unsigned char PWM23DT @ 0x9D;
+
+asm("PWM23DT EQU 9DH");
+
+
+
+
+extern volatile unsigned char SEGEN0 @ 0x9E;
+
+asm("SEGEN0 EQU 9EH");
+
+
+
+
+extern volatile unsigned char CMP2CON1 @ 0x9F;
+
+asm("CMP2CON1 EQU 9FH");
+
+
+
+
+extern volatile unsigned char TRISC @ 0x105;
+
+asm("TRISC EQU 105H");
+
+
+
+
+extern volatile unsigned char PORTC @ 0x106;
+
+asm("PORTC EQU 106H");
+
+
+
+
+extern volatile unsigned char PORTD @ 0x107;
+
+asm("PORTD EQU 107H");
+
+
+
+
+extern volatile unsigned char WPUC @ 0x108;
+
+asm("WPUC EQU 108H");
+
+
+
+
+extern volatile unsigned char ANSEL2 @ 0x109;
+
+asm("ANSEL2 EQU 109H");
+
+
+
+
+extern volatile unsigned char TMR1L @ 0x10C;
+
+asm("TMR1L EQU 10CH");
+
+
+
+
+extern volatile unsigned char TMR1H @ 0x10D;
+
+asm("TMR1H EQU 10DH");
+
+
+
+
+extern volatile unsigned char T1CON @ 0x10E;
+
+asm("T1CON EQU 10EH");
+
+
+
+
+extern volatile unsigned char PIR2 @ 0x10F;
+
+asm("PIR2 EQU 10FH");
+
+
+
+
+extern volatile unsigned char PIE2 @ 0x110;
+
+asm("PIE2 EQU 110H");
+
+
+
+
+extern volatile unsigned char KEYCON0 @ 0x111;
+
+asm("KEYCON0 EQU 111H");
+
+
+
+
+extern volatile unsigned char KEYCON1 @ 0x112;
+
+asm("KEYCON1 EQU 112H");
+
+
+
+
+extern volatile unsigned char KEYCON2 @ 0x113;
+
+asm("KEYCON2 EQU 113H");
+
+
+
+
+extern volatile unsigned char TRISD @ 0x114;
+
+asm("TRISD EQU 114H");
+
+
+
+
+extern volatile unsigned char WPUD @ 0x115;
+
+asm("WPUD EQU 115H");
+
+
+
+
+extern volatile unsigned char KEYDATAL @ 0x116;
+
+asm("KEYDATAL EQU 116H");
+
+
+
+
+extern volatile unsigned char KEYDATAH @ 0x117;
+
+asm("KEYDATAH EQU 117H");
+
+
+
+
+extern volatile unsigned char TXSTA0 @ 0x118;
+
+asm("TXSTA0 EQU 118H");
+
+
+
+
+extern volatile unsigned char RCSTA0 @ 0x119;
+
+asm("RCSTA0 EQU 119H");
+
+
+
+
+extern volatile unsigned char SPBRG0 @ 0x11A;
+
+asm("SPBRG0 EQU 11AH");
+
+
+
+
+extern volatile unsigned char TXREG0 @ 0x11B;
+
+asm("TXREG0 EQU 11BH");
+
+
+
+
+extern volatile unsigned char RCREG0 @ 0x11C;
+
+asm("RCREG0 EQU 11CH");
+
+
+
+
+extern volatile unsigned char LCDCON0 @ 0x11D;
+
+asm("LCDCON0 EQU 11DH");
+
+
+
+
+extern volatile unsigned char LCDCON1 @ 0x11E;
+
+asm("LCDCON1 EQU 11EH");
+
+
+
+
+extern volatile unsigned char SEGEN1 @ 0x11F;
+
+asm("SEGEN1 EQU 11FH");
+
+
+
+
+extern volatile unsigned char SEGEN2 @ 0x181;
+
+asm("SEGEN2 EQU 181H");
+
+
+
+
+extern volatile unsigned char TXSTA1 @ 0x185;
+
+asm("TXSTA1 EQU 185H");
+
+
+
+
+extern volatile unsigned char RCSTA1 @ 0x186;
+
+asm("RCSTA1 EQU 186H");
+
+
+
+
+extern volatile unsigned char TXREG1 @ 0x187;
+
+asm("TXREG1 EQU 187H");
+
+
+
+
+extern volatile unsigned char RCREG1 @ 0x188;
+
+asm("RCREG1 EQU 188H");
+
+
+
+
+extern volatile unsigned char SPBRG1 @ 0x189;
+
+asm("SPBRG1 EQU 189H");
+
+
+
+
+extern volatile unsigned char OPACON @ 0x18C;
+
+asm("OPACON EQU 18CH");
+
+
+
+
+extern volatile unsigned char OPAADJ @ 0x18D;
+
+asm("OPAADJ EQU 18DH");
+
+
+
+
+extern volatile unsigned char LEDCTR0 @ 0x18E;
+
+asm("LEDCTR0 EQU 18EH");
+
+
+
+
+extern volatile unsigned char LEDCTR1 @ 0x18F;
+
+asm("LEDCTR1 EQU 18FH");
+
+
+
+
+extern volatile unsigned char IICCON @ 0x190;
+
+asm("IICCON EQU 190H");
+
+
+
+
+extern volatile unsigned char IICCON2 @ 0x191;
+
+asm("IICCON2 EQU 191H");
+
+
+
+
+extern volatile unsigned char IICSTAT @ 0x192;
+
+asm("IICSTAT EQU 192H");
+
+
+
+
+extern volatile unsigned char IICBUF @ 0x193;
+
+asm("IICBUF EQU 193H");
+
+
+
+
+extern volatile unsigned char IICADD @ 0x194;
+
+asm("IICADD EQU 194H");
+
+
+
+
+extern volatile unsigned char CC0CON @ 0x195;
+
+asm("CC0CON EQU 195H");
+
+
+
+
+extern volatile unsigned char CC1CON @ 0x196;
+
+asm("CC1CON EQU 196H");
+
+
+
+
+extern volatile unsigned char PDCON0 @ 0x197;
+
+asm("PDCON0 EQU 197H");
+
+
+
+
+extern volatile unsigned char PDCON1 @ 0x198;
+
+asm("PDCON1 EQU 198H");
+
+
+
+
+extern volatile unsigned char PDADD @ 0x199;
+
+asm("PDADD EQU 199H");
+
+
+
+
+extern volatile unsigned char PDRDATA @ 0x19A;
+
+asm("PDRDATA EQU 19AH");
+
+
+
+
+extern volatile unsigned char PDSDATA @ 0x19B;
+
+asm("PDSDATA EQU 19BH");
+
+
+
+
+extern volatile unsigned char LCDADD @ 0x19C;
+
+asm("LCDADD EQU 19CH");
+
+
+
+
+extern volatile unsigned char LCDDATA @ 0x19D;
+
+asm("LCDDATA EQU 19DH");
+
+
+
+
+extern volatile unsigned char COMEN @ 0x19E;
+
+asm("COMEN EQU 19EH");
+
+
+
+
+extern volatile unsigned char SEGEN3 @ 0x19F;
+
+asm("SEGEN3 EQU 19FH");
+
+
+
+extern volatile bit T0LSE_EN @ ((unsigned)&OPTION_REG*8)+7;
+extern volatile bit INTEDG @ ((unsigned)&OPTION_REG*8)+6;
+extern volatile bit T0CS @ ((unsigned)&OPTION_REG*8)+5;
+extern volatile bit T0SE @ ((unsigned)&OPTION_REG*8)+4;
+extern volatile bit PSA @ ((unsigned)&OPTION_REG*8)+3;
+extern volatile bit PS2 @ ((unsigned)&OPTION_REG*8)+2;
+extern volatile bit PS1 @ ((unsigned)&OPTION_REG*8)+1;
+extern volatile bit PS0 @ ((unsigned)&OPTION_REG*8)+0;
+
+
+extern volatile bit IRP @ ((unsigned)&STATUS*8)+7;
+extern volatile bit RP1 @ ((unsigned)&STATUS*8)+6;
+extern volatile bit RP0 @ ((unsigned)&STATUS*8)+5;
+extern volatile bit TO @ ((unsigned)&STATUS*8)+4;
+extern volatile bit PD @ ((unsigned)&STATUS*8)+3;
+extern volatile bit Z @ ((unsigned)&STATUS*8)+2;
+extern volatile bit DC @ ((unsigned)&STATUS*8)+1;
+extern volatile bit C @ ((unsigned)&STATUS*8)+0;
+
+
+extern volatile bit TRISB7 @ ((unsigned)&TRISB*8)+7;
+extern volatile bit TRISB6 @ ((unsigned)&TRISB*8)+6;
+extern volatile bit TRISB5 @ ((unsigned)&TRISB*8)+5;
+extern volatile bit TRISB4 @ ((unsigned)&TRISB*8)+4;
+extern volatile bit TRISB3 @ ((unsigned)&TRISB*8)+3;
+extern volatile bit TRISB2 @ ((unsigned)&TRISB*8)+2;
+extern volatile bit TRISB1 @ ((unsigned)&TRISB*8)+1;
+extern volatile bit TRISB0 @ ((unsigned)&TRISB*8)+0;
+
+
+extern volatile bit RB7 @ ((unsigned)&PORTB*8)+7;
+extern volatile bit RB6 @ ((unsigned)&PORTB*8)+6;
+extern volatile bit RB5 @ ((unsigned)&PORTB*8)+5;
+extern volatile bit RB4 @ ((unsigned)&PORTB*8)+4;
+extern volatile bit RB3 @ ((unsigned)&PORTB*8)+3;
+extern volatile bit RB2 @ ((unsigned)&PORTB*8)+2;
+extern volatile bit RB1 @ ((unsigned)&PORTB*8)+1;
+extern volatile bit RB0 @ ((unsigned)&PORTB*8)+0;
+
+
+extern volatile bit WPDB7 @ ((unsigned)&WPDB*8)+7;
+extern volatile bit WPDB6 @ ((unsigned)&WPDB*8)+6;
+extern volatile bit WPDB5 @ ((unsigned)&WPDB*8)+5;
+extern volatile bit WPDB4 @ ((unsigned)&WPDB*8)+4;
+extern volatile bit WPDB3 @ ((unsigned)&WPDB*8)+3;
+extern volatile bit WPDB2 @ ((unsigned)&WPDB*8)+2;
+extern volatile bit WPDB1 @ ((unsigned)&WPDB*8)+1;
+extern volatile bit WPDB0 @ ((unsigned)&WPDB*8)+0;
+
+
+extern volatile bit WPUB7 @ ((unsigned)&WPUB*8)+7;
+extern volatile bit WPUB6 @ ((unsigned)&WPUB*8)+6;
+extern volatile bit WPUB5 @ ((unsigned)&WPUB*8)+5;
+extern volatile bit WPUB4 @ ((unsigned)&WPUB*8)+4;
+extern volatile bit WPUB3 @ ((unsigned)&WPUB*8)+3;
+extern volatile bit WPUB2 @ ((unsigned)&WPUB*8)+2;
+extern volatile bit WPUB1 @ ((unsigned)&WPUB*8)+1;
+extern volatile bit WPUB0 @ ((unsigned)&WPUB*8)+0;
+
+
+extern volatile bit IOCB7 @ ((unsigned)&IOCB*8)+7;
+extern volatile bit IOCB6 @ ((unsigned)&IOCB*8)+6;
+extern volatile bit IOCB5 @ ((unsigned)&IOCB*8)+5;
+extern volatile bit IOCB4 @ ((unsigned)&IOCB*8)+4;
+extern volatile bit IOCB3 @ ((unsigned)&IOCB*8)+3;
+extern volatile bit IOCB2 @ ((unsigned)&IOCB*8)+2;
+extern volatile bit IOCB1 @ ((unsigned)&IOCB*8)+1;
+extern volatile bit IOCB0 @ ((unsigned)&IOCB*8)+0;
+
+
+extern volatile bit GIE @ ((unsigned)&INTCON*8)+7;
+extern volatile bit PEIE @ ((unsigned)&INTCON*8)+6;
+extern volatile bit T0IE @ ((unsigned)&INTCON*8)+5;
+extern volatile bit INTE @ ((unsigned)&INTCON*8)+4;
+extern volatile bit RBIE @ ((unsigned)&INTCON*8)+3;
+extern volatile bit T0IF @ ((unsigned)&INTCON*8)+2;
+extern volatile bit INTF @ ((unsigned)&INTCON*8)+1;
+extern volatile bit RBIF @ ((unsigned)&INTCON*8)+0;
+
+
+extern volatile bit DPDAT @ ((unsigned)&QCCON*8)+5;
+extern volatile bit DMDAT @ ((unsigned)&QCCON*8)+4;
+extern volatile bit DPSEL @ ((unsigned)&QCCON*8)+3;
+extern volatile bit DPEN @ ((unsigned)&QCCON*8)+2;
+extern volatile bit DMSEL @ ((unsigned)&QCCON*8)+1;
+extern volatile bit DMEN @ ((unsigned)&QCCON*8)+0;
+
+
+extern volatile bit RC0IF @ ((unsigned)&PIR1*8)+7;
+extern volatile bit TX0IF @ ((unsigned)&PIR1*8)+6;
+extern volatile bit CMP1IF @ ((unsigned)&PIR1*8)+5;
+extern volatile bit PWMIF @ ((unsigned)&PIR1*8)+4;
+extern volatile bit RAIF @ ((unsigned)&PIR1*8)+3;
+extern volatile bit TMR1IF @ ((unsigned)&PIR1*8)+2;
+extern volatile bit TMR2IF @ ((unsigned)&PIR1*8)+1;
+extern volatile bit ADIF @ ((unsigned)&PIR1*8)+0;
+
+
+extern volatile bit RC0IE @ ((unsigned)&PIE1*8)+7;
+extern volatile bit TX0IE @ ((unsigned)&PIE1*8)+6;
+extern volatile bit CMP1IE @ ((unsigned)&PIE1*8)+5;
+extern volatile bit PWMIE @ ((unsigned)&PIE1*8)+4;
+extern volatile bit RAIE @ ((unsigned)&PIE1*8)+3;
+extern volatile bit TMR1IE @ ((unsigned)&PIE1*8)+2;
+extern volatile bit TMR2IE @ ((unsigned)&PIE1*8)+1;
+extern volatile bit ADIE @ ((unsigned)&PIE1*8)+0;
+
+
+extern volatile bit CMP1EN @ ((unsigned)&CMP1CON0*8)+7;
+extern volatile bit CMP1PS @ ((unsigned)&CMP1CON0*8)+6;
+extern volatile bit CMP1NS2 @ ((unsigned)&CMP1CON0*8)+5;
+extern volatile bit CMP1NS1 @ ((unsigned)&CMP1CON0*8)+4;
+extern volatile bit CMP1NS0 @ ((unsigned)&CMP1CON0*8)+3;
+extern volatile bit CMP1NV @ ((unsigned)&CMP1CON0*8)+2;
+extern volatile bit CMP1OUT @ ((unsigned)&CMP1CON0*8)+1;
+extern volatile bit CMP1OEN @ ((unsigned)&CMP1CON0*8)+0;
+
+
+extern volatile bit CMP1IM @ ((unsigned)&CMP1CON1*8)+7;
+extern volatile bit AN1_EN @ ((unsigned)&CMP1CON1*8)+6;
+extern volatile bit RBIAS1_H @ ((unsigned)&CMP1CON1*8)+5;
+extern volatile bit RBIAS1_L @ ((unsigned)&CMP1CON1*8)+4;
+extern volatile bit LVDS13 @ ((unsigned)&CMP1CON1*8)+3;
+extern volatile bit LVDS12 @ ((unsigned)&CMP1CON1*8)+2;
+extern volatile bit LVDS11 @ ((unsigned)&CMP1CON1*8)+1;
+extern volatile bit LVDS10 @ ((unsigned)&CMP1CON1*8)+0;
+
+
+extern volatile bit CLK_SEL @ ((unsigned)&T2CON*8)+7;
+extern volatile bit TOUTPS3 @ ((unsigned)&T2CON*8)+6;
+extern volatile bit TOUTPS2 @ ((unsigned)&T2CON*8)+5;
+extern volatile bit TOUTPS1 @ ((unsigned)&T2CON*8)+4;
+extern volatile bit TOUTPS0 @ ((unsigned)&T2CON*8)+3;
+extern volatile bit TMR2ON @ ((unsigned)&T2CON*8)+2;
+extern volatile bit T2CKPS1 @ ((unsigned)&T2CON*8)+1;
+extern volatile bit T2CKPS0 @ ((unsigned)&T2CON*8)+0;
+
+
+extern volatile bit IRCF2 @ ((unsigned)&OSCCON*8)+6;
+extern volatile bit IRCF1 @ ((unsigned)&OSCCON*8)+5;
+extern volatile bit IRCF0 @ ((unsigned)&OSCCON*8)+4;
+extern volatile bit SWDTEN @ ((unsigned)&OSCCON*8)+1;
+
+
+extern volatile bit CLKDIV2 @ ((unsigned)&PWMCON0*8)+7;
+extern volatile bit CLKDIV1 @ ((unsigned)&PWMCON0*8)+6;
+extern volatile bit CLKDIV0 @ ((unsigned)&PWMCON0*8)+5;
+extern volatile bit PWM4EN @ ((unsigned)&PWMCON0*8)+4;
+extern volatile bit PWM3EN @ ((unsigned)&PWMCON0*8)+3;
+extern volatile bit PWM2EN @ ((unsigned)&PWMCON0*8)+2;
+extern volatile bit PWM1EN @ ((unsigned)&PWMCON0*8)+1;
+extern volatile bit PWM0EN @ ((unsigned)&PWMCON0*8)+0;
+
+
+extern volatile bit PWMIO_SEL1 @ ((unsigned)&PWMCON1*8)+7;
+extern volatile bit PWMIO_SEL0 @ ((unsigned)&PWMCON1*8)+6;
+extern volatile bit PWM2DTEN @ ((unsigned)&PWMCON1*8)+5;
+extern volatile bit PWM0DTEN @ ((unsigned)&PWMCON1*8)+4;
+extern volatile bit DT_DIV1 @ ((unsigned)&PWMCON1*8)+1;
+extern volatile bit DT_DIV0 @ ((unsigned)&PWMCON1*8)+0;
+
+
+extern volatile bit PWM4D9 @ ((unsigned)&PWMTH*8)+5;
+extern volatile bit PWM4D8 @ ((unsigned)&PWMTH*8)+4;
+extern volatile bit PWM4T9 @ ((unsigned)&PWMTH*8)+3;
+extern volatile bit PWM4T8 @ ((unsigned)&PWMTH*8)+2;
+extern volatile bit PWMT9 @ ((unsigned)&PWMTH*8)+1;
+extern volatile bit PWMT8 @ ((unsigned)&PWMTH*8)+0;
+
+
+extern volatile bit PWM4DIR @ ((unsigned)&PWMCON2*8)+4;
+extern volatile bit PWM3DIR @ ((unsigned)&PWMCON2*8)+3;
+extern volatile bit PWM2DIR @ ((unsigned)&PWMCON2*8)+2;
+extern volatile bit PWM1DIR @ ((unsigned)&PWMCON2*8)+1;
+extern volatile bit PWM0DIR @ ((unsigned)&PWMCON2*8)+0;
+
+
+extern volatile bit PWMD39 @ ((unsigned)&PWMDH*8)+7;
+extern volatile bit PWMD38 @ ((unsigned)&PWMDH*8)+6;
+extern volatile bit PWMD29 @ ((unsigned)&PWMDH*8)+5;
+extern volatile bit PWMD28 @ ((unsigned)&PWMDH*8)+4;
+extern volatile bit PWMD19 @ ((unsigned)&PWMDH*8)+3;
+extern volatile bit PWMD18 @ ((unsigned)&PWMDH*8)+2;
+extern volatile bit PWMD09 @ ((unsigned)&PWMDH*8)+1;
+extern volatile bit PWMD08 @ ((unsigned)&PWMDH*8)+0;
+
+
+extern volatile bit PWM01DT5 @ ((unsigned)&PWM01DT*8)+5;
+extern volatile bit PWM01DT4 @ ((unsigned)&PWM01DT*8)+4;
+extern volatile bit PWM01DT3 @ ((unsigned)&PWM01DT*8)+3;
+extern volatile bit PWM01DT2 @ ((unsigned)&PWM01DT*8)+2;
+extern volatile bit PWM01DT1 @ ((unsigned)&PWM01DT*8)+1;
+extern volatile bit PWM01DT0 @ ((unsigned)&PWM01DT*8)+0;
+
+
+extern volatile bit TRISA7 @ ((unsigned)&TRISA*8)+7;
+extern volatile bit TRISA6 @ ((unsigned)&TRISA*8)+6;
+extern volatile bit TRISA5 @ ((unsigned)&TRISA*8)+5;
+extern volatile bit TRISA4 @ ((unsigned)&TRISA*8)+4;
+extern volatile bit TRISA3 @ ((unsigned)&TRISA*8)+3;
+extern volatile bit TRISA2 @ ((unsigned)&TRISA*8)+2;
+extern volatile bit TRISA1 @ ((unsigned)&TRISA*8)+1;
+extern volatile bit TRISA0 @ ((unsigned)&TRISA*8)+0;
+
+
+extern volatile bit RA7 @ ((unsigned)&PORTA*8)+7;
+extern volatile bit RA6 @ ((unsigned)&PORTA*8)+6;
+extern volatile bit RA5 @ ((unsigned)&PORTA*8)+5;
+extern volatile bit RA4 @ ((unsigned)&PORTA*8)+4;
+extern volatile bit RA3 @ ((unsigned)&PORTA*8)+3;
+extern volatile bit RA2 @ ((unsigned)&PORTA*8)+2;
+extern volatile bit RA1 @ ((unsigned)&PORTA*8)+1;
+extern volatile bit RA0 @ ((unsigned)&PORTA*8)+0;
+
+
+extern volatile bit WPDA7 @ ((unsigned)&WPDA*8)+7;
+extern volatile bit WPDA6 @ ((unsigned)&WPDA*8)+6;
+extern volatile bit WPDA5 @ ((unsigned)&WPDA*8)+5;
+extern volatile bit WPDA4 @ ((unsigned)&WPDA*8)+4;
+extern volatile bit WPDA3 @ ((unsigned)&WPDA*8)+3;
+extern volatile bit WPDA2 @ ((unsigned)&WPDA*8)+2;
+extern volatile bit WPDA1 @ ((unsigned)&WPDA*8)+1;
+extern volatile bit WPDA0 @ ((unsigned)&WPDA*8)+0;
+
+
+extern volatile bit WPUA7 @ ((unsigned)&WPUA*8)+7;
+extern volatile bit WPUA6 @ ((unsigned)&WPUA*8)+6;
+extern volatile bit WPUA5 @ ((unsigned)&WPUA*8)+5;
+extern volatile bit WPUA4 @ ((unsigned)&WPUA*8)+4;
+extern volatile bit WPUA3 @ ((unsigned)&WPUA*8)+3;
+extern volatile bit WPUA2 @ ((unsigned)&WPUA*8)+2;
+extern volatile bit WPUA1 @ ((unsigned)&WPUA*8)+1;
+extern volatile bit WPUA0 @ ((unsigned)&WPUA*8)+0;
+
+
+extern volatile bit IOCA7 @ ((unsigned)&IOCA*8)+7;
+extern volatile bit IOCA6 @ ((unsigned)&IOCA*8)+6;
+extern volatile bit IOCA5 @ ((unsigned)&IOCA*8)+5;
+extern volatile bit IOCA4 @ ((unsigned)&IOCA*8)+4;
+extern volatile bit IOCA3 @ ((unsigned)&IOCA*8)+3;
+extern volatile bit IOCA2 @ ((unsigned)&IOCA*8)+2;
+extern volatile bit IOCA1 @ ((unsigned)&IOCA*8)+1;
+extern volatile bit IOCA0 @ ((unsigned)&IOCA*8)+0;
+
+
+extern volatile bit ANS29 @ ((unsigned)&ANSEL3*8)+7;
+extern volatile bit ANS28 @ ((unsigned)&ANSEL3*8)+6;
+extern volatile bit ANS27 @ ((unsigned)&ANSEL3*8)+5;
+extern volatile bit ANS26 @ ((unsigned)&ANSEL3*8)+4;
+extern volatile bit ANS25 @ ((unsigned)&ANSEL3*8)+3;
+extern volatile bit ANS24 @ ((unsigned)&ANSEL3*8)+2;
+extern volatile bit ANS23 @ ((unsigned)&ANSEL3*8)+1;
+extern volatile bit ANS22 @ ((unsigned)&ANSEL3*8)+0;
+
+
+extern volatile bit EEPGD @ ((unsigned)&EECON1*8)+7;
+extern volatile bit WRERR @ ((unsigned)&EECON1*8)+3;
+extern volatile bit WREN @ ((unsigned)&EECON1*8)+2;
+extern volatile bit WR @ ((unsigned)&EECON1*8)+1;
+extern volatile bit RD @ ((unsigned)&EECON1*8)+0;
+
+
+extern volatile bit EEDAT7 @ ((unsigned)&EEDAT*8)+7;
+extern volatile bit EEDAT6 @ ((unsigned)&EEDAT*8)+6;
+extern volatile bit EEDAT5 @ ((unsigned)&EEDAT*8)+5;
+extern volatile bit EEDAT4 @ ((unsigned)&EEDAT*8)+4;
+extern volatile bit EEDAT3 @ ((unsigned)&EEDAT*8)+3;
+extern volatile bit EEDAT2 @ ((unsigned)&EEDAT*8)+2;
+extern volatile bit EEDAT1 @ ((unsigned)&EEDAT*8)+1;
+extern volatile bit EEDAT0 @ ((unsigned)&EEDAT*8)+0;
+
+
+extern volatile bit EEDATH7 @ ((unsigned)&EEDATH*8)+7;
+extern volatile bit EEDATH6 @ ((unsigned)&EEDATH*8)+6;
+extern volatile bit EEDATH5 @ ((unsigned)&EEDATH*8)+5;
+extern volatile bit EEDATH4 @ ((unsigned)&EEDATH*8)+4;
+extern volatile bit EEDATH3 @ ((unsigned)&EEDATH*8)+3;
+extern volatile bit EEDATH2 @ ((unsigned)&EEDATH*8)+2;
+extern volatile bit EEDATH1 @ ((unsigned)&EEDATH*8)+1;
+extern volatile bit EEDATH0 @ ((unsigned)&EEDATH*8)+0;
+
+
+extern volatile bit EEADR7 @ ((unsigned)&EEADR*8)+7;
+extern volatile bit EEADR6 @ ((unsigned)&EEADR*8)+6;
+extern volatile bit EEADR5 @ ((unsigned)&EEADR*8)+5;
+extern volatile bit EEADR4 @ ((unsigned)&EEADR*8)+4;
+extern volatile bit EEADR3 @ ((unsigned)&EEADR*8)+3;
+extern volatile bit EEADR2 @ ((unsigned)&EEADR*8)+2;
+extern volatile bit EEADR1 @ ((unsigned)&EEADR*8)+1;
+extern volatile bit EEADR0 @ ((unsigned)&EEADR*8)+0;
+
+
+extern volatile bit EEADRH4 @ ((unsigned)&EEADRH*8)+4;
+extern volatile bit EEADRH3 @ ((unsigned)&EEADRH*8)+3;
+extern volatile bit EEADRH2 @ ((unsigned)&EEADRH*8)+2;
+extern volatile bit EEADRH1 @ ((unsigned)&EEADRH*8)+1;
+extern volatile bit EEADRH0 @ ((unsigned)&EEADRH*8)+0;
+
+
+extern volatile bit ANS7 @ ((unsigned)&ANSEL0*8)+7;
+extern volatile bit ANS6 @ ((unsigned)&ANSEL0*8)+6;
+extern volatile bit ANS5 @ ((unsigned)&ANSEL0*8)+5;
+extern volatile bit ANS4 @ ((unsigned)&ANSEL0*8)+4;
+extern volatile bit ANS3 @ ((unsigned)&ANSEL0*8)+3;
+extern volatile bit ANS2 @ ((unsigned)&ANSEL0*8)+2;
+extern volatile bit ANS1 @ ((unsigned)&ANSEL0*8)+1;
+extern volatile bit ANS0 @ ((unsigned)&ANSEL0*8)+0;
+
+
+extern volatile bit ANS15 @ ((unsigned)&ANSEL1*8)+7;
+extern volatile bit ANS14 @ ((unsigned)&ANSEL1*8)+6;
+extern volatile bit ANS13 @ ((unsigned)&ANSEL1*8)+5;
+extern volatile bit ANS12 @ ((unsigned)&ANSEL1*8)+4;
+extern volatile bit ANS11 @ ((unsigned)&ANSEL1*8)+3;
+extern volatile bit ANS10 @ ((unsigned)&ANSEL1*8)+2;
+extern volatile bit ANS9 @ ((unsigned)&ANSEL1*8)+1;
+extern volatile bit ANS8 @ ((unsigned)&ANSEL1*8)+0;
+
+
+extern volatile bit ADCS1 @ ((unsigned)&ADCON0*8)+7;
+extern volatile bit ADCS0 @ ((unsigned)&ADCON0*8)+6;
+extern volatile bit CHS3 @ ((unsigned)&ADCON0*8)+5;
+extern volatile bit CHS2 @ ((unsigned)&ADCON0*8)+4;
+extern volatile bit CHS1 @ ((unsigned)&ADCON0*8)+3;
+extern volatile bit CHS0 @ ((unsigned)&ADCON0*8)+2;
+extern volatile bit GODONE @ ((unsigned)&ADCON0*8)+1;
+extern volatile bit ADON @ ((unsigned)&ADCON0*8)+0;
+
+
+extern volatile bit ADFM @ ((unsigned)&ADCON1*8)+7;
+extern volatile bit CHS4 @ ((unsigned)&ADCON1*8)+6;
+extern volatile bit LDO_EN @ ((unsigned)&ADCON1*8)+2;
+extern volatile bit LDO_SEL1 @ ((unsigned)&ADCON1*8)+1;
+extern volatile bit LDO_SEL0 @ ((unsigned)&ADCON1*8)+0;
+
+
+extern volatile bit CMP2EN @ ((unsigned)&CMP2CON0*8)+7;
+extern volatile bit CMP2PS @ ((unsigned)&CMP2CON0*8)+6;
+extern volatile bit CMP2NS2 @ ((unsigned)&CMP2CON0*8)+5;
+extern volatile bit CMP2NS1 @ ((unsigned)&CMP2CON0*8)+4;
+extern volatile bit CMP2NS0 @ ((unsigned)&CMP2CON0*8)+3;
+extern volatile bit CMP2NV @ ((unsigned)&CMP2CON0*8)+2;
+extern volatile bit CMP2OUT @ ((unsigned)&CMP2CON0*8)+1;
+extern volatile bit CMP2OEN @ ((unsigned)&CMP2CON0*8)+0;
+
+
+extern volatile bit SEG7EN @ ((unsigned)&SEGEN0*8)+7;
+extern volatile bit SEG6EN @ ((unsigned)&SEGEN0*8)+6;
+extern volatile bit SEG5EN @ ((unsigned)&SEGEN0*8)+5;
+extern volatile bit SEG4EN @ ((unsigned)&SEGEN0*8)+4;
+extern volatile bit SEG3EN @ ((unsigned)&SEGEN0*8)+3;
+extern volatile bit SEG2EN @ ((unsigned)&SEGEN0*8)+2;
+extern volatile bit SEG1EN @ ((unsigned)&SEGEN0*8)+1;
+extern volatile bit SEG0EN @ ((unsigned)&SEGEN0*8)+0;
+
+
+extern volatile bit CMP2IM @ ((unsigned)&CMP2CON1*8)+7;
+extern volatile bit AN2_EN @ ((unsigned)&CMP2CON1*8)+6;
+extern volatile bit RBIAS2_H @ ((unsigned)&CMP2CON1*8)+5;
+extern volatile bit RBIAS2_L @ ((unsigned)&CMP2CON1*8)+4;
+extern volatile bit LVDS23 @ ((unsigned)&CMP2CON1*8)+3;
+extern volatile bit LVDS22 @ ((unsigned)&CMP2CON1*8)+2;
+extern volatile bit LVDS21 @ ((unsigned)&CMP2CON1*8)+1;
+extern volatile bit LVDS20 @ ((unsigned)&CMP2CON1*8)+0;
+
+
+extern volatile bit TRISC5 @ ((unsigned)&TRISC*8)+5;
+extern volatile bit TRISC4 @ ((unsigned)&TRISC*8)+4;
+extern volatile bit TRISC3 @ ((unsigned)&TRISC*8)+3;
+extern volatile bit TRISC2 @ ((unsigned)&TRISC*8)+2;
+extern volatile bit TRISC1 @ ((unsigned)&TRISC*8)+1;
+extern volatile bit TRISC0 @ ((unsigned)&TRISC*8)+0;
+
+
+extern volatile bit RC5 @ ((unsigned)&PORTC*8)+5;
+extern volatile bit RC4 @ ((unsigned)&PORTC*8)+4;
+extern volatile bit RC3 @ ((unsigned)&PORTC*8)+3;
+extern volatile bit RC2 @ ((unsigned)&PORTC*8)+2;
+extern volatile bit RC1 @ ((unsigned)&PORTC*8)+1;
+extern volatile bit RC0 @ ((unsigned)&PORTC*8)+0;
+
+
+extern volatile bit RD7 @ ((unsigned)&PORTD*8)+7;
+extern volatile bit RD6 @ ((unsigned)&PORTD*8)+6;
+extern volatile bit RD5 @ ((unsigned)&PORTD*8)+5;
+extern volatile bit RD4 @ ((unsigned)&PORTD*8)+4;
+extern volatile bit RD3 @ ((unsigned)&PORTD*8)+3;
+extern volatile bit RD2 @ ((unsigned)&PORTD*8)+2;
+extern volatile bit RD1 @ ((unsigned)&PORTD*8)+1;
+extern volatile bit RD0 @ ((unsigned)&PORTD*8)+0;
+
+
+extern volatile bit WPUC5 @ ((unsigned)&WPUC*8)+5;
+extern volatile bit WPUC4 @ ((unsigned)&WPUC*8)+4;
+extern volatile bit WPUC3 @ ((unsigned)&WPUC*8)+3;
+extern volatile bit WPUC2 @ ((unsigned)&WPUC*8)+2;
+extern volatile bit WPUC1 @ ((unsigned)&WPUC*8)+1;
+extern volatile bit WPUC0 @ ((unsigned)&WPUC*8)+0;
+
+
+extern volatile bit ANS21 @ ((unsigned)&ANSEL2*8)+5;
+extern volatile bit ANS20 @ ((unsigned)&ANSEL2*8)+4;
+extern volatile bit ANS19 @ ((unsigned)&ANSEL2*8)+3;
+extern volatile bit ANS18 @ ((unsigned)&ANSEL2*8)+2;
+extern volatile bit ANS17 @ ((unsigned)&ANSEL2*8)+1;
+extern volatile bit ANS16 @ ((unsigned)&ANSEL2*8)+0;
+
+
+extern volatile bit T1GINV @ ((unsigned)&T1CON*8)+7;
+extern volatile bit TMR1GE @ ((unsigned)&T1CON*8)+6;
+extern volatile bit T1CKPS1 @ ((unsigned)&T1CON*8)+5;
+extern volatile bit T1CKPS0 @ ((unsigned)&T1CON*8)+4;
+extern volatile bit T1OSCEN @ ((unsigned)&T1CON*8)+3;
+extern volatile bit T1SYNC @ ((unsigned)&T1CON*8)+2;
+extern volatile bit TMR1CS @ ((unsigned)&T1CON*8)+1;
+extern volatile bit TMR1ON @ ((unsigned)&T1CON*8)+0;
+
+
+extern volatile bit BCLIF @ ((unsigned)&PIR2*8)+7;
+extern volatile bit TKIF @ ((unsigned)&PIR2*8)+6;
+extern volatile bit CMP2IF @ ((unsigned)&PIR2*8)+5;
+extern volatile bit IICIF @ ((unsigned)&PIR2*8)+4;
+extern volatile bit PDSIF @ ((unsigned)&PIR2*8)+3;
+extern volatile bit PDRIF @ ((unsigned)&PIR2*8)+2;
+extern volatile bit TX1IF @ ((unsigned)&PIR2*8)+1;
+extern volatile bit RC1IF @ ((unsigned)&PIR2*8)+0;
+
+
+extern volatile bit BCLIE @ ((unsigned)&PIE2*8)+7;
+extern volatile bit TKIE @ ((unsigned)&PIE2*8)+6;
+extern volatile bit CMP2IE @ ((unsigned)&PIE2*8)+5;
+extern volatile bit IICIE @ ((unsigned)&PIE2*8)+4;
+extern volatile bit PDSIE @ ((unsigned)&PIE2*8)+3;
+extern volatile bit PDRIE @ ((unsigned)&PIE2*8)+2;
+extern volatile bit TX1IE @ ((unsigned)&PIE2*8)+1;
+extern volatile bit RC1IE @ ((unsigned)&PIE2*8)+0;
+
+
+extern volatile bit KDONE @ ((unsigned)&KEYCON0*8)+7;
+extern volatile bit KTOUT @ ((unsigned)&KEYCON0*8)+2;
+extern volatile bit KCAP @ ((unsigned)&KEYCON0*8)+1;
+extern volatile bit KEN @ ((unsigned)&KEYCON0*8)+0;
+
+
+extern volatile bit KVREF1 @ ((unsigned)&KEYCON1*8)+7;
+extern volatile bit KVREF0 @ ((unsigned)&KEYCON1*8)+6;
+extern volatile bit KCLK1 @ ((unsigned)&KEYCON1*8)+5;
+extern volatile bit KCLK0 @ ((unsigned)&KEYCON1*8)+4;
+extern volatile bit KCHS3 @ ((unsigned)&KEYCON1*8)+3;
+extern volatile bit KCHS2 @ ((unsigned)&KEYCON1*8)+2;
+extern volatile bit KCHS1 @ ((unsigned)&KEYCON1*8)+1;
+extern volatile bit KCHS0 @ ((unsigned)&KEYCON1*8)+0;
+
+
+extern volatile bit CAP_LVBO2 @ ((unsigned)&KEYCON2*8)+7;
+extern volatile bit CAP_LVBO1 @ ((unsigned)&KEYCON2*8)+6;
+extern volatile bit CAP_LVBO0 @ ((unsigned)&KEYCON2*8)+5;
+extern volatile bit TP_EN @ ((unsigned)&KEYCON2*8)+4;
+extern volatile bit TKLDOEN @ ((unsigned)&KEYCON2*8)+3;
+extern volatile bit TKLDO_SEL @ ((unsigned)&KEYCON2*8)+1;
+extern volatile bit TKEN @ ((unsigned)&KEYCON2*8)+0;
+
+
+extern volatile bit TRISD7 @ ((unsigned)&TRISD*8)+7;
+extern volatile bit TRISD6 @ ((unsigned)&TRISD*8)+6;
+extern volatile bit TRISD5 @ ((unsigned)&TRISD*8)+5;
+extern volatile bit TRISD4 @ ((unsigned)&TRISD*8)+4;
+extern volatile bit TRISD3 @ ((unsigned)&TRISD*8)+3;
+extern volatile bit TRISD2 @ ((unsigned)&TRISD*8)+2;
+extern volatile bit TRISD1 @ ((unsigned)&TRISD*8)+1;
+extern volatile bit TRISD0 @ ((unsigned)&TRISD*8)+0;
+
+
+extern volatile bit WPUD7 @ ((unsigned)&WPUD*8)+7;
+extern volatile bit WPUD6 @ ((unsigned)&WPUD*8)+6;
+extern volatile bit WPUD5 @ ((unsigned)&WPUD*8)+5;
+extern volatile bit WPUD4 @ ((unsigned)&WPUD*8)+4;
+extern volatile bit WPUD3 @ ((unsigned)&WPUD*8)+3;
+extern volatile bit WPUD2 @ ((unsigned)&WPUD*8)+2;
+extern volatile bit WPUD1 @ ((unsigned)&WPUD*8)+1;
+extern volatile bit WPUD0 @ ((unsigned)&WPUD*8)+0;
+
+
+extern volatile bit CSRC0 @ ((unsigned)&TXSTA0*8)+7;
+extern volatile bit TX9EN0 @ ((unsigned)&TXSTA0*8)+6;
+extern volatile bit TXEN0 @ ((unsigned)&TXSTA0*8)+5;
+extern volatile bit SYNC0 @ ((unsigned)&TXSTA0*8)+4;
+extern volatile bit SCKP0 @ ((unsigned)&TXSTA0*8)+3;
+extern volatile bit TRMT0 @ ((unsigned)&TXSTA0*8)+1;
+extern volatile bit TX9D0 @ ((unsigned)&TXSTA0*8)+0;
+
+
+extern volatile bit SPEN0 @ ((unsigned)&RCSTA0*8)+7;
+extern volatile bit RX9EN0 @ ((unsigned)&RCSTA0*8)+6;
+extern volatile bit SREN0 @ ((unsigned)&RCSTA0*8)+5;
+extern volatile bit CREN0 @ ((unsigned)&RCSTA0*8)+4;
+extern volatile bit RCIDL0 @ ((unsigned)&RCSTA0*8)+3;
+extern volatile bit FERR0 @ ((unsigned)&RCSTA0*8)+2;
+extern volatile bit OERR0 @ ((unsigned)&RCSTA0*8)+1;
+extern volatile bit RX9D0 @ ((unsigned)&RCSTA0*8)+0;
+
+
+extern volatile bit LCDEN @ ((unsigned)&LCDCON0*8)+7;
+extern volatile bit LEDEN @ ((unsigned)&LCDCON0*8)+6;
+extern volatile bit COMSEL2 @ ((unsigned)&LCDCON0*8)+5;
+extern volatile bit COMSEL1 @ ((unsigned)&LCDCON0*8)+4;
+extern volatile bit COMSEL0 @ ((unsigned)&LCDCON0*8)+3;
+extern volatile bit LCDCLK2 @ ((unsigned)&LCDCON0*8)+2;
+extern volatile bit LCDCLK1 @ ((unsigned)&LCDCON0*8)+1;
+extern volatile bit LCDCLK0 @ ((unsigned)&LCDCON0*8)+0;
+
+
+extern volatile bit BIAS @ ((unsigned)&LCDCON1*8)+6;
+extern volatile bit FCCTLM1 @ ((unsigned)&LCDCON1*8)+3;
+extern volatile bit FCCTLM0 @ ((unsigned)&LCDCON1*8)+2;
+extern volatile bit LCDF1 @ ((unsigned)&LCDCON1*8)+1;
+extern volatile bit LCDF0 @ ((unsigned)&LCDCON1*8)+0;
+
+
+extern volatile bit SEG15EN @ ((unsigned)&SEGEN1*8)+7;
+extern volatile bit SEG14EN @ ((unsigned)&SEGEN1*8)+6;
+extern volatile bit SEG13EN @ ((unsigned)&SEGEN1*8)+5;
+extern volatile bit SEG12EN @ ((unsigned)&SEGEN1*8)+4;
+extern volatile bit SEG11EN @ ((unsigned)&SEGEN1*8)+3;
+extern volatile bit SEG10EN @ ((unsigned)&SEGEN1*8)+2;
+extern volatile bit SEG9EN @ ((unsigned)&SEGEN1*8)+1;
+extern volatile bit SEG8EN @ ((unsigned)&SEGEN1*8)+0;
+
+
+extern volatile bit SEG23EN @ ((unsigned)&SEGEN2*8)+7;
+extern volatile bit SEG22EN @ ((unsigned)&SEGEN2*8)+6;
+extern volatile bit SEG21EN @ ((unsigned)&SEGEN2*8)+5;
+extern volatile bit SEG20EN @ ((unsigned)&SEGEN2*8)+4;
+extern volatile bit SEG19EN @ ((unsigned)&SEGEN2*8)+3;
+extern volatile bit SEG18EN @ ((unsigned)&SEGEN2*8)+2;
+extern volatile bit SEG17EN @ ((unsigned)&SEGEN2*8)+1;
+extern volatile bit SEG16EN @ ((unsigned)&SEGEN2*8)+0;
+
+
+extern volatile bit CSRC1 @ ((unsigned)&TXSTA1*8)+7;
+extern volatile bit TX9EN1 @ ((unsigned)&TXSTA1*8)+6;
+extern volatile bit TXEN1 @ ((unsigned)&TXSTA1*8)+5;
+extern volatile bit SYNC1 @ ((unsigned)&TXSTA1*8)+4;
+extern volatile bit SCKP1 @ ((unsigned)&TXSTA1*8)+3;
+extern volatile bit TRMT1 @ ((unsigned)&TXSTA1*8)+1;
+extern volatile bit TX9D1 @ ((unsigned)&TXSTA1*8)+0;
+
+
+extern volatile bit SPEN1 @ ((unsigned)&RCSTA1*8)+7;
+extern volatile bit RX9EN1 @ ((unsigned)&RCSTA1*8)+6;
+extern volatile bit SREN1 @ ((unsigned)&RCSTA1*8)+5;
+extern volatile bit CREN1 @ ((unsigned)&RCSTA1*8)+4;
+extern volatile bit RCIDL1 @ ((unsigned)&RCSTA1*8)+3;
+extern volatile bit FERR1 @ ((unsigned)&RCSTA1*8)+2;
+extern volatile bit OERR1 @ ((unsigned)&RCSTA1*8)+1;
+extern volatile bit RX9D1 @ ((unsigned)&RCSTA1*8)+0;
+
+
+extern volatile bit OPA_EN @ ((unsigned)&OPACON*8)+7;
+extern volatile bit OPA_OEN @ ((unsigned)&OPACON*8)+6;
+extern volatile bit OPA_ADC @ ((unsigned)&OPACON*8)+4;
+extern volatile bit OPA_FT @ ((unsigned)&OPACON*8)+0;
+
+
+extern volatile bit OPADOUT @ ((unsigned)&OPAADJ*8)+7;
+extern volatile bit OPACOFM @ ((unsigned)&OPAADJ*8)+6;
+extern volatile bit OPACRS @ ((unsigned)&OPAADJ*8)+5;
+extern volatile bit OPAADJ4 @ ((unsigned)&OPAADJ*8)+4;
+extern volatile bit OPAADJ3 @ ((unsigned)&OPAADJ*8)+3;
+extern volatile bit OPAADJ2 @ ((unsigned)&OPAADJ*8)+2;
+extern volatile bit OPAADJ1 @ ((unsigned)&OPAADJ*8)+1;
+extern volatile bit OPAADJ0 @ ((unsigned)&OPAADJ*8)+0;
+
+
+extern volatile bit LEDSW @ ((unsigned)&LEDCTR0*8)+7;
+extern volatile bit LEDSW_RT @ ((unsigned)&LEDCTR0*8)+6;
+extern volatile bit IF_15 @ ((unsigned)&LEDCTR0*8)+5;
+extern volatile bit IF_30 @ ((unsigned)&LEDCTR0*8)+4;
+extern volatile bit RESET_T @ ((unsigned)&LEDCTR0*8)+3;
+extern volatile bit LEDSW_CKSEL1 @ ((unsigned)&LEDCTR0*8)+2;
+extern volatile bit LEDSW_CKSEL0 @ ((unsigned)&LEDCTR0*8)+1;
+extern volatile bit LEDSW_ST @ ((unsigned)&LEDCTR0*8)+0;
+
+
+extern volatile bit LEDSW_ADR @ ((unsigned)&LEDCTR1*8)+7;
+extern volatile bit LEDSW_ADD4 @ ((unsigned)&LEDCTR1*8)+4;
+extern volatile bit LEDSW_ADD3 @ ((unsigned)&LEDCTR1*8)+3;
+extern volatile bit LEDSW_ADD2 @ ((unsigned)&LEDCTR1*8)+2;
+extern volatile bit LEDSW_ADD1 @ ((unsigned)&LEDCTR1*8)+1;
+extern volatile bit LEDSW_ADD0 @ ((unsigned)&LEDCTR1*8)+0;
+
+
+extern volatile bit IICWCOL @ ((unsigned)&IICCON*8)+7;
+extern volatile bit IICOV @ ((unsigned)&IICCON*8)+6;
+extern volatile bit IICEN @ ((unsigned)&IICCON*8)+5;
+extern volatile bit IICCKP @ ((unsigned)&IICCON*8)+4;
+extern volatile bit IICTOS1 @ ((unsigned)&IICCON*8)+3;
+extern volatile bit IICTOS0 @ ((unsigned)&IICCON*8)+2;
+extern volatile bit IICM1 @ ((unsigned)&IICCON*8)+1;
+extern volatile bit IICM0 @ ((unsigned)&IICCON*8)+0;
+
+
+extern volatile bit GCEN @ ((unsigned)&IICCON2*8)+7;
+extern volatile bit ACKSTAT @ ((unsigned)&IICCON2*8)+6;
+extern volatile bit ACKDT @ ((unsigned)&IICCON2*8)+5;
+extern volatile bit ACKEN @ ((unsigned)&IICCON2*8)+4;
+extern volatile bit RCEN @ ((unsigned)&IICCON2*8)+3;
+extern volatile bit PEN @ ((unsigned)&IICCON2*8)+2;
+extern volatile bit RSEN @ ((unsigned)&IICCON2*8)+1;
+extern volatile bit SEN @ ((unsigned)&IICCON2*8)+0;
+
+
+extern volatile bit IDLE @ ((unsigned)&IICSTAT*8)+6;
+extern volatile bit DA @ ((unsigned)&IICSTAT*8)+5;
+extern volatile bit P @ ((unsigned)&IICSTAT*8)+4;
+extern volatile bit S @ ((unsigned)&IICSTAT*8)+3;
+extern volatile bit RW @ ((unsigned)&IICSTAT*8)+2;
+extern volatile bit IICTOF @ ((unsigned)&IICSTAT*8)+1;
+extern volatile bit BF @ ((unsigned)&IICSTAT*8)+0;
+
+
+extern volatile bit IICBUF7 @ ((unsigned)&IICBUF*8)+7;
+extern volatile bit IICBUF6 @ ((unsigned)&IICBUF*8)+6;
+extern volatile bit IICBUF5 @ ((unsigned)&IICBUF*8)+5;
+extern volatile bit IICBUF4 @ ((unsigned)&IICBUF*8)+4;
+extern volatile bit IICBUF3 @ ((unsigned)&IICBUF*8)+3;
+extern volatile bit IICBUF2 @ ((unsigned)&IICBUF*8)+2;
+extern volatile bit IICBUF1 @ ((unsigned)&IICBUF*8)+1;
+extern volatile bit IICBUF0 @ ((unsigned)&IICBUF*8)+0;
+
+
+extern volatile bit IICADD7 @ ((unsigned)&IICADD*8)+7;
+extern volatile bit IICADD6 @ ((unsigned)&IICADD*8)+6;
+extern volatile bit IICADD5 @ ((unsigned)&IICADD*8)+5;
+extern volatile bit IICADD4 @ ((unsigned)&IICADD*8)+4;
+extern volatile bit IICADD3 @ ((unsigned)&IICADD*8)+3;
+extern volatile bit IICADD2 @ ((unsigned)&IICADD*8)+2;
+extern volatile bit IICADD1 @ ((unsigned)&IICADD*8)+1;
+extern volatile bit IICADD0 @ ((unsigned)&IICADD*8)+0;
+
+
+extern volatile bit CC0_EN @ ((unsigned)&CC0CON*8)+5;
+extern volatile bit CC0_HYS @ ((unsigned)&CC0CON*8)+4;
+extern volatile bit CC0_CVS1 @ ((unsigned)&CC0CON*8)+3;
+extern volatile bit CC0_CVS0 @ ((unsigned)&CC0CON*8)+2;
+extern volatile bit CC0_RD @ ((unsigned)&CC0CON*8)+1;
+extern volatile bit CC0_CMPO @ ((unsigned)&CC0CON*8)+0;
+
+
+extern volatile bit CC1_EN @ ((unsigned)&CC1CON*8)+5;
+extern volatile bit CC1_HYS @ ((unsigned)&CC1CON*8)+4;
+extern volatile bit CC1_CVS1 @ ((unsigned)&CC1CON*8)+3;
+extern volatile bit CC1_CVS0 @ ((unsigned)&CC1CON*8)+2;
+extern volatile bit CC1_RD @ ((unsigned)&CC1CON*8)+1;
+extern volatile bit CC1_CMPO @ ((unsigned)&CC1CON*8)+0;
+
+
+extern volatile bit PDEN @ ((unsigned)&PDCON0*8)+7;
+extern volatile bit PD_BUF @ ((unsigned)&PDCON0*8)+6;
+extern volatile bit SEND_ST @ ((unsigned)&PDCON0*8)+5;
+extern volatile bit CRC_RES @ ((unsigned)&PDCON0*8)+4;
+extern volatile bit CC_SEL @ ((unsigned)&PDCON0*8)+3;
+extern volatile bit PD_MODE @ ((unsigned)&PDCON0*8)+2;
+extern volatile bit REC_S @ ((unsigned)&PDCON0*8)+0;
+
+
+extern volatile bit PDSEN @ ((unsigned)&PDCON1*8)+6;
+extern volatile bit SEND_SEL @ ((unsigned)&PDCON1*8)+5;
+extern volatile bit PDCNT4 @ ((unsigned)&PDCON1*8)+4;
+extern volatile bit PDCNT3 @ ((unsigned)&PDCON1*8)+3;
+extern volatile bit PDCNT2 @ ((unsigned)&PDCON1*8)+2;
+extern volatile bit PDCNT1 @ ((unsigned)&PDCON1*8)+1;
+extern volatile bit PDCNT0 @ ((unsigned)&PDCON1*8)+0;
+
+
+extern volatile bit PDSADD2 @ ((unsigned)&PDADD*8)+7;
+extern volatile bit PDSADD1 @ ((unsigned)&PDADD*8)+6;
+extern volatile bit PDSADD0 @ ((unsigned)&PDADD*8)+5;
+extern volatile bit PDRADD4 @ ((unsigned)&PDADD*8)+4;
+extern volatile bit PDRADD3 @ ((unsigned)&PDADD*8)+3;
+extern volatile bit PDRADD2 @ ((unsigned)&PDADD*8)+2;
+extern volatile bit PDRADD1 @ ((unsigned)&PDADD*8)+1;
+extern volatile bit PDRADD0 @ ((unsigned)&PDADD*8)+0;
+
+
+extern volatile bit PDRDATA7 @ ((unsigned)&PDRDATA*8)+7;
+extern volatile bit PDRDATA6 @ ((unsigned)&PDRDATA*8)+6;
+extern volatile bit PDRDATA5 @ ((unsigned)&PDRDATA*8)+5;
+extern volatile bit PDRDATA4 @ ((unsigned)&PDRDATA*8)+4;
+extern volatile bit PDRDATA3 @ ((unsigned)&PDRDATA*8)+3;
+extern volatile bit PDRDATA2 @ ((unsigned)&PDRDATA*8)+2;
+extern volatile bit PDRDATA1 @ ((unsigned)&PDRDATA*8)+1;
+extern volatile bit PDRDATA0 @ ((unsigned)&PDRDATA*8)+0;
+
+
+extern volatile bit PDSDATA7 @ ((unsigned)&PDSDATA*8)+7;
+extern volatile bit PDSDATA6 @ ((unsigned)&PDSDATA*8)+6;
+extern volatile bit PDSDATA5 @ ((unsigned)&PDSDATA*8)+5;
+extern volatile bit PDSDATA4 @ ((unsigned)&PDSDATA*8)+4;
+extern volatile bit PDSDATA3 @ ((unsigned)&PDSDATA*8)+3;
+extern volatile bit PDSDATA2 @ ((unsigned)&PDSDATA*8)+2;
+extern volatile bit PDSDATA1 @ ((unsigned)&PDSDATA*8)+1;
+extern volatile bit PDSDATA0 @ ((unsigned)&PDSDATA*8)+0;
+
+
+extern volatile bit LCDCS @ ((unsigned)&LCDADD*8)+7;
+extern volatile bit B2RES1 @ ((unsigned)&LCDADD*8)+6;
+extern volatile bit B2RES0 @ ((unsigned)&LCDADD*8)+5;
+extern volatile bit LCDADD4 @ ((unsigned)&LCDADD*8)+4;
+extern volatile bit LCDADD3 @ ((unsigned)&LCDADD*8)+3;
+extern volatile bit LCDADD2 @ ((unsigned)&LCDADD*8)+2;
+extern volatile bit LCDADD1 @ ((unsigned)&LCDADD*8)+1;
+extern volatile bit LCDADD0 @ ((unsigned)&LCDADD*8)+0;
+
+
+extern volatile bit LCDDATA7 @ ((unsigned)&LCDDATA*8)+7;
+extern volatile bit LCDDATA6 @ ((unsigned)&LCDDATA*8)+6;
+extern volatile bit LCDDATA5 @ ((unsigned)&LCDDATA*8)+5;
+extern volatile bit LCDDATA4 @ ((unsigned)&LCDDATA*8)+4;
+extern volatile bit LCDDATA3 @ ((unsigned)&LCDDATA*8)+3;
+extern volatile bit LCDDATA2 @ ((unsigned)&LCDDATA*8)+2;
+extern volatile bit LCDDATA1 @ ((unsigned)&LCDDATA*8)+1;
+extern volatile bit LCDDATA0 @ ((unsigned)&LCDDATA*8)+0;
+
+
+extern volatile bit COM5EN @ ((unsigned)&COMEN*8)+5;
+extern volatile bit COM4EN @ ((unsigned)&COMEN*8)+4;
+extern volatile bit COM3EN @ ((unsigned)&COMEN*8)+3;
+extern volatile bit COM2EN @ ((unsigned)&COMEN*8)+2;
+extern volatile bit COM1EN @ ((unsigned)&COMEN*8)+1;
+extern volatile bit COM0EN @ ((unsigned)&COMEN*8)+0;
+
+
+extern volatile bit SEGDRI4 @ ((unsigned)&SEGEN3*8)+7;
+extern volatile bit SEGDRI3 @ ((unsigned)&SEGEN3*8)+6;
+extern volatile bit SEGDRI2 @ ((unsigned)&SEGEN3*8)+5;
+extern volatile bit SEGDRI1 @ ((unsigned)&SEGEN3*8)+4;
+extern volatile bit SEGDRI0 @ ((unsigned)&SEGEN3*8)+3;
+extern volatile bit LCDDATA8 @ ((unsigned)&SEGEN3*8)+0;
+
+
+# 27 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\include\sc.h"
+#pragma intrinsic(__nop)
+extern void __nop(void);
+
+# 76
+extern unsigned int flash_read(unsigned short addr);
+
+
+# 149
+#pragma intrinsic(_delay)
+extern __nonreentrant void _delay(unsigned long);
+
+# 184
+extern unsigned char __resetbits;
+extern __bit __powerdown;
+extern __bit __timeout;
+
+# 5 "H:\MyDownloads\说明书&测试报告\开发包\SC8F096AD开发包\SC8F096_DEMO_C\SC8F096_Pwm_Demo\SC8F096_Pwm_Demo.c"
+void Init_System();
+
+
+void main(void)
+{
+unsigned int delaycnt = 0;
+unsigned char pwmbuf = 0X1F;
+
+Init_System();
+
+# 35
+PWMCON1 = 0B11010010;
+
+TRISA = 0B00011111;
+PWMTH = 0X0C;
+
+PWMTL = 0XFF;
+PWMT4L = 0XFF;
+
+PWMDH = 0;
+
+PWMD0L = 0X1F;
+
+
+PWMD1L = 0X7F;
+
+PWM01DT = 0X03;
+
+
+PWMD2L = 0X3F;
+PWMD3L = 0X7F;
+
+PWMD4L = 0X1F;
+
+# 72
+PWMCON0 = 0X1F;
+PWMCON2 =0X10;
+TRISA = 0;
+
+while(1)
+{
+asm("clrwdt");
+if(++delaycnt > 5000)
+{
+delaycnt = 0;
+if(++pwmbuf > 0xfe)
+{
+pwmbuf = 0x01f;
+}
+PWMD0L = pwmbuf;
+}
+}
+}
+
+# 99
+void Init_System()
+{
+asm("nop");
+asm("clrwdt");
+INTCON = 0;
+OSCCON = 0X72;
+OPTION_REG = 0;
+asm("clrwdt");
+
+TRISA = 0B00011111;
+TRISB = 0B00000000;
+
+PORTA = 0B00000000;
+PORTB = 0B00000000;
+
+}

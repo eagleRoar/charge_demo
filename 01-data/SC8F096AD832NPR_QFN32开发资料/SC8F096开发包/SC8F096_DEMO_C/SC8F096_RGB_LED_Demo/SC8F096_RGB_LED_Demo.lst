@@ -1,0 +1,577 @@
+---- H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_RGB_LED_Demo\SC8F096_RGB_LED_Demo.c ----------------------------------------------------------------------
+1:                #include <sc.h>
+2:                
+3:                #pragma warning disable 751,752;
+4:                
+5:                bit B_MainLoop;
+6:                volatile unsigned char led_c;
+7:                volatile unsigned char dis_buf[4];
+8:                
+9:                void Set_LED_Moudle();
+10:               void Led_Moudle_Device();
+11:               void LED_B();
+12:               void LED_G();
+13:               void LED_R();
+14:               void LED_B1();
+15:               void LED_G1();
+16:               void LED_R1();
+17:               
+18:               void main()
+19:               {
+20:               	asm("nop");
+21:               	asm("clrwdt");
+22:               	
+23:               	OPTION_REG = 0X0F;
+  001C    300F    LDIA	0xF
+  001D    1283    CLRB	0x3,5
+  001E    1303    CLRB	0x3,6
+  001F    0081    LD	0x1,A
+  0020    0064    CLRWDT
+24:               	asm("clrwdt");
+25:               	OSCCON = 0x70;							//内部振荡器1分频
+  0021    3070    LDIA	0x70
+  0022    1283    CLRB	0x3,5
+  0023    1303    CLRB	0x3,6
+  0024    0094    LD	0x14,A
+26:               	INTCON = 0;
+  0025    018B    CLR	0xB
+27:               	
+28:               	PIR1 = 0;
+  0026    018D    CLR	0xD
+29:               	PIE1 = 0;
+  0027    018E    CLR	0xE
+30:               	PIR2 = 0;
+  0028    1703    SETB	0x3,6
+  0029    018F    CLR	0xF
+31:               	PIE2 = 0;
+  002A    0190    CLR	0x10
+32:               
+33:               	Set_LED_Moudle();						//初始化LED模块
+  002B    120A    CLRB	0xA,4
+  002C    118A    CLRB	0xA,3
+  002D    2119    CALL	0x119
+34:               
+35:               //125us中断初始化
+36:               	PR2 = 124;				//赋初值	
+  0030    307C    LDIA	0x7C
+  0031    1283    CLRB	0x3,5
+  0032    0091    LD	0x11,A
+37:               	TMR2IF = 0;				//清中断标志位
+  0033    108D    CLRB	0xD,1
+38:               	TMR2IE = 1;				//允许Timer2中断
+  0034    148E    SETB	0xE,1
+39:               	T2CON = 0x07;			//开启Timer2，预分频值为4，后分频比为1:1
+  0035    3007    LDIA	0x7
+  0036    0093    LD	0x13,A
+40:               	
+41:               	INTCON = 0XC0;							//全局中断使能
+  0037    30C0    LDIA	0xC0
+  0038    008B    LD	0xB,A
+42:               	
+43:               	TRISC = 0B00000000;
+  0039    1703    SETB	0x3,6
+  003A    0185    CLR	0x5
+44:               	TRISB = 0B00000000;		//CONFIG配置里面选择RA5口做DAT输出
+  003B    1303    CLRB	0x3,6
+  003C    0185    CLR	0x5
+45:               	TRISA = 0B00000000;
+  003D    1683    SETB	0x3,5
+  003E    0185    CLR	0x5
+46:               	
+47:               	dis_buf[0] = 0X1;			//
+  003F    3001    LDIA	0x1
+  0040    00F0    LD	0x70,A
+48:               	dis_buf[1] = 0X0;
+  0041    01F1    CLR	0x71
+49:               	dis_buf[2] = 0X0;		
+  0042    01F2    CLR	0x72
+50:               
+51:               	while(1)
+52:               	{
+53:               		if(B_MainLoop)
+  0043    1C79    SNZB	0x79,0
+  0044    2843    JP	0x43
+54:               		{
+55:               			B_MainLoop = 0;
+  0045    1079    CLRB	0x79,0
+  0046    0064    CLRWDT
+56:               			asm("clrwdt");
+57:               			switch(led_c)
+  0047    286E    JP	0x6E
+  0048    120A    CLRB	0xA,4
+  0049    118A    CLRB	0xA,3
+  004A    2112    CALL	0x112
+  004D    2882    JP	0x82
+  004E    120A    CLRB	0xA,4
+  004F    118A    CLRB	0xA,3
+  0050    2109    CALL	0x109
+  0053    2882    JP	0x82
+  0054    120A    CLRB	0xA,4
+  0055    118A    CLRB	0xA,3
+  0056    2100    CALL	0x100
+  0059    2882    JP	0x82
+  005A    120A    CLRB	0xA,4
+  005B    118A    CLRB	0xA,3
+  005C    2125    CALL	0x125
+  005F    2882    JP	0x82
+  0060    120A    CLRB	0xA,4
+  0061    118A    CLRB	0xA,3
+  0062    211F    CALL	0x11F
+  0065    2882    JP	0x82
+  0066    120A    CLRB	0xA,4
+  0067    118A    CLRB	0xA,3
+  0068    20F7    CALL	0xF7
+  006B    2882    JP	0x82
+  006C    01F5    CLR	0x75
+  006D    2882    JP	0x82
+  006E    0875    LD	A,0x75
+  006F    3A00    XORIA	0x0
+  0070    1903    SZB	0x3,2
+  0071    2848    JP	0x48
+  0072    3A01    XORIA	0x1
+  0073    1903    SZB	0x3,2
+  0074    284E    JP	0x4E
+  0075    3A03    XORIA	0x3
+  0076    1903    SZB	0x3,2
+  0077    2854    JP	0x54
+  0078    3A01    XORIA	0x1
+  0079    1903    SZB	0x3,2
+  007A    285A    JP	0x5A
+  007B    3A07    XORIA	0x7
+  007C    1903    SZB	0x3,2
+  007D    2860    JP	0x60
+  007E    3A01    XORIA	0x1
+  007F    1903    SZB	0x3,2
+  0080    2866    JP	0x66
+  0081    286C    JP	0x6C
+58:               			{
+59:               				case 0x0:  LED_B();break;		
+60:               				case 0x01:	LED_G();break;	 	
+61:               				case 0x02:	LED_R();break;		
+62:               				case 0x03:	LED_B1();break;		
+63:               			
+64:               				case 0x04:  LED_G1();break;		
+65:               				case 0x05:	LED_R1();break;		
+66:               						
+67:               				default:	led_c = 0;break;
+68:               			}
+69:               			
+70:               			Led_Moudle_Device();			//将数据写入LCDDATA
+  0082    120A    CLRB	0xA,4
+  0083    118A    CLRB	0xA,3
+  0084    2088    CALL	0x88
+  0087    2843    JP	0x43
+71:               		}
+72:               	}
+73:               
+74:               }
+75:               
+76:               void interrupt Timer_Isr()
+77:               {
+78:               	static unsigned char tcount = 0;
+79:               	
+80:               	if(TMR2IF)
+  00E4    1283    CLRB	0x3,5
+  00E5    1303    CLRB	0x3,6
+  00E6    1C8D    SNZB	0xD,1
+  00E7    28F0    JP	0xF0
+81:               	{
+82:               		TMR2IF = 0;
+  00E8    108D    CLRB	0xD,1
+83:               		if(++tcount >= 40)					//主循环定时设置为40*125us=5ms
+  00E9    3028    LDIA	0x28
+  00EA    0AF4    INCR	0x74
+  00EB    0274    SUBA	0x74
+  00EC    1C03    SNZB	0x3,0
+  00ED    28F0    JP	0xF0
+84:               		{
+85:               			tcount = 0;
+  00EE    01F4    CLR	0x74
+86:               			B_MainLoop = 1;
+  00EF    1479    SETB	0x79,0
+  00F0    0877    LD	A,0x77
+  00F1    008A    LD	0xA,A
+  00F2    0E76    SWAPA	0x76
+  00F3    0083    LD	0x3,A
+  00F4    0EFE    SWAPR	0x7E
+  00F5    0E7E    SWAPA	0x7E
+  00F6    0009    RETI
+87:               		}
+88:               	}
+89:               }
+90:               
+91:               /**********************************************************
+92:               函数名称：Set_LED_Moudle
+93:               函数功能：初始化LED/LCD模块设置
+94:               入口参数：无
+95:               出口参数：无 
+96:               备    注：
+97:               **********************************************************/
+98:               void Set_LED_Moudle()
+99:               {
+100:              	LEDCTR0 = 0B11000000;			//使能驱动模块和重发模式,设置码率
+  0119    30C0    LDIA	0xC0
+  011A    1683    SETB	0x3,5
+  011B    008E    LD	0xE,A
+101:              	/***********LEDCTR0*********************************
+102:              	Bit7  LEDSWE:	RGB彩灯驱动模块使能位
+103:              		1=	使能RGB彩灯驱动模块
+104:              		0=	关闭RGB彩灯驱动模块
+105:              	Bit6  LEDSW_RT:	重发模式使能位
+106:              		1=	使能重发模式
+107:              		0=	关闭重发模式
+108:              	Bit5  IF_15:	发码完成标志位
+109:              		1=  已完成发码15个字节（第1到15字节），需软件清零才能重发
+110:              		（第1到15字节）
+111:              		0=  未完成发码15个字节
+112:              	Bit4  IF_30:	发码完成标志位
+113:              		1=  已完成发码30个字节（第1到30字节），需软件清零才能重发
+114:              		（第16到30字节）
+115:              		0=	未完成发码30个字节
+116:              	Bit3  RESET_T:	RESET时间选择
+117:              		1=	300us
+118:              		0=	100us
+119:              	Bit2~Bit1  LEDSW_CKSEL<1:0>:	码元格式选择
+120:              		11=	T0H=500ns，T0L=2000ns；T1H=2000ns，T1L=500ns
+121:              		10=	T0H=312.5ns，T0L=875ns；T1H=875ns，T1L=875ns
+122:              		01=	T0H=250ns，T0L=1000ns；T1H=875ns，T1L=375ns
+123:              		00=	T0H=312.5ns，T0L=625ns；T1H=625ns，T1L=312.5ns
+124:              	Bit0  LEDSW_ST:	发码启动位
+125:              		1=	启动发码，发码完成后硬件自动清零
+126:              		0=禁止发码
+127:              ******************************************************/
+128:              	TRISA5 =0;
+  011C    1303    CLRB	0x3,6
+  011D    1285    CLRB	0x5,5
+  011E    0008    RET
+129:              	
+130:              }
+131:              
+132:              /**********************************************************
+133:              函数名称：Led_Moudle_Device
+134:              函数功能：更新LED模块内部所有用到的显示LEDDATA的数据
+135:              入口参数：无
+136:              出口参数：无 
+137:              备    注：可通过判断IF_15,IF_30来写入更多的数据，实现点亮几十个灯的功能
+138:              **********************************************************/
+139:              void Led_Moudle_Device()
+140:              {
+141:              	unsigned char i=0; 
+142:              	LEDCTR0 = 0X80;
+  0088    3080    LDIA	0x80
+  0089    1683    SETB	0x3,5
+  008A    1703    SETB	0x3,6
+  008B    008E    LD	0xE,A
+143:              	LEDCTR1 = 0X80;
+  008C    008F    LD	0xF,A
+144:              	/**************LEDCTR1******************************
+145:              	Bit7  LEDSW_ADR:RGB彩灯驱动模块读写数据缓存使能位
+146:              		1=使能读写数据缓存
+147:              		0=禁止读写数据缓存
+148:              	Bit6~Bit5  未用
+149:              	Bit4~Bit0  LEDSW_ADD<4:0>	数据缓存地址选择
+150:              		00000=  第1字节数据缓存地址
+151:              		…
+152:              		11101=	第30字节数据缓存地址
+153:              	***************************************************/
+154:              	LEDSW_RT = 1;
+  008D    170E    SETB	0xE,6
+155:              	for(i=0;i<10;i++)		//一次可以发送30个字节数据，点10个灯
+  008E    01F8    CLR	0x78
+156:              	{
+157:              		PDSDATA = dis_buf[0];	//LEDDATA和PDSDATA共用一个地址，故用PD的时候不能用这个模块
+  008F    0870    LD	A,0x70
+  0090    009B    LD	0x1B,A
+158:              		LEDCTR1 ++;
+  0091    0A8F    INCR	0xF
+159:              		PDSDATA = dis_buf[1];
+  0092    0871    LD	A,0x71
+  0093    009B    LD	0x1B,A
+160:              		LEDCTR1 ++;
+  0094    0A8F    INCR	0xF
+161:              		PDSDATA = dis_buf[2];
+  0095    0872    LD	A,0x72
+  0096    009B    LD	0x1B,A
+162:              		LEDCTR1 ++;
+  0097    0A8F    INCR	0xF
+  0098    300A    LDIA	0xA
+  0099    0AF8    INCR	0x78
+  009A    0278    SUBA	0x78
+  009B    1C03    SNZB	0x3,0
+  009C    288F    JP	0x8F
+163:              	}
+164:              	LEDSW_ST = 1;
+  009D    140E    SETB	0xE,0
+165:              	
+166:              	while(IF_15==0)			//等待发完15个字节数据，
+  009E    1683    SETB	0x3,5
+  009F    1703    SETB	0x3,6
+  00A0    1A8E    SZB	0xE,5
+  00A1    28A4    JP	0xA4
+  00A2    0064    CLRWDT
+  00A3    289E    JP	0x9E
+167:              	{
+168:              		asm("clrwdt");
+169:              	}
+170:              	IF_15 = 0;				//软件清零IF_15后可再次写入地址0~14的数据，实现点15个灯
+  00A4    128E    CLRB	0xE,5
+171:              	LEDCTR1 = 0X80;
+  00A5    3080    LDIA	0x80
+  00A6    008F    LD	0xF,A
+172:              	for(i=0;i<5;i++)		//如有中断产生，则中断处理时间加写LED数据时间需小于15个字节的数据发送时间
+  00A7    01F8    CLR	0x78
+173:              	{
+174:              		PDSDATA = dis_buf[0];
+175:              		LEDCTR1 ++;
+176:              		PDSDATA = dis_buf[1];
+177:              		LEDCTR1 ++;
+178:              		PDSDATA = dis_buf[2];
+179:              		LEDCTR1 ++;
+  00A8    20D7    CALL	0xD7
+  00A9    120A    CLRB	0xA,4
+  00AA    118A    CLRB	0xA,3
+  00AB    1803    SZB	0x3,0
+  00AC    28AF    JP	0xAF
+  00AD    28A8    JP	0xA8
+  00AE    0064    CLRWDT
+  00AF    1683    SETB	0x3,5
+  00B0    1703    SETB	0x3,6
+  00B1    1E0E    SNZB	0xE,4
+  00B2    28AE    JP	0xAE
+180:              	}
+181:              	
+182:              	while(IF_30==0)			//等待发完30个字节数据，如有中断产生，则中断处理数据时间加送数据时间
+183:              	{
+184:              		asm("clrwdt");
+185:              	}
+186:              	IF_30 = 0;				//软件清零IF_30后可再次写入地址15~29的数据，实现点20个灯
+  00B3    120E    CLRB	0xE,4
+187:              	for(i=0;i<5;i++)
+  00B4    01F8    CLR	0x78
+188:              	{
+189:              		PDSDATA = dis_buf[0];
+190:              		LEDCTR1 ++;
+191:              		PDSDATA = dis_buf[1];
+192:              		LEDCTR1 ++;
+193:              		PDSDATA = dis_buf[2];
+194:              		LEDCTR1 ++;
+  00B5    20D7    CALL	0xD7
+  00B6    120A    CLRB	0xA,4
+  00B7    118A    CLRB	0xA,3
+  00B8    1803    SZB	0x3,0
+  00B9    28BC    JP	0xBC
+  00BA    28B5    JP	0xB5
+  00BB    0064    CLRWDT
+  00BC    1683    SETB	0x3,5
+  00BD    1703    SETB	0x3,6
+  00BE    1E8E    SNZB	0xE,5
+  00BF    28BB    JP	0xBB
+195:              	}
+196:              	
+197:              	while(IF_15==0)
+198:              	{
+199:              		asm("clrwdt");
+200:              	}
+201:              	IF_15 = 0;					//实现点25个灯
+  00C0    128E    CLRB	0xE,5
+202:              	LEDCTR1 = 0X80;
+  00C1    3080    LDIA	0x80
+  00C2    008F    LD	0xF,A
+203:              	for(i=0;i<5;i++)
+  00C3    01F8    CLR	0x78
+204:              	{
+205:              		PDSDATA = dis_buf[0];
+206:              		LEDCTR1 ++;
+207:              		PDSDATA = dis_buf[1];
+208:              		LEDCTR1 ++;
+209:              		PDSDATA = dis_buf[2];
+210:              		LEDCTR1 ++;
+  00C4    20D7    CALL	0xD7
+  00C5    120A    CLRB	0xA,4
+  00C6    118A    CLRB	0xA,3
+  00C7    1803    SZB	0x3,0
+  00C8    28CB    JP	0xCB
+  00C9    28C4    JP	0xC4
+  00CA    0064    CLRWDT
+  00CB    1683    SETB	0x3,5
+  00CC    1703    SETB	0x3,6
+  00CD    1E0E    SNZB	0xE,4
+  00CE    28CA    JP	0xCA
+211:              	}
+212:              	while(IF_30==0)
+213:              	{
+214:              		asm("clrwdt");
+215:              	}
+216:              	IF_30 = 0;					//实现点30个灯
+  00CF    120E    CLRB	0xE,4
+217:              	for(i=0;i<5;i++)
+  00D0    01F8    CLR	0x78
+218:              	{
+219:              		PDSDATA = dis_buf[0];
+220:              		LEDCTR1 ++;
+221:              		PDSDATA = dis_buf[1];
+222:              		LEDCTR1 ++;
+223:              		PDSDATA = dis_buf[2];
+224:              		LEDCTR1 ++;
+  00D1    20D7    CALL	0xD7
+  00D2    120A    CLRB	0xA,4
+  00D3    118A    CLRB	0xA,3
+  00D4    1803    SZB	0x3,0
+  00D5    0008    RET
+  00D6    28D1    JP	0xD1
+225:              	}
+226:              }
+227:              
+228:              void LED_B()
+229:              {
+230:              	if(dis_buf[0]==255)	
+  0112    0F70    SZINCA	0x70
+  0113    2917    JP	0x117
+231:              	{
+232:              		dis_buf[0] = 0;
+  0114    01F0    CLR	0x70
+233:              		led_c++;
+  0115    0AF5    INCR	0x75
+234:              	}
+  0116    0008    RET
+235:              	else dis_buf[0]++;
+  0117    0AF0    INCR	0x70
+  0118    0008    RET
+236:              }
+237:              
+238:              void LED_G()
+239:              {
+240:              	if(dis_buf[1]==250)
+  0109    30FA    LDIA	0xFA
+  010A    0671    XORA	0x71
+  010B    1D03    SNZB	0x3,2
+  010C    2910    JP	0x110
+241:              	{
+242:              		dis_buf[1] = 0;
+  010D    01F1    CLR	0x71
+243:              		led_c++;
+  010E    0AF5    INCR	0x75
+244:              	}
+  010F    0008    RET
+245:              	else dis_buf[1]++;
+  0110    0AF1    INCR	0x71
+  0111    0008    RET
+246:              }
+247:              
+248:              void LED_R()
+249:              {
+250:              	if(dis_buf[2]==250)
+  0100    30FA    LDIA	0xFA
+  0101    0672    XORA	0x72
+  0102    1D03    SNZB	0x3,2
+  0103    2907    JP	0x107
+251:              	{
+252:              		dis_buf[2] = 0;
+  0104    01F2    CLR	0x72
+253:              		led_c++;
+  0105    0AF5    INCR	0x75
+254:              	}
+  0106    0008    RET
+255:              	else dis_buf[2]++;
+  0107    0AF2    INCR	0x72
+  0108    0008    RET
+256:              }
+257:              
+258:              void LED_B1()
+259:              {
+260:              	if(dis_buf[0]==255)	
+  0125    0F70    SZINCA	0x70
+  0126    2929    JP	0x129
+261:              	{
+262:              		//DispData[0] = 0;
+263:              		led_c++;
+  0127    0AF5    INCR	0x75
+264:              	}
+  0128    0008    RET
+265:              	else dis_buf[0]++;
+  0129    0AF0    INCR	0x70
+  012A    0008    RET
+266:              }
+267:              
+268:              void LED_G1()
+269:              {
+270:              	if(dis_buf[1]==255)	
+  011F    0F71    SZINCA	0x71
+  0120    2923    JP	0x123
+271:              	{
+272:              		//DispData[0] = 0;
+273:              		led_c++;
+  0121    0AF5    INCR	0x75
+274:              	}
+  0122    0008    RET
+275:              	else dis_buf[1]++;
+  0123    0AF1    INCR	0x71
+  0124    0008    RET
+276:              }
+277:              
+278:              void LED_R1()
+279:              {
+280:              	if(dis_buf[2]==255)	
+  00F7    0F72    SZINCA	0x72
+  00F8    28FE    JP	0xFE
+281:              	{
+282:              		dis_buf[0] = 0;
+  00F9    01F0    CLR	0x70
+283:              		dis_buf[1] = 0;
+  00FA    01F1    CLR	0x71
+284:              		dis_buf[2] = 0;
+  00FB    01F2    CLR	0x72
+285:              		led_c = 0;
+  00FC    01F5    CLR	0x75
+286:              	}
+  00FD    0008    RET
+287:              	else dis_buf[2]++;
+  00FE    0AF2    INCR	0x72
+  00FF    0008    RET
+288:              }
+289:              	
+---- stringtab ------------------------------------------------------------------
+---- reset_enter ------------------------------------------------------------------
+  0000    120A    CLRB	0xA,4
+  0001    118A    CLRB	0xA,3
+  0002    280C    JP	0xC
+  000C    120A    CLRB	0xA,4
+  000D    118A    CLRB	0xA,3
+  000E    280F    JP	0xF
+---- start_initialization ------------------------------------------------------------------
+  000F    01F9    CLR	0x79
+  0010    01F0    CLR	0x70
+  0011    01F1    CLR	0x71
+  0012    01F2    CLR	0x72
+  0013    01F3    CLR	0x73
+  0014    01F4    CLR	0x74
+  0015    01F5    CLR	0x75
+---- interrupt_function_enter ----------------------------------------------------------
+  0004    00FE    LD	0x7E,A
+  0005    0E03    SWAPA	0x3
+  0006    00F6    LD	0x76,A
+  0007    080A    LD	A,0xA
+  0008    00F7    LD	0x77,A
+  0009    120A    CLRB	0xA,4
+  000A    118A    CLRB	0xA,3
+  000B    28E4    JP	0xE4
+---- common_function ------------------------------------------------------------------
+  0016    0183    CLR	0x3
+  0017    120A    CLRB	0xA,4
+  0018    118A    CLRB	0xA,3
+  0019    281A    JP	0x1A
+  001A    0000    NOP
+  001B    0064    CLRWDT
+  00D7    0870    LD	A,0x70
+  00D8    009B    LD	0x1B,A
+  00D9    0A8F    INCR	0xF
+  00DA    0871    LD	A,0x71
+  00DB    009B    LD	0x1B,A
+  00DC    0A8F    INCR	0xF
+  00DD    0872    LD	A,0x72
+  00DE    009B    LD	0x1B,A
+  00DF    0A8F    INCR	0xF
+  00E0    3005    LDIA	0x5
+  00E1    0AF8    INCR	0x78
+  00E2    0278    SUBA	0x78
+  00E3    0008    RET

@@ -1,0 +1,10 @@
+[PROJECT]
+Version=200
+Compile=1
+Device=SC8F096
+OptValue=-local,-asmfile,+asm,-speed,+space,-debug
+RuntimeValue=
+WarningValue=-9
+config=FFFB,FFEF,FFFF,FFFF,
+[FILE]
+SourceFile=SC8F096_Sleep_Demo.c

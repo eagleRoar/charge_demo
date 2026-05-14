@@ -1,0 +1,82 @@
+[p PRO_MODE GLOBOPT AUTOSTATIC PIC14 PICREGULAR PICMID SPACEOPT ]
+[d version 1.1 ]
+[d edition pro ]
+[d chip SC8F096AD ]
+[d frameptr 6 ]
+"62 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V3.00.00_Beta6\Addins\CompilerBindings\CCompiler\data\sources\common\float.c
+[v ___ftpack __ftpack `(f  1 e 3 0 ]
+"86 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V3.00.00_Beta6\Addins\CompilerBindings\CCompiler\data\sources\common\ftadd.c
+[v ___ftadd __ftadd `(f  1 e 3 0 ]
+"10 H:\MyDownloads\说明书&测试报告\开发包\SC8F096AD开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c
+[v _main main `(v  1 e 1 0 ]
+"113
+[v _Timer_Isr Timer_Isr `II(v  1 e 1 0 ]
+"135
+[v _Set_LED_Moudle Set_LED_Moudle `(v  1 e 1 0 ]
+"46 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V3.00.00_Beta6\Addins\CompilerBindings\CCompiler\data\include\SC8F096AD.h
+[v _TRISB TRISB `VEuc  1 e 1 @5 ]
+"88
+[v _INTCON INTCON `VEuc  1 e 1 @11 ]
+"102
+[v _PIR1 PIR1 `VEuc  1 e 1 @13 ]
+"109
+[v _PIE1 PIE1 `VEuc  1 e 1 @14 ]
+"130
+[v _PR2 PR2 `VEuc  1 e 1 @17 ]
+"144
+[v _T2CON T2CON `VEuc  1 e 1 @19 ]
+"151
+[v _OSCCON OSCCON `VEuc  1 e 1 @20 ]
+"242
+[v _TRISA TRISA `VEuc  1 e 1 @133 ]
+"410
+[v _TRISC TRISC `VEuc  1 e 1 @261 ]
+"466
+[v _PIR2 PIR2 `VEuc  1 e 1 @271 ]
+"473
+[v _PIE2 PIE2 `VEuc  1 e 1 @272 ]
+"564
+[v _LCDCON0 LCDCON0 `VEuc  1 e 1 @285 ]
+"571
+[v _LCDCON1 LCDCON1 `VEuc  1 e 1 @286 ]
+"578
+[v _SEGEN1 SEGEN1 `VEuc  1 e 1 @287 ]
+"739
+[v _LCDADD LCDADD `VEuc  1 e 1 @412 ]
+"746
+[v _LCDDATA LCDDATA `VEuc  1 e 1 @413 ]
+"753
+[v _COMEN COMEN `VEuc  1 e 1 @414 ]
+"760
+[v _SEGEN3 SEGEN3 `VEuc  1 e 1 @415 ]
+"860
+[v _TMR2IF TMR2IF `VEb  1 e 0 @105 ]
+"870
+[v _TMR2IE TMR2IE `VEb  1 e 0 @113 ]
+"1269
+[v _LEDEN LEDEN `VEb  1 e 0 @2286 ]
+"1471
+[v _LCDCS LCDCS `VEb  1 e 0 @3303 ]
+"1504
+[v _LCDDATA8 LCDDATA8 `VEb  1 e 0 @3320 ]
+"7 H:\MyDownloads\说明书&测试报告\开发包\SC8F096AD开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c
+[v _B_MainLoop B_MainLoop `b  1 e 0 0 ]
+"8
+[v _sec sec `VEuc  1 e 1 0 ]
+"10
+[v _main main `(v  1 e 1 0 ]
+{
+"111
+} 0
+"135
+[v _Set_LED_Moudle Set_LED_Moudle `(v  1 e 1 0 ]
+{
+"196
+} 0
+"113
+[v _Timer_Isr Timer_Isr `II(v  1 e 1 0 ]
+{
+"115
+[v Timer_Isr@tcount tcount `uc  1 s 1 tcount ]
+"126
+} 0

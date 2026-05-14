@@ -1,0 +1,10 @@
+Warning[520]:	H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c	第659行	function "_I2C_Read1bYTE" is never called
+
+Memory Summary:
+    Program space        used   3FFh (  1023) of  2000h words   ( 12.5%)
+    Data space           used    2Ch (    44) of   140h bytes   ( 13.8%)
+    EEPROM space         None available
+    Data stack space     used     0h (     0) of    50h bytes   (  0.0%)
+    Configuration bits   used     0h (     0) of     2h words   (  0.0%)
+    ID Location space    used     0h (     0) of     4h bytes   (  0.0%)
+

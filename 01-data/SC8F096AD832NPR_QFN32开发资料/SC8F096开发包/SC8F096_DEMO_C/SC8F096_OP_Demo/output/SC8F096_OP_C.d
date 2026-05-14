@@ -1,0 +1,1 @@
+ SC8F096_OP_C.d  SC8F096_OP_C.p1:  H:/MyDownloads/说明书&测试报告/开发包/SC8F096AD开发包/SC8F096_DEMO_C/SC8F096_OP_Demo/SC8F096_OP_C.c

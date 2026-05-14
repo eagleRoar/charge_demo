@@ -1,0 +1,74 @@
+[p PRO_MODE GLOBOPT AUTOSTATIC PIC14 PICREGULAR PICMID SPACEOPT ]
+[d version 1.1 ]
+[d edition pro ]
+[d chip SC8F096AD ]
+[d frameptr 6 ]
+"62 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\sources\common\float.c
+[v ___ftpack __ftpack `(f  1 e 3 0 ]
+"86 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\sources\common\ftadd.c
+[v ___ftadd __ftadd `(f  1 e 3 0 ]
+"37 H:\MyDownloads\说明书&测试报告\开发包\SC8F096AD开发包\SC8F096_DEMO_C\SC8F096_IIC_Slave_Demo\SC8F096_IIC_Slave_C.c
+[v _main main `(v  1 e 1 0 ]
+"96
+[v _Init_System Init_System `(v  1 e 1 0 ]
+"123
+[v _IIC_Isr IIC_Isr `II(v  1 e 1 0 ]
+"18 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\include\SC8F096AD.h
+[v _OPTION_REG OPTION_REG `VEuc  1 e 1 @1 ]
+"46
+[v _TRISB TRISB `VEuc  1 e 1 @5 ]
+"53
+[v _PORTB PORTB `VEuc  1 e 1 @6 ]
+"67
+[v _WPUB WPUB `VEuc  1 e 1 @8 ]
+"88
+[v _INTCON INTCON `VEuc  1 e 1 @11 ]
+"151
+[v _OSCCON OSCCON `VEuc  1 e 1 @20 ]
+"242
+[v _TRISA TRISA `VEuc  1 e 1 @133 ]
+"249
+[v _PORTA PORTA `VEuc  1 e 1 @134 ]
+"263
+[v _WPUA WPUA `VEuc  1 e 1 @136 ]
+"655
+[v _IICCON IICCON `VEuc  1 e 1 @400 ]
+"676
+[v _IICBUF IICBUF `VEuc  1 e 1 @403 ]
+"683
+[v _IICADD IICADD `VEuc  1 e 1 @404 ]
+"836
+[v _GIE GIE `VEb  1 e 0 @95 ]
+"837
+[v _PEIE PEIE `VEb  1 e 0 @94 ]
+"1187
+[v _IICIF IICIF `VEb  1 e 0 @2172 ]
+"1197
+[v _IICIE IICIE `VEb  1 e 0 @2180 ]
+"1361
+[v _IICCKP IICCKP `VEb  1 e 0 @3204 ]
+"1379
+[v _DA DA `VEb  1 e 0 @3221 ]
+"1382
+[v _RW RW `VEb  1 e 0 @3218 ]
+"9 H:\MyDownloads\说明书&测试报告\开发包\SC8F096AD开发包\SC8F096_DEMO_C\SC8F096_IIC_Slave_Demo\SC8F096_IIC_Slave_C.c
+[v _result result `VEui  1 e 2 0 ]
+[v _result1 result1 `VEui  1 e 2 0 ]
+[v _result2 result2 `VEui  1 e 2 0 ]
+"10
+[v _IICReadData IICReadData `VEuc  1 e 1 0 ]
+"37
+[v _main main `(v  1 e 1 0 ]
+{
+"85
+} 0
+"96
+[v _Init_System Init_System `(v  1 e 1 0 ]
+{
+"114
+} 0
+"123
+[v _IIC_Isr IIC_Isr `II(v  1 e 1 0 ]
+{
+"154
+} 0

@@ -1,0 +1,13 @@
+1.调试/烧录SC8F096
+1>打开SCMCU IDE
+编译工程
+
+2>准备CMS-ICE 8PRO工具(烧录器)
+1>烧录
+先按下黑色按钮
+默认配置:
+选CMS
+选OUT
+
+2> debug
+当连接CMS-ICE 8PRO工具之后，在SCMCU IDE上面的小框有调试的功能

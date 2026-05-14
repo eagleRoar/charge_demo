@@ -1,0 +1,106 @@
+[p PRO_MODE GLOBOPT AUTOSTATIC PIC14 PICREGULAR PICMID SPACEOPT ]
+[d version 1.1 ]
+[d edition pro ]
+[d chip SC8F096 ]
+[d frameptr 6 ]
+"62 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta14\data\sources\common\float.c
+[v ___ftpack __ftpack `(f  1 e 3 0 ]
+"86 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta14\data\sources\common\ftadd.c
+[v ___ftadd __ftadd `(f  1 e 3 0 ]
+"22 H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Lcd_Demo\SC8F096_Lcd_Demo.c
+[v _main main `(v  1 e 1 0 ]
+"74
+[v _Timer_Isr Timer_Isr `II(v  1 e 1 0 ]
+"98
+[v _UpData UpData `(v  1 e 1 0 ]
+"120
+[v _Set_LCD_Moudle Set_LCD_Moudle `(v  1 e 1 0 ]
+"46 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta14\data\include\SC8F096.h
+[v _TRISB TRISB `VEuc  1 e 1 @5 ]
+"88
+[v _INTCON INTCON `VEuc  1 e 1 @11 ]
+"102
+[v _PIR1 PIR1 `VEuc  1 e 1 @13 ]
+"109
+[v _PIE1 PIE1 `VEuc  1 e 1 @14 ]
+"130
+[v _PR2 PR2 `VEuc  1 e 1 @17 ]
+"144
+[v _T2CON T2CON `VEuc  1 e 1 @19 ]
+"151
+[v _OSCCON OSCCON `VEuc  1 e 1 @20 ]
+"242
+[v _TRISA TRISA `VEuc  1 e 1 @133 ]
+"396
+[v _SEGEN0 SEGEN0 `VEuc  1 e 1 @158 ]
+"410
+[v _TRISC TRISC `VEuc  1 e 1 @261 ]
+"466
+[v _PIR2 PIR2 `VEuc  1 e 1 @271 ]
+"473
+[v _PIE2 PIE2 `VEuc  1 e 1 @272 ]
+"501
+[v _TRISD TRISD `VEuc  1 e 1 @276 ]
+"564
+[v _LCDCON0 LCDCON0 `VEuc  1 e 1 @285 ]
+"571
+[v _LCDCON1 LCDCON1 `VEuc  1 e 1 @286 ]
+"578
+[v _SEGEN1 SEGEN1 `VEuc  1 e 1 @287 ]
+"585
+[v _SEGEN2 SEGEN2 `VEuc  1 e 1 @385 ]
+"739
+[v _LCDADD LCDADD `VEuc  1 e 1 @412 ]
+"746
+[v _LCDDATA LCDDATA `VEuc  1 e 1 @413 ]
+"753
+[v _COMEN COMEN `VEuc  1 e 1 @414 ]
+"760
+[v _SEGEN3 SEGEN3 `VEuc  1 e 1 @415 ]
+"860
+[v _TMR2IF TMR2IF `VEb  1 e 0 @105 ]
+"870
+[v _TMR2IE TMR2IE `VEb  1 e 0 @113 ]
+"1268
+[v _LCDEN LCDEN `VEb  1 e 0 @2287 ]
+"1411
+[v _CC0_RD CC0_RD `VEb  1 e 0 @3241 ]
+"1419
+[v _CC1_RD CC1_RD `VEb  1 e 0 @3249 ]
+"1471
+[v _LCDCS LCDCS `VEb  1 e 0 @3303 ]
+"18 H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Lcd_Demo\SC8F096_Lcd_Demo.c
+[v _B_MainLoop B_MainLoop `b  1 e 0 0 ]
+"19
+[v _sec sec `VEuc  1 e 1 0 ]
+"21
+[v _LCD_DataBuf LCD_DataBuf `VEuc  1 e 1 0 ]
+"22
+[v _main main `(v  1 e 1 0 ]
+{
+"64
+} 0
+"98
+[v _UpData UpData `(v  1 e 1 0 ]
+{
+[v UpData@Val Val `uc  1 a 1 wreg ]
+"100
+[v UpData@i i `VEuc  1 a 1 3 ]
+"98
+[v UpData@Val Val `uc  1 a 1 wreg ]
+"102
+[v UpData@Val Val `uc  1 a 1 2 ]
+"110
+} 0
+"120
+[v _Set_LCD_Moudle Set_LCD_Moudle `(v  1 e 1 0 ]
+{
+"214
+} 0
+"74
+[v _Timer_Isr Timer_Isr `II(v  1 e 1 0 ]
+{
+"76
+[v Timer_Isr@tcount tcount `uc  1 s 1 tcount ]
+"87
+} 0

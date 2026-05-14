@@ -1,0 +1,1874 @@
+---- H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c ----------------------------------------------------------------------
+1:                
+2:                #include "CheckTouchKey.h"		//此包含放在最前面
+3:                		
+4:                //---------------------------------------------------
+5:                #include <sc.h>
+6:                
+7:                volatile unsigned int MainTime;
+8:                
+9:                
+10:               /***********************************************************************
+11:               函数功能：延时子函数，13个指令周期1循环
+12:               ***********************************************************************/
+13:               static void Delay(unsigned int dtemp) 
+14:               {
+15:               	while(dtemp--);
+  03C3    3001    LDIA	0x1
+  03C4    02F2    SUBR	0x72
+  03C5    3000    LDIA	0x0
+  03C6    1C03    SNZB	0x3,0
+  03C7    03F3    DECR	0x73
+  03C8    02F3    SUBR	0x73
+  03C9    0F72    SZINCA	0x72
+  03CA    2BC3    JP	0x3C3
+  03CB    0A73    INCA	0x73
+  03CC    1903    SZB	0x3,2
+  03CD    0008    RET
+  03CE    2BC3    JP	0x3C3
+16:               }
+17:               /***********************************************************************
+18:               子函数功能：延时templ  ms，有中断则不准
+19:               ***********************************************************************/
+20:               static void Delay_nms (unsigned int inittempl)
+21:               {
+22:               	unsigned int	i;
+23:               	/******************************************************************/
+24:               	for(i=0;i<inittempl;i++)
+  03AE    01F6    CLR	0x76
+  03AF    01F7    CLR	0x77
+  03B0    0875    LD	A,0x75
+  03B1    0277    SUBA	0x77
+  03B2    1D03    SNZB	0x3,2
+  03B3    2BB6    JP	0x3B6
+  03B4    0874    LD	A,0x74
+  03B5    0276    SUBA	0x76
+  03B6    1803    SZB	0x3,0
+  03B7    0008    RET
+25:               	{
+26:               		Delay(154);
+  03B8    309A    LDIA	0x9A
+  03B9    00F2    LD	0x72,A
+  03BA    01F3    CLR	0x73
+  03BB    23C3    CALL	0x3C3
+  03BC    120A    CLRB	0xA,4
+  03BD    118A    CLRB	0xA,3
+  03BE    0064    CLRWDT
+  03BF    0AF6    INCR	0x76
+  03C0    1903    SZB	0x3,2
+  03C1    0AF7    INCR	0x77
+  03C2    2BB0    JP	0x3B0
+27:               		CLRWDT();
+28:               	}
+29:               }
+30:               
+31:               /**********************************************************
+32:               初始化程序
+33:               **********************************************************/
+34:               void System_Init()
+  038B    0064    CLRWDT
+35:               {
+36:               	CLRWDT();					//清看门狗
+37:               	OSCCON = 0X70;				//配置振荡为8M
+38:               	OPTION_REG = 0B00001111;	//INT下降沿  预分频WDT 4*18=72ms  溢出(3V下约为144)
+  038C    23A7    CALL	0x3A7
+  038D    120A    CLRB	0xA,4
+  038E    118A    CLRB	0xA,3
+  038F    0064    CLRWDT
+39:               	CLRWDT();					//清看门狗
+40:               	
+41:               	TRISB = 0B11111111;			//触摸口
+42:               	
+43:               	PORTB = 0;
+44:               	
+45:               	WPUB = 0;
+46:               			 	
+47:               	PIE1 = 0;
+48:               
+49:               	INTCON = 0xC0;				//使能中断，允许int中断	
+  0390    239D    CALL	0x39D
+  0391    0008    RET
+50:               }
+51:               
+52:               /**********************************************************
+53:               函数名称：Refurbish_Sfr
+54:               函数功能：刷新一些特殊功能寄存器
+55:               入口参数：无
+56:               出口参数：无 
+57:               备    注：每隔一定时间刷新一次SFR可增强抗干扰能力
+58:               **********************************************************/
+59:               void Refurbish_Sfr()
+  0392    0064    CLRWDT
+60:               {
+61:               	CLRWDT();					//清看门狗
+62:               	OSCCON = 0X70;				//配置振荡为16M
+63:               	OPTION_REG = 0B00001111;	//INT下降沿  预分频WDT 4*18=72ms
+  0393    23A7    CALL	0x3A7
+  0394    120A    CLRB	0xA,4
+  0395    118A    CLRB	0xA,3
+  0396    0064    CLRWDT
+64:               	CLRWDT();					//清看门狗
+65:               	
+66:               	TRISB = 0B11111111;			//触摸口
+67:               	
+68:               	PORTB = 0;
+69:               	
+70:               	WPUB = 0;
+71:               		 	
+72:               	PIE1 = 0;
+73:               
+74:               	INTCON = 0xC0;				//使能中断，允许int中断
+  0397    239D    CALL	0x39D
+75:               	
+76:               	T2CON =4;	
+  0398    3004    LDIA	0x4
+  0399    0093    LD	0x13,A
+77:               	PR2 =250;	
+  039A    30FA    LDIA	0xFA
+  039B    0091    LD	0x11,A
+  039C    0008    RET
+78:               }
+79:               
+80:               /***********************************************************
+81:               中断服务函数
+82:               ***********************************************************/
+83:               void interrupt Isr_Timer()
+84:               {
+85:               	if(TMR2IE==1&&TMR2IF==1)				//若只使能了一个中断源,可以略去判断
+  03E7    1283    CLRB	0x3,5
+  03E8    1303    CLRB	0x3,6
+  03E9    188E    SZB	0xE,1
+  03EA    1C8D    SNZB	0xD,1
+  03EB    2BF1    JP	0x3F1
+86:               	{
+87:               		TMR2IF = 0;
+  03EC    108D    CLRB	0xD,1
+88:               		MainTime++;
+  03ED    0AF8    INCR	0x78
+  03EE    1903    SZB	0x3,2
+  03EF    0AF9    INCR	0x79
+89:               	}
+  03F0    2BF4    JP	0x3F4
+90:               
+91:               	else
+92:               	{
+93:               		INTCON &= 0xC0;	
+  03F1    30C0    LDIA	0xC0
+  03F2    058B    ANDR	0xB
+94:               		PIR1 = 0;
+  03F3    018D    CLR	0xD
+  03F4    0871    LD	A,0x71
+  03F5    008A    LD	0xA,A
+  03F6    0E70    SWAPA	0x70
+  03F7    0083    LD	0x3,A
+  03F8    0EFE    SWAPR	0x7E
+  03F9    0E7E    SWAPA	0x7E
+  03FA    0009    RETI
+95:               		
+96:               	}
+97:               }
+98:               /***********************************************************
+99:               主函数
+100:              ***********************************************************/
+101:              void main()
+102:              {
+103:              	Delay_nms(100);			//延时等待电源电压稳定
+  03CF    3064    LDIA	0x64
+  03D0    00F4    LD	0x74,A
+  03D1    01F5    CLR	0x75
+  03D2    120A    CLRB	0xA,4
+  03D3    118A    CLRB	0xA,3
+  03D4    23AE    CALL	0x3AE
+104:              	System_Init();			//系统初始化
+  03D7    120A    CLRB	0xA,4
+  03D8    118A    CLRB	0xA,3
+  03D9    238B    CALL	0x38B
+105:              		
+106:              	while(1)
+107:              	{
+108:              		
+109:              		Refurbish_Sfr();	//唤醒后刷新专用寄存器
+  03DC    120A    CLRB	0xA,4
+  03DD    118A    CLRB	0xA,3
+  03DE    2392    CALL	0x392
+110:              		CheckTouchKey();	//触摸检测	
+  03E1    120A    CLRB	0xA,4
+  03E2    118A    CLRB	0xA,3
+  03E3    201C    CALL	0x1C
+  03E6    2BDC    JP	0x3DC
+111:              		
+112:              	}
+113:              }
+114:              
+---- H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c ----------------------------------------------------------------------
+1:                /**************************************************************************
+2:                * SC8F083系列MCU触摸按键检测库函数
+3:                * 文 件 名：CheckTouchKey.c
+4:                * 修改日期：2023/02/25
+5:                * 修改人员：luo
+6:                * 版 本 号：V1.0
+7:                **************************************************************************/
+8:                #include "CheckTouchKey.h"			//此包含放在最前面
+9:                //---------------------------------------------------
+10:               #include <sc.h>
+11:               
+12:               
+13:               
+14:               
+15:               #ifdef	ENABLE_IIC
+16:               unsigned char I2C_Read1bYTE(unsigned char ack);		//用于触摸仿真工具
+17:               unsigned char I2C_Write1bYTE(unsigned char data);
+18:               void I2C_WriteStop();
+19:               void I2C_WriteStart();
+20:               #endif
+21:               
+22:               unsigned int TKdata[16];
+23:               //volatile unsigned int KEYCON2;
+24:               /**************************************************************************
+25:               * 函数名称：
+26:               * 函数功能：
+27:               * 入口参数：无
+28:               * 出口参数：无
+29:               * 备    注：
+30:               **************************************************************************/
+31:               
+32:               unsigned int Key_Test()
+33:               {	
+34:               	#ifdef	C_KEY_1
+35:               	KEYCON0 = 0x02;      //使能电容口，不并联电容
+  01D2    3002    LDIA	0x2
+  01D3    1283    CLRB	0x3,5
+  01D4    1703    SETB	0x3,6
+  01D5    0091    LD	0x11,A
+36:               	KEYCON1 = C_KCHS0;		 //0.5VDD,FRES/4，通道1	
+  01D6    3050    LDIA	0x50
+  01D7    0092    LD	0x12,A
+37:               	KEYCON2 = C_KEYCON2;
+  01D8    3099    LDIA	0x99
+  01D9    0093    LD	0x13,A
+  01DA    0000    NOP
+  01DB    0000    NOP
+  01DC    0000    NOP
+  01DD    0000    NOP
+  01DE    0000    NOP
+  01DF    0000    NOP
+  01E0    0000    NOP
+  01E1    0000    NOP
+  01E2    0000    NOP
+38:               	asm("nop");
+39:               	asm("nop");
+40:               	asm("nop");
+41:               	asm("nop");
+42:               	asm("nop");
+43:               	asm("nop");
+44:               	asm("nop");
+45:               	asm("nop");
+46:               	asm("nop");
+47:               	KEYCON0 |= 0x01;	 //开始检测按键 .0位由0变为1开始检测
+  01E3    1283    CLRB	0x3,5
+  01E4    1703    SETB	0x3,6
+  01E5    1411    SETB	0x11,0
+48:               	while(!(KEYCON0&0x80));	//.7位为1检测完成
+  01E6    1F91    SNZB	0x11,7
+  01E7    29E6    JP	0x1E6
+49:               	TKdata[0] = ((KEYDATAH<<8) + KEYDATAL);				//获得键值
+  01E8    0817    LD	A,0x17
+  01E9    1303    CLRB	0x3,6
+  01EA    00A1    LD	0x21,A
+  01EB    01A0    CLR	0x20
+  01EC    1703    SETB	0x3,6
+  01ED    0816    LD	A,0x16
+  01EE    1303    CLRB	0x3,6
+  01EF    07A0    ADDR	0x20
+  01F0    1803    SZB	0x3,0
+  01F1    0AA1    INCR	0x21
+50:               	KEYCON0 = 0x00;
+  01F2    1703    SETB	0x3,6
+  01F3    0191    CLR	0x11
+51:               	#endif
+52:               	
+53:               
+54:               	#ifdef	C_KEY_2
+55:               	KEYCON0 = 0x02;      //使能电容口，不并联电容
+  01F4    3002    LDIA	0x2
+  01F5    0091    LD	0x11,A
+56:               	KEYCON1 = C_KCHS1;		 //0.5VDD,FRES/4，通道2	
+  01F6    3051    LDIA	0x51
+  01F7    0092    LD	0x12,A
+57:               	KEYCON2 = C_KEYCON2|0X01;
+  01F8    3099    LDIA	0x99
+  01F9    0093    LD	0x13,A
+  01FA    0000    NOP
+  01FB    0000    NOP
+  01FC    0000    NOP
+  01FD    0000    NOP
+  01FE    0000    NOP
+  01FF    0000    NOP
+  0200    0000    NOP
+  0201    0000    NOP
+  0202    0000    NOP
+58:               	asm("nop");
+59:               	asm("nop");
+60:               	asm("nop");
+61:               	asm("nop");
+62:               	asm("nop");
+63:               	asm("nop");
+64:               	asm("nop");
+65:               	asm("nop");
+66:               	asm("nop");
+67:               	KEYCON0 |= 0x01;	 //开始检测按键 .0位由0变为1开始检测
+  0203    1283    CLRB	0x3,5
+  0204    1703    SETB	0x3,6
+  0205    1411    SETB	0x11,0
+68:               	while(!(KEYCON0&0x80));	//.7位为1检测完成
+  0206    1F91    SNZB	0x11,7
+  0207    2A06    JP	0x206
+69:               	TKdata[1] = ((KEYDATAH<<8) + KEYDATAL);				//获得键值
+  0208    0817    LD	A,0x17
+  0209    1303    CLRB	0x3,6
+  020A    00A3    LD	0x23,A
+  020B    1703    SETB	0x3,6
+  020C    0816    LD	A,0x16
+  020D    1303    CLRB	0x3,6
+  020E    00A2    LD	0x22,A
+70:               	KEYCON0 = 0x00;
+  020F    1703    SETB	0x3,6
+  0210    0191    CLR	0x11
+71:               	#endif
+72:               	
+73:               
+74:               	#ifdef	C_KEY_3
+75:               	KEYCON0 = 0x02;      //使能电容口，不并联电容
+  0211    3002    LDIA	0x2
+  0212    0091    LD	0x11,A
+76:               	KEYCON1 = C_KCHS2;		 //0.5VDD,FRES/4，通道3	
+  0213    3052    LDIA	0x52
+  0214    0092    LD	0x12,A
+77:               	KEYCON2 = C_KEYCON2|0X01;
+  0215    3099    LDIA	0x99
+  0216    0093    LD	0x13,A
+  0217    0000    NOP
+  0218    0000    NOP
+  0219    0000    NOP
+  021A    0000    NOP
+  021B    0000    NOP
+  021C    0000    NOP
+  021D    0000    NOP
+  021E    0000    NOP
+  021F    0000    NOP
+78:               	asm("nop");
+79:               	asm("nop");
+80:               	asm("nop");
+81:               	asm("nop");
+82:               	asm("nop");
+83:               	asm("nop");
+84:               	asm("nop");
+85:               	asm("nop");
+86:               	asm("nop");
+87:               	KEYCON0 |= 0x01;	 //开始检测按键 .0位由0变为1开始检测
+  0220    1283    CLRB	0x3,5
+  0221    1703    SETB	0x3,6
+  0222    1411    SETB	0x11,0
+88:               	while(!(KEYCON0&0x80));	//.7位为1检测完成
+  0223    1F91    SNZB	0x11,7
+  0224    2A23    JP	0x223
+89:               	TKdata[2] = ((KEYDATAH<<8) + KEYDATAL);				//获得键值
+  0225    0817    LD	A,0x17
+  0226    1303    CLRB	0x3,6
+  0227    00A5    LD	0x25,A
+  0228    1703    SETB	0x3,6
+  0229    0816    LD	A,0x16
+  022A    1303    CLRB	0x3,6
+  022B    00A4    LD	0x24,A
+90:               	KEYCON0 = 0x00;
+  022C    1703    SETB	0x3,6
+  022D    0191    CLR	0x11
+91:               	#endif	
+92:               
+93:               
+94:               
+95:               	#ifdef	C_KEY_4
+96:               	KEYCON0 = 0x02;      //使能电容口，不并联电容
+  022E    3002    LDIA	0x2
+  022F    0091    LD	0x11,A
+97:               	KEYCON1 = C_KCHS3;		 //0.5VDD,FRES/4，通道4	
+  0230    3053    LDIA	0x53
+  0231    0092    LD	0x12,A
+98:               	KEYCON2 = C_KEYCON2|0X01;
+  0232    3099    LDIA	0x99
+  0233    0093    LD	0x13,A
+  0234    0000    NOP
+  0235    0000    NOP
+  0236    0000    NOP
+  0237    0000    NOP
+  0238    0000    NOP
+  0239    0000    NOP
+  023A    0000    NOP
+  023B    0000    NOP
+  023C    0000    NOP
+99:               	asm("nop");
+100:              	asm("nop");
+101:              	asm("nop");
+102:              	asm("nop");
+103:              	asm("nop");
+104:              	asm("nop");
+105:              	asm("nop");
+106:              	asm("nop");
+107:              	asm("nop");
+108:              	KEYCON0 |= 0x01;	 //开始检测按键 .0位由0变为1开始检测
+  023D    1283    CLRB	0x3,5
+  023E    1703    SETB	0x3,6
+  023F    1411    SETB	0x11,0
+109:              	while(!(KEYCON0&0x80));	//.7位为1检测完成
+  0240    1F91    SNZB	0x11,7
+  0241    2A40    JP	0x240
+110:              	TKdata[3] = ((KEYDATAH<<8) + KEYDATAL);				//获得键值
+  0242    0817    LD	A,0x17
+  0243    1303    CLRB	0x3,6
+  0244    00A7    LD	0x27,A
+  0245    1703    SETB	0x3,6
+  0246    0816    LD	A,0x16
+  0247    1303    CLRB	0x3,6
+  0248    00A6    LD	0x26,A
+111:              	KEYCON0 = 0x00;
+  0249    1703    SETB	0x3,6
+  024A    0191    CLR	0x11
+112:              	#endif	
+113:              	
+114:              	#ifdef	C_KEY_5
+115:              	KEYCON0 = 0x02;      //使能电容口，不并联电容
+  024B    3002    LDIA	0x2
+  024C    0091    LD	0x11,A
+116:              	KEYCON1 = C_KCHS4;		 //0.5VDD,FRES/4，通道5	
+  024D    3054    LDIA	0x54
+  024E    0092    LD	0x12,A
+117:              	KEYCON2 = C_KEYCON2|0X01;
+  024F    3099    LDIA	0x99
+  0250    0093    LD	0x13,A
+  0251    0000    NOP
+  0252    0000    NOP
+  0253    0000    NOP
+  0254    0000    NOP
+  0255    0000    NOP
+  0256    0000    NOP
+  0257    0000    NOP
+  0258    0000    NOP
+  0259    0000    NOP
+118:              	asm("nop");
+119:              	asm("nop");
+120:              	asm("nop");
+121:              	asm("nop");
+122:              	asm("nop");
+123:              	asm("nop");
+124:              	asm("nop");
+125:              	asm("nop");
+126:              	asm("nop");
+127:              	KEYCON0 |= 0x01;	 //开始检测按键 .0位由0变为1开始检测
+  025A    1283    CLRB	0x3,5
+  025B    1703    SETB	0x3,6
+  025C    1411    SETB	0x11,0
+128:              	while(!(KEYCON0&0x80));	//.7位为1检测完成
+  025D    1F91    SNZB	0x11,7
+  025E    2A5D    JP	0x25D
+129:              	TKdata[4] = ((KEYDATAH<<8) + KEYDATAL);				//获得键值
+  025F    0817    LD	A,0x17
+  0260    1303    CLRB	0x3,6
+  0261    00A9    LD	0x29,A
+  0262    1703    SETB	0x3,6
+  0263    0816    LD	A,0x16
+  0264    1303    CLRB	0x3,6
+  0265    00A8    LD	0x28,A
+130:              	KEYCON0 = 0x00;
+  0266    1703    SETB	0x3,6
+  0267    0191    CLR	0x11
+131:              	#endif	
+132:              	
+133:              	
+134:              	#ifdef	C_KEY_6
+135:              	KEYCON0 = 0x02;      //使能电容口，不并联电容
+  0268    3002    LDIA	0x2
+  0269    0091    LD	0x11,A
+136:              	KEYCON1 = C_KCHS5;		 //0.5VDD,FRES/4，通道6	
+  026A    3055    LDIA	0x55
+  026B    0092    LD	0x12,A
+137:              	KEYCON2 = C_KEYCON2|0X01;
+  026C    3099    LDIA	0x99
+  026D    0093    LD	0x13,A
+  026E    0000    NOP
+  026F    0000    NOP
+  0270    0000    NOP
+  0271    0000    NOP
+  0272    0000    NOP
+  0273    0000    NOP
+  0274    0000    NOP
+  0275    0000    NOP
+  0276    0000    NOP
+138:              	asm("nop");
+139:              	asm("nop");
+140:              	asm("nop");
+141:              	asm("nop");
+142:              	asm("nop");
+143:              	asm("nop");
+144:              	asm("nop");
+145:              	asm("nop");
+146:              	asm("nop");
+147:              	KEYCON0 |= 0x01;	 //开始检测按键 .0位由0变为1开始检测
+  0277    1283    CLRB	0x3,5
+  0278    1703    SETB	0x3,6
+  0279    1411    SETB	0x11,0
+148:              	while(!(KEYCON0&0x80));	//.7位为1检测完成
+  027A    1F91    SNZB	0x11,7
+  027B    2A7A    JP	0x27A
+149:              	TKdata[5] = ((KEYDATAH<<8) + KEYDATAL);				//获得键值
+  027C    0817    LD	A,0x17
+  027D    1303    CLRB	0x3,6
+  027E    00AB    LD	0x2B,A
+  027F    1703    SETB	0x3,6
+  0280    0816    LD	A,0x16
+  0281    1303    CLRB	0x3,6
+  0282    00AA    LD	0x2A,A
+150:              	KEYCON0 = 0x00;
+  0283    1703    SETB	0x3,6
+  0284    0191    CLR	0x11
+151:              	#endif	
+152:              	
+153:              	#ifdef	C_KEY_7
+154:              	KEYCON0 = 0x02;      //使能电容口，不并联电容
+  0285    3002    LDIA	0x2
+  0286    0091    LD	0x11,A
+155:              	KEYCON1 = C_KCHS7;		 //0.5VDD,FRES/4，通道7	
+  0287    3057    LDIA	0x57
+  0288    0092    LD	0x12,A
+156:              	KEYCON2 = C_KEYCON2|0X01;
+  0289    3099    LDIA	0x99
+  028A    0093    LD	0x13,A
+  028B    0000    NOP
+  028C    0000    NOP
+  028D    0000    NOP
+  028E    0000    NOP
+  028F    0000    NOP
+  0290    0000    NOP
+  0291    0000    NOP
+  0292    0000    NOP
+  0293    0000    NOP
+157:              	asm("nop");
+158:              	asm("nop");
+159:              	asm("nop");
+160:              	asm("nop");
+161:              	asm("nop");
+162:              	asm("nop");
+163:              	asm("nop");
+164:              	asm("nop");
+165:              	asm("nop");
+166:              	KEYCON0 |= 0x01;	 //开始检测按键 .0位由0变为1开始检测
+  0294    1283    CLRB	0x3,5
+  0295    1703    SETB	0x3,6
+  0296    1411    SETB	0x11,0
+167:              	while(!(KEYCON0&0x80));	//.7位为1检测完成
+  0297    1F91    SNZB	0x11,7
+  0298    2A97    JP	0x297
+168:              	TKdata[7] = ((KEYDATAH<<8) + KEYDATAL);				//获得键值
+  0299    0817    LD	A,0x17
+  029A    1303    CLRB	0x3,6
+  029B    00AF    LD	0x2F,A
+  029C    1703    SETB	0x3,6
+  029D    0816    LD	A,0x16
+  029E    1303    CLRB	0x3,6
+  029F    00AE    LD	0x2E,A
+169:              	KEYCON0 = 0x00;
+  02A0    1703    SETB	0x3,6
+  02A1    0191    CLR	0x11
+170:              	#endif	
+171:              	
+172:              	#ifdef	C_KEY_8
+173:              	KEYCON0 = 0x02;      //使能电容口，不并联电容
+  02A2    3002    LDIA	0x2
+  02A3    0091    LD	0x11,A
+174:              	KEYCON1 = C_KCHS8;		 //0.5VDD,FRES/4，通道1	
+  02A4    3058    LDIA	0x58
+  02A5    0092    LD	0x12,A
+175:              	KEYCON2 = C_KEYCON2|0X01;
+  02A6    3099    LDIA	0x99
+  02A7    0093    LD	0x13,A
+  02A8    0000    NOP
+  02A9    0000    NOP
+  02AA    0000    NOP
+  02AB    0000    NOP
+  02AC    0000    NOP
+  02AD    0000    NOP
+  02AE    0000    NOP
+  02AF    0000    NOP
+  02B0    0000    NOP
+176:              	asm("nop");
+177:              	asm("nop");
+178:              	asm("nop");
+179:              	asm("nop");
+180:              	asm("nop");
+181:              	asm("nop");
+182:              	asm("nop");
+183:              	asm("nop");
+184:              	asm("nop");
+185:              	KEYCON0 |= 0x01;	 //开始检测按键 .0位由0变为1开始检测
+  02B1    1283    CLRB	0x3,5
+  02B2    1703    SETB	0x3,6
+  02B3    1411    SETB	0x11,0
+186:              	while(!(KEYCON0&0x80));	//.7位为1检测完成
+  02B4    1F91    SNZB	0x11,7
+  02B5    2AB4    JP	0x2B4
+187:              	TKdata[8] = ((KEYDATAH<<8) + KEYDATAL);				//获得键值
+  02B6    0817    LD	A,0x17
+  02B7    1303    CLRB	0x3,6
+  02B8    00B1    LD	0x31,A
+  02B9    1703    SETB	0x3,6
+  02BA    0816    LD	A,0x16
+  02BB    1303    CLRB	0x3,6
+  02BC    00B0    LD	0x30,A
+188:              	KEYCON0 = 0x00;
+  02BD    1703    SETB	0x3,6
+  02BE    0191    CLR	0x11
+189:              	#endif
+190:              	
+191:              
+192:              	#ifdef	C_KEY_9
+193:              	KEYCON0 = 0x02;      //使能电容口，不并联电容
+  02BF    3002    LDIA	0x2
+  02C0    0091    LD	0x11,A
+194:              	KEYCON1 = C_KCHS9;		 //0.5VDD,FRES/4，通道2	
+  02C1    3059    LDIA	0x59
+  02C2    0092    LD	0x12,A
+195:              	KEYCON2 = C_KEYCON2|0X01;
+  02C3    3099    LDIA	0x99
+  02C4    0093    LD	0x13,A
+  02C5    0000    NOP
+  02C6    0000    NOP
+  02C7    0000    NOP
+  02C8    0000    NOP
+  02C9    0000    NOP
+  02CA    0000    NOP
+  02CB    0000    NOP
+  02CC    0000    NOP
+  02CD    0000    NOP
+196:              	asm("nop");
+197:              	asm("nop");
+198:              	asm("nop");
+199:              	asm("nop");
+200:              	asm("nop");
+201:              	asm("nop");
+202:              	asm("nop");
+203:              	asm("nop");
+204:              	asm("nop");
+205:              	KEYCON0 |= 0x01;	 //开始检测按键 .0位由0变为1开始检测
+  02CE    1283    CLRB	0x3,5
+  02CF    1703    SETB	0x3,6
+  02D0    1411    SETB	0x11,0
+206:              	while(!(KEYCON0&0x80));	//.7位为1检测完成
+  02D1    1F91    SNZB	0x11,7
+  02D2    2AD1    JP	0x2D1
+207:              	TKdata[9] = ((KEYDATAH<<8) + KEYDATAL);				//获得键值
+  02D3    0817    LD	A,0x17
+  02D4    1303    CLRB	0x3,6
+  02D5    00B3    LD	0x33,A
+  02D6    1703    SETB	0x3,6
+  02D7    0816    LD	A,0x16
+  02D8    1303    CLRB	0x3,6
+  02D9    00B2    LD	0x32,A
+208:              	KEYCON0 = 0x00;
+  02DA    1703    SETB	0x3,6
+  02DB    0191    CLR	0x11
+209:              	#endif
+210:              	
+211:              
+212:              	#ifdef	C_KEY_10
+213:              	KEYCON0 = 0x02;      //使能电容口，不并联电容
+  02DC    3002    LDIA	0x2
+  02DD    0091    LD	0x11,A
+214:              	KEYCON1 = C_KCHS10;		 //0.5VDD,FRES/4，通道3	
+  02DE    305A    LDIA	0x5A
+  02DF    0092    LD	0x12,A
+215:              	KEYCON2 = C_KEYCON2|0X01;
+  02E0    3099    LDIA	0x99
+  02E1    0093    LD	0x13,A
+  02E2    0000    NOP
+  02E3    0000    NOP
+  02E4    0000    NOP
+  02E5    0000    NOP
+  02E6    0000    NOP
+  02E7    0000    NOP
+  02E8    0000    NOP
+  02E9    0000    NOP
+  02EA    0000    NOP
+216:              	asm("nop");
+217:              	asm("nop");
+218:              	asm("nop");
+219:              	asm("nop");
+220:              	asm("nop");
+221:              	asm("nop");
+222:              	asm("nop");
+223:              	asm("nop");
+224:              	asm("nop");
+225:              	KEYCON0 |= 0x01;	 //开始检测按键 .0位由0变为1开始检测
+  02EB    1283    CLRB	0x3,5
+  02EC    1703    SETB	0x3,6
+  02ED    1411    SETB	0x11,0
+226:              	while(!(KEYCON0&0x80));	//.7位为1检测完成
+  02EE    1F91    SNZB	0x11,7
+  02EF    2AEE    JP	0x2EE
+227:              	TKdata[10] = ((KEYDATAH<<8) + KEYDATAL);				//获得键值
+  02F0    0817    LD	A,0x17
+  02F1    1303    CLRB	0x3,6
+  02F2    00B5    LD	0x35,A
+  02F3    1703    SETB	0x3,6
+  02F4    0816    LD	A,0x16
+  02F5    1303    CLRB	0x3,6
+  02F6    00B4    LD	0x34,A
+228:              	KEYCON0 = 0x00;
+  02F7    1703    SETB	0x3,6
+  02F8    0191    CLR	0x11
+229:              	#endif	
+230:              
+231:              
+232:              
+233:              	#ifdef	C_KEY_11
+234:              	KEYCON0 = 0x02;      //使能电容口，不并联电容
+  02F9    3002    LDIA	0x2
+  02FA    0091    LD	0x11,A
+235:              	KEYCON1 = C_KCHS11;		 //0.5VDD,FRES/4，通道4	
+  02FB    305B    LDIA	0x5B
+  02FC    0092    LD	0x12,A
+236:              	KEYCON2 = C_KEYCON2|0X01;
+  02FD    3099    LDIA	0x99
+  02FE    0093    LD	0x13,A
+  02FF    0000    NOP
+  0300    0000    NOP
+  0301    0000    NOP
+  0302    0000    NOP
+  0303    0000    NOP
+  0304    0000    NOP
+  0305    0000    NOP
+  0306    0000    NOP
+  0307    0000    NOP
+237:              	asm("nop");
+238:              	asm("nop");
+239:              	asm("nop");
+240:              	asm("nop");
+241:              	asm("nop");
+242:              	asm("nop");
+243:              	asm("nop");
+244:              	asm("nop");
+245:              	asm("nop");
+246:              	KEYCON0 |= 0x01;	 //开始检测按键 .0位由0变为1开始检测
+  0308    1283    CLRB	0x3,5
+  0309    1703    SETB	0x3,6
+  030A    1411    SETB	0x11,0
+247:              	while(!(KEYCON0&0x80));	//.7位为1检测完成
+  030B    1F91    SNZB	0x11,7
+  030C    2B0B    JP	0x30B
+248:              	TKdata[11] = ((KEYDATAH<<8) + KEYDATAL);				//获得键值
+  030D    0817    LD	A,0x17
+  030E    1303    CLRB	0x3,6
+  030F    00B7    LD	0x37,A
+  0310    1703    SETB	0x3,6
+  0311    0816    LD	A,0x16
+  0312    1303    CLRB	0x3,6
+  0313    00B6    LD	0x36,A
+249:              	KEYCON0 = 0x00;
+  0314    1703    SETB	0x3,6
+  0315    0191    CLR	0x11
+250:              	#endif	
+251:              	
+252:              	#ifdef	C_KEY_12
+253:              	KEYCON0 = 0x02;      //使能电容口，不并联电容
+  0316    3002    LDIA	0x2
+  0317    0091    LD	0x11,A
+254:              	KEYCON1 = C_KCHS12;		 //0.5VDD,FRES/4，通道5	
+  0318    305C    LDIA	0x5C
+  0319    0092    LD	0x12,A
+255:              	KEYCON2 = C_KEYCON2|0X01;
+  031A    3099    LDIA	0x99
+  031B    0093    LD	0x13,A
+  031C    0000    NOP
+  031D    0000    NOP
+  031E    0000    NOP
+  031F    0000    NOP
+  0320    0000    NOP
+  0321    0000    NOP
+  0322    0000    NOP
+  0323    0000    NOP
+  0324    0000    NOP
+256:              	asm("nop");
+257:              	asm("nop");
+258:              	asm("nop");
+259:              	asm("nop");
+260:              	asm("nop");
+261:              	asm("nop");
+262:              	asm("nop");
+263:              	asm("nop");
+264:              	asm("nop");
+265:              	KEYCON0 |= 0x01;	 //开始检测按键 .0位由0变为1开始检测
+  0325    1283    CLRB	0x3,5
+  0326    1703    SETB	0x3,6
+  0327    1411    SETB	0x11,0
+266:              	while(!(KEYCON0&0x80));	//.7位为1检测完成
+  0328    1F91    SNZB	0x11,7
+  0329    2B28    JP	0x328
+267:              	TKdata[12] = ((KEYDATAH<<8) + KEYDATAL);				//获得键值
+  032A    0817    LD	A,0x17
+  032B    1303    CLRB	0x3,6
+  032C    00B9    LD	0x39,A
+  032D    1703    SETB	0x3,6
+  032E    0816    LD	A,0x16
+  032F    1303    CLRB	0x3,6
+  0330    00B8    LD	0x38,A
+268:              	KEYCON0 = 0x00;
+  0331    1703    SETB	0x3,6
+  0332    0191    CLR	0x11
+269:              	#endif	
+270:              	
+271:              	
+272:              	#ifdef	C_KEY_13
+273:              	KEYCON0 = 0x02;      //使能电容口，不并联电容
+  0333    3002    LDIA	0x2
+  0334    0091    LD	0x11,A
+274:              	KEYCON1 = C_KCHS13;		 //0.5VDD,FRES/4，通道6	
+  0335    305D    LDIA	0x5D
+  0336    0092    LD	0x12,A
+275:              	KEYCON2 = C_KEYCON2|0X01;
+  0337    3099    LDIA	0x99
+  0338    0093    LD	0x13,A
+  0339    0000    NOP
+  033A    0000    NOP
+  033B    0000    NOP
+  033C    0000    NOP
+  033D    0000    NOP
+  033E    0000    NOP
+  033F    0000    NOP
+  0340    0000    NOP
+  0341    0000    NOP
+276:              	asm("nop");
+277:              	asm("nop");
+278:              	asm("nop");
+279:              	asm("nop");
+280:              	asm("nop");
+281:              	asm("nop");
+282:              	asm("nop");
+283:              	asm("nop");
+284:              	asm("nop");
+285:              	KEYCON0 |= 0x01;	 //开始检测按键 .0位由0变为1开始检测
+  0342    1283    CLRB	0x3,5
+  0343    1703    SETB	0x3,6
+  0344    1411    SETB	0x11,0
+286:              	while(!(KEYCON0&0x80));	//.7位为1检测完成
+  0345    1F91    SNZB	0x11,7
+  0346    2B45    JP	0x345
+287:              	TKdata[13] = ((KEYDATAH<<8) + KEYDATAL);				//获得键值
+  0347    0817    LD	A,0x17
+  0348    1303    CLRB	0x3,6
+  0349    00BB    LD	0x3B,A
+  034A    1703    SETB	0x3,6
+  034B    0816    LD	A,0x16
+  034C    1303    CLRB	0x3,6
+  034D    00BA    LD	0x3A,A
+288:              	KEYCON0 = 0x00;
+  034E    1703    SETB	0x3,6
+  034F    0191    CLR	0x11
+289:              	#endif	
+290:              	
+291:              	#ifdef	C_KEY_14
+292:              	KEYCON0 = 0x02;      //使能电容口，不并联电容
+  0350    3002    LDIA	0x2
+  0351    0091    LD	0x11,A
+293:              	KEYCON1 = C_KCHS14;		 //0.5VDD,FRES/4，通道7	
+  0352    305E    LDIA	0x5E
+  0353    0092    LD	0x12,A
+294:              	KEYCON2 = C_KEYCON2|0X01;
+  0354    3099    LDIA	0x99
+  0355    0093    LD	0x13,A
+  0356    0000    NOP
+  0357    0000    NOP
+  0358    0000    NOP
+  0359    0000    NOP
+  035A    0000    NOP
+  035B    0000    NOP
+  035C    0000    NOP
+  035D    0000    NOP
+  035E    0000    NOP
+295:              	asm("nop");
+296:              	asm("nop");
+297:              	asm("nop");
+298:              	asm("nop");
+299:              	asm("nop");
+300:              	asm("nop");
+301:              	asm("nop");
+302:              	asm("nop");
+303:              	asm("nop");
+304:              	KEYCON0 |= 0x01;	 //开始检测按键 .0位由0变为1开始检测
+  035F    1283    CLRB	0x3,5
+  0360    1703    SETB	0x3,6
+  0361    1411    SETB	0x11,0
+305:              	while(!(KEYCON0&0x80));	//.7位为1检测完成
+  0362    1F91    SNZB	0x11,7
+  0363    2B62    JP	0x362
+306:              	TKdata[14] = ((KEYDATAH<<8) + KEYDATAL);				//获得键值
+  0364    0817    LD	A,0x17
+  0365    1303    CLRB	0x3,6
+  0366    00BD    LD	0x3D,A
+  0367    1703    SETB	0x3,6
+  0368    0816    LD	A,0x16
+  0369    1303    CLRB	0x3,6
+  036A    00BC    LD	0x3C,A
+307:              	KEYCON0 = 0x00;
+  036B    1703    SETB	0x3,6
+  036C    0191    CLR	0x11
+308:              	#endif	
+309:              	
+310:              	#ifdef	C_KEY_15
+311:              	KEYCON0 = 0x02;      //使能电容口，不并联电容
+  036D    3002    LDIA	0x2
+  036E    0091    LD	0x11,A
+312:              	KEYCON1 = C_KCHS15;		 //0.5VDD,FRES/4，通道7	
+  036F    305F    LDIA	0x5F
+  0370    0092    LD	0x12,A
+313:              	KEYCON2 = C_KEYCON2|0X01;
+  0371    3099    LDIA	0x99
+  0372    0093    LD	0x13,A
+  0373    0000    NOP
+  0374    0000    NOP
+  0375    0000    NOP
+  0376    0000    NOP
+  0377    0000    NOP
+  0378    0000    NOP
+  0379    0000    NOP
+  037A    0000    NOP
+  037B    0000    NOP
+314:              	asm("nop");
+315:              	asm("nop");
+316:              	asm("nop");
+317:              	asm("nop");
+318:              	asm("nop");
+319:              	asm("nop");
+320:              	asm("nop");
+321:              	asm("nop");
+322:              	asm("nop");
+323:              	KEYCON0 |= 0x01;	 //开始检测按键 .0位由0变为1开始检测
+  037C    1283    CLRB	0x3,5
+  037D    1703    SETB	0x3,6
+  037E    1411    SETB	0x11,0
+324:              	while(!(KEYCON0&0x80));	//.7位为1检测完成
+  037F    1F91    SNZB	0x11,7
+  0380    2B7F    JP	0x37F
+325:              	TKdata[15] = ((KEYDATAH<<8) + KEYDATAL);				//获得键值
+  0381    0817    LD	A,0x17
+  0382    1303    CLRB	0x3,6
+  0383    00BF    LD	0x3F,A
+  0384    1703    SETB	0x3,6
+  0385    0816    LD	A,0x16
+  0386    1303    CLRB	0x3,6
+  0387    00BE    LD	0x3E,A
+326:              	KEYCON0 = 0x00;
+  0388    1703    SETB	0x3,6
+  0389    0191    CLR	0x11
+  038A    0008    RET
+327:              	#endif	
+328:              	
+329:              	return 0;
+330:              															
+331:              }
+332:              
+333:              /**************************************************************************
+334:              * 函数名称：
+335:              * 函数功能：IIC送数据程序
+336:              * 入口参数：无
+337:              * 出口参数：
+338:              * 备    注：
+339:              **************************************************************************/
+340:              void CheckTouchKey_F()
+341:              {
+342:              	#ifdef	ENABLE_IIC
+343:              		unsigned char checksum = 0;
+  001D    01F4    CLR	0x74
+  001E    0064    CLRWDT
+344:              	#endif	
+345:              	
+346:              	asm("clrwdt");
+347:              	
+348:              	#ifdef	C_KEY_1
+349:              	checksum += 1;
+  001F    0AF4    INCR	0x74
+350:              	#endif
+351:              	
+352:              	#ifdef	C_KEY_2
+353:              	checksum += 1;
+  0020    0AF4    INCR	0x74
+354:              	#endif	
+355:              	
+356:              	#ifdef	C_KEY_3
+357:              	checksum += 1;
+  0021    0AF4    INCR	0x74
+358:              	#endif	
+359:              	
+360:              	#ifdef	C_KEY_4
+361:              	checksum += 1;
+  0022    0AF4    INCR	0x74
+362:              	#endif	
+363:              	
+364:              	#ifdef	C_KEY_5
+365:              	checksum += 1;
+  0023    0AF4    INCR	0x74
+366:              	#endif	
+367:              	
+368:              	#ifdef	C_KEY_6
+369:              	checksum += 1;
+  0024    0AF4    INCR	0x74
+370:              	#endif	
+371:              	
+372:              	#ifdef	C_KEY_7
+373:              	checksum += 1;
+  0025    0AF4    INCR	0x74
+374:              	#endif	
+375:              	
+376:              	#ifdef	C_KEY_8
+377:              	checksum += 1;
+  0026    0AF4    INCR	0x74
+378:              	#endif
+379:              	
+380:              	#ifdef	C_KEY_9
+381:              	checksum += 1;
+  0027    0AF4    INCR	0x74
+382:              	#endif	
+383:              	
+384:              	#ifdef	C_KEY_10
+385:              	checksum += 1;
+  0028    0AF4    INCR	0x74
+386:              	#endif	
+387:              	
+388:              	#ifdef	C_KEY_11
+389:              	checksum += 1;
+  0029    0AF4    INCR	0x74
+390:              	#endif	
+391:              	
+392:              	#ifdef	C_KEY_12
+393:              	checksum += 1;
+  002A    0AF4    INCR	0x74
+394:              	#endif	
+395:              	
+396:              	#ifdef	C_KEY_13
+397:              	checksum += 1;
+  002B    0AF4    INCR	0x74
+398:              	#endif	
+399:              	
+400:              	#ifdef	C_KEY_14
+401:              	checksum += 1;
+  002C    0AF4    INCR	0x74
+402:              	#endif	
+403:              
+404:              	#ifdef	C_KEY_15
+405:              	checksum += 1;
+  002D    0AF4    INCR	0x74
+406:              	#endif	
+407:              	
+408:              	if (checksum)		//如果定义了按键
+  002E    0874    LD	A,0x74
+  002F    1903    SZB	0x3,2
+  0030    0008    RET
+409:              	{
+410:              		
+411:              		Key_Test();		//检测按键值
+  0031    21D2    CALL	0x1D2
+  0032    120A    CLRB	0xA,4
+  0033    118A    CLRB	0xA,3
+412:              		
+413:              		
+414:              		checksum *= 3;		//在此之前的checksum表示按键个数
+  0034    1003    CLRB	0x3,0
+  0035    0D74    RLCA	0x74
+  0036    07F4    ADDR	0x74
+415:              		checksum += 2;		//在此之后的checksum表示校验和
+  0037    0AF4    INCR	0x74
+  0038    0AF4    INCR	0x74
+416:              		//-----------------与软件通讯规则为   0xA0+数据个数+数据+检验和------------------
+417:              		I2C_WriteStart();
+  0039    21B9    CALL	0x1B9
+  003A    120A    CLRB	0xA,4
+  003B    118A    CLRB	0xA,3
+418:              		I2C_Write1bYTE(0xa0);							//建立连接的命令
+  003C    30A0    LDIA	0xA0
+  003D    2183    CALL	0x183
+  003E    120A    CLRB	0xA,4
+  003F    118A    CLRB	0xA,3
+419:              		I2C_Write1bYTE(checksum);						//数据个数为  X*2+2  X表示按键个数
+  0040    0874    LD	A,0x74
+  0041    2183    CALL	0x183
+  0042    120A    CLRB	0xA,4
+  0043    118A    CLRB	0xA,3
+420:              		
+421:              		#ifdef	C_KEY_1
+422:              		I2C_Write1bYTE(1);
+  0044    3001    LDIA	0x1
+  0045    2183    CALL	0x183
+  0046    120A    CLRB	0xA,4
+  0047    118A    CLRB	0xA,3
+423:              		I2C_Write1bYTE(TKdata[0] & 0xff);        		//键值数据低位   
+  0048    1303    CLRB	0x3,6
+  0049    0820    LD	A,0x20
+  004A    2183    CALL	0x183
+  004B    120A    CLRB	0xA,4
+  004C    118A    CLRB	0xA,3
+424:              		I2C_Write1bYTE((TKdata[0]>>8) & 0xff);	  		//键值数据高位
+  004D    1303    CLRB	0x3,6
+  004E    0821    LD	A,0x21
+  004F    2183    CALL	0x183
+  0050    120A    CLRB	0xA,4
+  0051    118A    CLRB	0xA,3
+425:              		checksum += 1;
+  0052    0AF4    INCR	0x74
+426:              		checksum += (TKdata[0] & 0xff);					//检验和= 数据个数+键值数据的总和
+  0053    1303    CLRB	0x3,6
+  0054    0820    LD	A,0x20
+  0055    07F4    ADDR	0x74
+427:              		checksum += ((TKdata[0]>>8) & 0xff);		
+  0056    0821    LD	A,0x21
+  0057    07F4    ADDR	0x74
+428:              		#endif
+429:              		
+430:              		#ifdef	C_KEY_2
+431:              		I2C_Write1bYTE(2);
+  0058    3002    LDIA	0x2
+  0059    2183    CALL	0x183
+  005A    120A    CLRB	0xA,4
+  005B    118A    CLRB	0xA,3
+432:              		I2C_Write1bYTE(TKdata[1] & 0xff);        		//键值数据低位   
+  005C    1303    CLRB	0x3,6
+  005D    0822    LD	A,0x22
+  005E    2183    CALL	0x183
+  005F    120A    CLRB	0xA,4
+  0060    118A    CLRB	0xA,3
+433:              		I2C_Write1bYTE((TKdata[1]>>8) & 0xff);	  		//键值数据高位
+  0061    1303    CLRB	0x3,6
+  0062    0823    LD	A,0x23
+  0063    2183    CALL	0x183
+  0064    120A    CLRB	0xA,4
+  0065    118A    CLRB	0xA,3
+434:              		checksum += 2;
+  0066    0AF4    INCR	0x74
+  0067    0AF4    INCR	0x74
+435:              		checksum += (TKdata[1] & 0xff);					//检验和= 数据个数+键值数据的总和
+  0068    1303    CLRB	0x3,6
+  0069    0822    LD	A,0x22
+  006A    07F4    ADDR	0x74
+436:              		checksum += ((TKdata[1]>>8) & 0xff);		
+  006B    0823    LD	A,0x23
+  006C    07F4    ADDR	0x74
+437:              		#endif		
+438:              		
+439:              		#ifdef	C_KEY_3
+440:              		I2C_Write1bYTE(3);
+  006D    3003    LDIA	0x3
+  006E    2183    CALL	0x183
+  006F    120A    CLRB	0xA,4
+  0070    118A    CLRB	0xA,3
+441:              		I2C_Write1bYTE(TKdata[2] & 0xff);        		//键值数据低位   
+  0071    1303    CLRB	0x3,6
+  0072    0824    LD	A,0x24
+  0073    2183    CALL	0x183
+  0074    120A    CLRB	0xA,4
+  0075    118A    CLRB	0xA,3
+442:              		I2C_Write1bYTE((TKdata[2]>>8) & 0xff);	  		//键值数据高位
+  0076    1303    CLRB	0x3,6
+  0077    0825    LD	A,0x25
+  0078    2183    CALL	0x183
+  0079    120A    CLRB	0xA,4
+  007A    118A    CLRB	0xA,3
+443:              		checksum += 3;
+  007B    3003    LDIA	0x3
+  007C    07F4    ADDR	0x74
+444:              		checksum += (TKdata[2] & 0xff);					//检验和= 数据个数+键值数据的总和
+  007D    1303    CLRB	0x3,6
+  007E    0824    LD	A,0x24
+  007F    07F4    ADDR	0x74
+445:              		checksum += ((TKdata[2]>>8) & 0xff);		
+  0080    0825    LD	A,0x25
+  0081    07F4    ADDR	0x74
+446:              		#endif		
+447:              		
+448:              		#ifdef	C_KEY_4
+449:              		I2C_Write1bYTE(4);
+  0082    3004    LDIA	0x4
+  0083    2183    CALL	0x183
+  0084    120A    CLRB	0xA,4
+  0085    118A    CLRB	0xA,3
+450:              		I2C_Write1bYTE(TKdata[3] & 0xff);        		//键值数据低位   
+  0086    1303    CLRB	0x3,6
+  0087    0826    LD	A,0x26
+  0088    2183    CALL	0x183
+  0089    120A    CLRB	0xA,4
+  008A    118A    CLRB	0xA,3
+451:              		I2C_Write1bYTE((TKdata[3]>>8) & 0xff);	  		//键值数据高位
+  008B    1303    CLRB	0x3,6
+  008C    0827    LD	A,0x27
+  008D    2183    CALL	0x183
+  008E    120A    CLRB	0xA,4
+  008F    118A    CLRB	0xA,3
+452:              		checksum += 4;
+  0090    3004    LDIA	0x4
+  0091    07F4    ADDR	0x74
+453:              		checksum += (TKdata[3] & 0xff);					//检验和= 数据个数+键值数据的总和
+  0092    1303    CLRB	0x3,6
+  0093    0826    LD	A,0x26
+  0094    07F4    ADDR	0x74
+454:              		checksum += ((TKdata[3]>>8) & 0xff);		
+  0095    0827    LD	A,0x27
+  0096    07F4    ADDR	0x74
+455:              		#endif		
+456:              		
+457:              		#ifdef	C_KEY_5
+458:              		I2C_Write1bYTE(5);
+  0097    3005    LDIA	0x5
+  0098    2183    CALL	0x183
+  0099    120A    CLRB	0xA,4
+  009A    118A    CLRB	0xA,3
+459:              		I2C_Write1bYTE(TKdata[4] & 0xff);        		//键值数据低位   
+  009B    1303    CLRB	0x3,6
+  009C    0828    LD	A,0x28
+  009D    2183    CALL	0x183
+  009E    120A    CLRB	0xA,4
+  009F    118A    CLRB	0xA,3
+460:              		I2C_Write1bYTE((TKdata[4]>>8) & 0xff);	  		//键值数据高位
+  00A0    1303    CLRB	0x3,6
+  00A1    0829    LD	A,0x29
+  00A2    2183    CALL	0x183
+  00A3    120A    CLRB	0xA,4
+  00A4    118A    CLRB	0xA,3
+461:              		checksum += 5;
+  00A5    3005    LDIA	0x5
+  00A6    07F4    ADDR	0x74
+462:              		checksum += (TKdata[4] & 0xff);					//检验和= 数据个数+键值数据的总和
+  00A7    1303    CLRB	0x3,6
+  00A8    0828    LD	A,0x28
+  00A9    07F4    ADDR	0x74
+463:              		checksum += ((TKdata[4]>>8) & 0xff);		
+  00AA    0829    LD	A,0x29
+  00AB    07F4    ADDR	0x74
+464:              		#endif
+465:              		
+466:              		#ifdef	C_KEY_6
+467:              		I2C_Write1bYTE(6);
+  00AC    3006    LDIA	0x6
+  00AD    2183    CALL	0x183
+  00AE    120A    CLRB	0xA,4
+  00AF    118A    CLRB	0xA,3
+468:              		I2C_Write1bYTE(TKdata[5] & 0xff);        		//键值数据低位   
+  00B0    1303    CLRB	0x3,6
+  00B1    082A    LD	A,0x2A
+  00B2    2183    CALL	0x183
+  00B3    120A    CLRB	0xA,4
+  00B4    118A    CLRB	0xA,3
+469:              		I2C_Write1bYTE((TKdata[5]>>8) & 0xff);	  		//键值数据高位
+  00B5    1303    CLRB	0x3,6
+  00B6    082B    LD	A,0x2B
+  00B7    2183    CALL	0x183
+  00B8    120A    CLRB	0xA,4
+  00B9    118A    CLRB	0xA,3
+470:              		checksum += 6;
+  00BA    3006    LDIA	0x6
+  00BB    07F4    ADDR	0x74
+471:              		checksum += (TKdata[5] & 0xff);					//检验和= 数据个数+键值数据的总和
+  00BC    1303    CLRB	0x3,6
+  00BD    082A    LD	A,0x2A
+  00BE    07F4    ADDR	0x74
+472:              		checksum += ((TKdata[5]>>8) & 0xff);		
+  00BF    082B    LD	A,0x2B
+  00C0    07F4    ADDR	0x74
+473:              		#endif		
+474:              		
+475:              		#ifdef	C_KEY_7
+476:              		I2C_Write1bYTE(7);
+  00C1    3007    LDIA	0x7
+  00C2    2183    CALL	0x183
+  00C3    120A    CLRB	0xA,4
+  00C4    118A    CLRB	0xA,3
+477:              		I2C_Write1bYTE(TKdata[7] & 0xff);        		//键值数据低位   
+  00C5    1303    CLRB	0x3,6
+  00C6    082E    LD	A,0x2E
+  00C7    2183    CALL	0x183
+  00C8    120A    CLRB	0xA,4
+  00C9    118A    CLRB	0xA,3
+478:              		I2C_Write1bYTE((TKdata[7]>>8) & 0xff);	  		//键值数据高位
+  00CA    1303    CLRB	0x3,6
+  00CB    082F    LD	A,0x2F
+  00CC    2183    CALL	0x183
+  00CD    120A    CLRB	0xA,4
+  00CE    118A    CLRB	0xA,3
+479:              		checksum += 7;
+  00CF    3007    LDIA	0x7
+  00D0    07F4    ADDR	0x74
+480:              		checksum += (TKdata[7] & 0xff);					//检验和= 数据个数+键值数据的总和
+  00D1    1303    CLRB	0x3,6
+  00D2    082E    LD	A,0x2E
+  00D3    07F4    ADDR	0x74
+481:              		checksum += ((TKdata[7]>>8) & 0xff);		
+  00D4    082F    LD	A,0x2F
+  00D5    07F4    ADDR	0x74
+482:              		#endif		
+483:              		
+484:              		#ifdef	C_KEY_8
+485:              		I2C_Write1bYTE(8);
+  00D6    3008    LDIA	0x8
+  00D7    2183    CALL	0x183
+  00D8    120A    CLRB	0xA,4
+  00D9    118A    CLRB	0xA,3
+486:              		I2C_Write1bYTE(TKdata[8] & 0xff);        		//键值数据低位   
+  00DA    1303    CLRB	0x3,6
+  00DB    0830    LD	A,0x30
+  00DC    2183    CALL	0x183
+  00DD    120A    CLRB	0xA,4
+  00DE    118A    CLRB	0xA,3
+487:              		I2C_Write1bYTE((TKdata[8]>>8) & 0xff);	  		//键值数据高位
+  00DF    1303    CLRB	0x3,6
+  00E0    0831    LD	A,0x31
+  00E1    2183    CALL	0x183
+  00E2    120A    CLRB	0xA,4
+  00E3    118A    CLRB	0xA,3
+488:              		checksum += 8;
+  00E4    3008    LDIA	0x8
+  00E5    07F4    ADDR	0x74
+489:              		checksum += (TKdata[8] & 0xff);					//检验和= 数据个数+键值数据的总和
+  00E6    1303    CLRB	0x3,6
+  00E7    0830    LD	A,0x30
+  00E8    07F4    ADDR	0x74
+490:              		checksum += ((TKdata[8]>>8) & 0xff);		
+  00E9    0831    LD	A,0x31
+  00EA    07F4    ADDR	0x74
+491:              		#endif
+492:              		
+493:              		#ifdef	C_KEY_9
+494:              		I2C_Write1bYTE(9);
+  00EB    3009    LDIA	0x9
+  00EC    2183    CALL	0x183
+  00ED    120A    CLRB	0xA,4
+  00EE    118A    CLRB	0xA,3
+495:              		I2C_Write1bYTE(TKdata[9] & 0xff);        		//键值数据低位   
+  00EF    1303    CLRB	0x3,6
+  00F0    0832    LD	A,0x32
+  00F1    2183    CALL	0x183
+  00F2    120A    CLRB	0xA,4
+  00F3    118A    CLRB	0xA,3
+496:              		I2C_Write1bYTE((TKdata[9]>>8) & 0xff);	  		//键值数据高位
+  00F4    1303    CLRB	0x3,6
+  00F5    0833    LD	A,0x33
+  00F6    2183    CALL	0x183
+  00F7    120A    CLRB	0xA,4
+  00F8    118A    CLRB	0xA,3
+497:              		checksum += 9;
+  00F9    3009    LDIA	0x9
+  00FA    07F4    ADDR	0x74
+498:              		checksum += (TKdata[9] & 0xff);					//检验和= 数据个数+键值数据的总和
+  00FB    1303    CLRB	0x3,6
+  00FC    0832    LD	A,0x32
+  00FD    07F4    ADDR	0x74
+499:              		checksum += ((TKdata[9]>>8) & 0xff);		
+  00FE    0833    LD	A,0x33
+  00FF    07F4    ADDR	0x74
+500:              		#endif		
+501:              		
+502:              		#ifdef	C_KEY_10
+503:              		I2C_Write1bYTE(10);
+  0100    300A    LDIA	0xA
+  0101    2183    CALL	0x183
+  0102    120A    CLRB	0xA,4
+  0103    118A    CLRB	0xA,3
+504:              		I2C_Write1bYTE(TKdata[10] & 0xff);        		//键值数据低位   
+  0104    1303    CLRB	0x3,6
+  0105    0834    LD	A,0x34
+  0106    2183    CALL	0x183
+  0107    120A    CLRB	0xA,4
+  0108    118A    CLRB	0xA,3
+505:              		I2C_Write1bYTE((TKdata[10]>>8) & 0xff);	  		//键值数据高位
+  0109    1303    CLRB	0x3,6
+  010A    0835    LD	A,0x35
+  010B    2183    CALL	0x183
+  010C    120A    CLRB	0xA,4
+  010D    118A    CLRB	0xA,3
+506:              		checksum += 10;
+  010E    300A    LDIA	0xA
+  010F    07F4    ADDR	0x74
+507:              		checksum += (TKdata[10] & 0xff);					//检验和= 数据个数+键值数据的总和
+  0110    1303    CLRB	0x3,6
+  0111    0834    LD	A,0x34
+  0112    07F4    ADDR	0x74
+508:              		checksum += ((TKdata[10]>>8) & 0xff);		
+  0113    0835    LD	A,0x35
+  0114    07F4    ADDR	0x74
+509:              		#endif		
+510:              		
+511:              		#ifdef	C_KEY_11
+512:              		I2C_Write1bYTE(11);
+  0115    300B    LDIA	0xB
+  0116    2183    CALL	0x183
+  0117    120A    CLRB	0xA,4
+  0118    118A    CLRB	0xA,3
+513:              		I2C_Write1bYTE(TKdata[11] & 0xff);        		//键值数据低位   
+  0119    1303    CLRB	0x3,6
+  011A    0836    LD	A,0x36
+  011B    2183    CALL	0x183
+  011C    120A    CLRB	0xA,4
+  011D    118A    CLRB	0xA,3
+514:              		I2C_Write1bYTE((TKdata[11]>>8) & 0xff);	  		//键值数据高位
+  011E    1303    CLRB	0x3,6
+  011F    0837    LD	A,0x37
+  0120    2183    CALL	0x183
+  0121    120A    CLRB	0xA,4
+  0122    118A    CLRB	0xA,3
+515:              		checksum += 11;
+  0123    300B    LDIA	0xB
+  0124    07F4    ADDR	0x74
+516:              		checksum += (TKdata[11] & 0xff);					//检验和= 数据个数+键值数据的总和
+  0125    1303    CLRB	0x3,6
+  0126    0836    LD	A,0x36
+  0127    07F4    ADDR	0x74
+517:              		checksum += ((TKdata[11]>>8) & 0xff);		
+  0128    0837    LD	A,0x37
+  0129    07F4    ADDR	0x74
+518:              		#endif		
+519:              		
+520:              		#ifdef	C_KEY_12
+521:              		I2C_Write1bYTE(12);
+  012A    300C    LDIA	0xC
+  012B    2183    CALL	0x183
+  012C    120A    CLRB	0xA,4
+  012D    118A    CLRB	0xA,3
+522:              		I2C_Write1bYTE(TKdata[12] & 0xff);        		//键值数据低位   
+  012E    1303    CLRB	0x3,6
+  012F    0838    LD	A,0x38
+  0130    2183    CALL	0x183
+  0131    120A    CLRB	0xA,4
+  0132    118A    CLRB	0xA,3
+523:              		I2C_Write1bYTE((TKdata[12]>>8) & 0xff);	  		//键值数据高位
+  0133    1303    CLRB	0x3,6
+  0134    0839    LD	A,0x39
+  0135    2183    CALL	0x183
+  0136    120A    CLRB	0xA,4
+  0137    118A    CLRB	0xA,3
+524:              		checksum += 12;
+  0138    300C    LDIA	0xC
+  0139    07F4    ADDR	0x74
+525:              		checksum += (TKdata[12] & 0xff);					//检验和= 数据个数+键值数据的总和
+  013A    1303    CLRB	0x3,6
+  013B    0838    LD	A,0x38
+  013C    07F4    ADDR	0x74
+526:              		checksum += ((TKdata[12]>>8) & 0xff);		
+  013D    0839    LD	A,0x39
+  013E    07F4    ADDR	0x74
+527:              		#endif
+528:              		
+529:              		#ifdef	C_KEY_13
+530:              		I2C_Write1bYTE(13);
+  013F    300D    LDIA	0xD
+  0140    2183    CALL	0x183
+  0141    120A    CLRB	0xA,4
+  0142    118A    CLRB	0xA,3
+531:              		I2C_Write1bYTE(TKdata[13] & 0xff);        		//键值数据低位   
+  0143    1303    CLRB	0x3,6
+  0144    083A    LD	A,0x3A
+  0145    2183    CALL	0x183
+  0146    120A    CLRB	0xA,4
+  0147    118A    CLRB	0xA,3
+532:              		I2C_Write1bYTE((TKdata[13]>>8) & 0xff);	  		//键值数据高位
+  0148    1303    CLRB	0x3,6
+  0149    083B    LD	A,0x3B
+  014A    2183    CALL	0x183
+  014B    120A    CLRB	0xA,4
+  014C    118A    CLRB	0xA,3
+533:              		checksum += 13;
+  014D    300D    LDIA	0xD
+  014E    07F4    ADDR	0x74
+534:              		checksum += (TKdata[13] & 0xff);					//检验和= 数据个数+键值数据的总和
+  014F    1303    CLRB	0x3,6
+  0150    083A    LD	A,0x3A
+  0151    07F4    ADDR	0x74
+535:              		checksum += ((TKdata[13]>>8) & 0xff);		
+  0152    083B    LD	A,0x3B
+  0153    07F4    ADDR	0x74
+536:              		#endif		
+537:              		
+538:              		#ifdef	C_KEY_14
+539:              		I2C_Write1bYTE(14);
+  0154    300E    LDIA	0xE
+  0155    2183    CALL	0x183
+  0156    120A    CLRB	0xA,4
+  0157    118A    CLRB	0xA,3
+540:              		I2C_Write1bYTE(TKdata[14] & 0xff);        		//键值数据低位   
+  0158    1303    CLRB	0x3,6
+  0159    083C    LD	A,0x3C
+  015A    2183    CALL	0x183
+  015B    120A    CLRB	0xA,4
+  015C    118A    CLRB	0xA,3
+541:              		I2C_Write1bYTE((TKdata[14]>>8) & 0xff);	  		//键值数据高位
+  015D    1303    CLRB	0x3,6
+  015E    083D    LD	A,0x3D
+  015F    2183    CALL	0x183
+  0160    120A    CLRB	0xA,4
+  0161    118A    CLRB	0xA,3
+542:              		checksum += 14;
+  0162    300E    LDIA	0xE
+  0163    07F4    ADDR	0x74
+543:              		checksum += (TKdata[14] & 0xff);					//检验和= 数据个数+键值数据的总和
+  0164    1303    CLRB	0x3,6
+  0165    083C    LD	A,0x3C
+  0166    07F4    ADDR	0x74
+544:              		checksum += ((TKdata[14]>>8) & 0xff);		
+  0167    083D    LD	A,0x3D
+  0168    07F4    ADDR	0x74
+545:              		#endif	
+546:              
+547:              		#ifdef	C_KEY_15
+548:              		I2C_Write1bYTE(15);
+  0169    300F    LDIA	0xF
+  016A    2183    CALL	0x183
+  016B    120A    CLRB	0xA,4
+  016C    118A    CLRB	0xA,3
+549:              		I2C_Write1bYTE(TKdata[15] & 0xff);        		//键值数据低位   
+  016D    1303    CLRB	0x3,6
+  016E    083E    LD	A,0x3E
+  016F    2183    CALL	0x183
+  0170    120A    CLRB	0xA,4
+  0171    118A    CLRB	0xA,3
+550:              		I2C_Write1bYTE((TKdata[15]>>8) & 0xff);	  		//键值数据高位
+  0172    1303    CLRB	0x3,6
+  0173    083F    LD	A,0x3F
+  0174    2183    CALL	0x183
+  0175    120A    CLRB	0xA,4
+  0176    118A    CLRB	0xA,3
+551:              		checksum += 15;
+  0177    300F    LDIA	0xF
+  0178    07F4    ADDR	0x74
+552:              		checksum += (TKdata[15] & 0xff);					//检验和= 数据个数+键值数据的总和
+  0179    1303    CLRB	0x3,6
+  017A    083E    LD	A,0x3E
+  017B    07F4    ADDR	0x74
+553:              		checksum += ((TKdata[15]>>8) & 0xff);		
+  017C    083F    LD	A,0x3F
+  017D    07F4    ADDR	0x74
+554:              		#endif			
+555:              		
+556:              		I2C_Write1bYTE(checksum);						//发校验和
+  017E    0874    LD	A,0x74
+  017F    2183    CALL	0x183
+  0180    120A    CLRB	0xA,4
+  0181    118A    CLRB	0xA,3
+557:              		I2C_WriteStop();								//结束					
+  0182    29A3    JP	0x1A3
+558:              	}	
+559:              	
+560:              }	
+561:              
+562:              /**************************************************************************
+563:              对外输出函数
+564:              **************************************************************************/	
+565:              void CheckTouchKey()
+566:              {
+567:              	CheckTouchKey_F();
+  001C    281D    JP	0x1D
+568:              }
+569:              	
+570:              	
+571:              	
+572:              	
+573:              	
+574:              	
+575:              	
+576:              /*********************************************************************	
+577:               IIC函数
+578:              	
+579:              *********************************************************************/
+580:              
+581:              
+582:              //起始信号-在SCL为高电平时，SDA线上发生从高到低的电平变化
+583:              void I2C_WriteStart()
+584:              {
+585:              	I2C_SDA_IO = 0;
+  01B9    1285    CLRB	0x5,5
+586:              	I2C_SCL_IO = 0;
+  01BA    1205    CLRB	0x5,4
+587:              	I2C_WaitMoment();
+  01BB    21CF    CALL	0x1CF
+  01BC    120A    CLRB	0xA,4
+  01BD    118A    CLRB	0xA,3
+588:              	
+589:              	I2C_SDA = 1;			//先将SDA=1，以准备在SCL=1时，将SDA=0
+  01BE    1283    CLRB	0x3,5
+  01BF    1703    SETB	0x3,6
+  01C0    1686    SETB	0x6,5
+590:              	I2C_SCL = 1;			//时钟总线拉高
+  01C1    1606    SETB	0x6,4
+591:              	I2C_WaitMoment();
+  01C2    21CF    CALL	0x1CF
+  01C3    120A    CLRB	0xA,4
+  01C4    118A    CLRB	0xA,3
+592:              	I2C_SDA = 0;			//SCL=1时，将SDA拉低即产生启动信号
+  01C5    1283    CLRB	0x3,5
+  01C6    1703    SETB	0x3,6
+  01C7    1286    CLRB	0x6,5
+593:              	
+594:              	I2C_WaitMoment();
+  01C8    21CF    CALL	0x1CF
+  01C9    120A    CLRB	0xA,4
+  01CA    118A    CLRB	0xA,3
+595:              	I2C_SCL = 0;			//将SCL=0，完成启动信号操作
+  01CB    1283    CLRB	0x3,5
+  01CC    1703    SETB	0x3,6
+  01CD    1206    CLRB	0x6,4
+596:              	I2C_WaitMoment();
+  01CE    29CF    JP	0x1CF
+597:              }
+598:              
+599:              //结束信号-在SCL为高电平时，SDA线上发生从低到高的电平变化
+600:              void I2C_WriteStop()
+601:              {
+602:              	I2C_SDA_IO = 0;
+  01A3    1285    CLRB	0x5,5
+603:              	I2C_SCL_IO = 0;
+  01A4    1205    CLRB	0x5,4
+604:              	I2C_WaitMoment();
+  01A5    21CF    CALL	0x1CF
+  01A6    120A    CLRB	0xA,4
+  01A7    118A    CLRB	0xA,3
+605:              	
+606:              	I2C_SDA = 0;			//先将SDA=0，以准备在SCL=1时，将SDA=1
+  01A8    1283    CLRB	0x3,5
+  01A9    1703    SETB	0x3,6
+  01AA    1286    CLRB	0x6,5
+607:              	I2C_SCL = 1;			//时钟总线拉高
+  01AB    1606    SETB	0x6,4
+608:              	I2C_WaitMoment();
+  01AC    21CF    CALL	0x1CF
+  01AD    120A    CLRB	0xA,4
+  01AE    118A    CLRB	0xA,3
+609:              	I2C_SDA = 1;			//SCL=1时，将SDA拉高即产生停止信号
+  01AF    1283    CLRB	0x3,5
+  01B0    1703    SETB	0x3,6
+  01B1    1686    SETB	0x6,5
+610:              	
+611:              	I2C_WaitMoment();
+  01B2    21CF    CALL	0x1CF
+  01B3    120A    CLRB	0xA,4
+  01B4    118A    CLRB	0xA,3
+612:              	I2C_SCL = 0;			//将SCL=0，完成启动信号操作
+  01B5    1283    CLRB	0x3,5
+  01B6    1703    SETB	0x3,6
+  01B7    1206    CLRB	0x6,4
+613:              	I2C_WaitMoment();
+  01B8    29CF    JP	0x1CF
+614:              }
+615:              
+616:              /***********************************************************
+617:              函数功能：模拟IIC主机发送8位数据
+618:              入口参数：data-待发送数据
+619:              函数返回：返回ack应答信号
+620:              备    注：IIC协议ack应答信号为低有效
+621:              ***********************************************************/
+622:              unsigned char I2C_Write1bYTE(unsigned char data)
+  0183    00F2    LD	0x72,A
+623:              {
+624:              	unsigned char i = 8;
+  0184    3008    LDIA	0x8
+  0185    00F3    LD	0x73,A
+625:              	I2C_SDA_IO = 0;
+  0186    1283    CLRB	0x3,5
+  0187    1703    SETB	0x3,6
+  0188    1285    CLRB	0x5,5
+626:              	I2C_SCL_IO = 0;
+  0189    1205    CLRB	0x5,4
+627:              	do
+628:              	{
+629:              		I2C_SCL = 0;
+  018A    1206    CLRB	0x6,4
+630:              		if(data&0x80)
+  018B    1FF2    SNZB	0x72,7
+  018C    298F    JP	0x18F
+631:              			I2C_SDA = 1;
+  018D    1686    SETB	0x6,5
+  018E    2990    JP	0x190
+632:              		else
+633:              			I2C_SDA = 0;
+  018F    1286    CLRB	0x6,5
+634:              		
+635:              		I2C_SCL = 1;		//时钟线做一个上升沿，将一位数据写入
+  0190    1606    SETB	0x6,4
+636:              		data <<= 1;
+  0191    1003    CLRB	0x3,0
+  0192    0DF2    RLCR	0x72
+637:              	}
+638:              	while(--i);
+  0193    0BF3    SZDECR	0x73
+  0194    298A    JP	0x18A
+639:              	I2C_SCL = 0;
+  0195    1206    CLRB	0x6,4
+640:              	
+641:              	I2C_SDA_IO = 1;			//置为输入口接收应答信号
+  0196    1685    SETB	0x5,5
+642:              
+643:              	I2C_WaitMoment();
+  0197    21CF    CALL	0x1CF
+  0198    120A    CLRB	0xA,4
+  0199    118A    CLRB	0xA,3
+644:              	I2C_SCL = 1;			//做个上升沿准备读应答信号
+  019A    1283    CLRB	0x3,5
+  019B    1703    SETB	0x3,6
+  019C    1606    SETB	0x6,4
+645:              	I2C_WaitMoment();
+  019D    21CF    CALL	0x1CF
+646:              	
+647:              	i = I2C_SDA;
+648:              	I2C_SCL = 0;
+  019E    1283    CLRB	0x3,5
+  019F    1703    SETB	0x3,6
+  01A0    1206    CLRB	0x6,4
+649:              	I2C_SDA_IO = 0;
+  01A1    1285    CLRB	0x5,5
+  01A2    0008    RET
+650:              	return i;
+651:              }
+652:              
+653:              /***********************************************************
+654:              函数功能：模拟IIC主机接收8位数据
+655:              入口参数：ack-应答信号
+656:              函数返回：接收到的数据
+657:              备    注：IIC协议ack应答信号为低有效
+658:              ***********************************************************/
+659:              unsigned char I2C_Read1bYTE(unsigned char ack)
+660:              {
+661:              	unsigned char i,data;
+662:              	I2C_SDA_IO = 1;
+663:              	I2C_SCL_IO = 1;
+664:              	I2C_WaitMoment();
+665:              	
+666:              	while(!I2C_SCL);				//等待从机准备好数据释放时钟
+667:              	I2C_SCL_IO = 0;
+668:              	I2C_SCL = 0;
+669:              	I2C_WaitMoment();
+670:              	
+671:              	data <<= 1;
+672:              	if(I2C_SDA) data |= 0x1;
+673:              	
+674:              	
+675:              	for(i = 0; i < 7; i++)
+676:              	{
+677:              		I2C_SCL = 1;
+678:              		data <<= 1;
+679:              		if(I2C_SDA) data |= 0x1;
+680:              		I2C_SCL = 0;
+681:              	}
+682:              	
+683:              	I2C_SDA_IO = 0;
+684:              	
+685:              	if(ack)I2C_SDA = 1;			//是否需要更多的数据
+686:              	else I2C_SDA = 0;
+687:              	
+688:              	I2C_WaitMoment();
+689:              	I2C_SCL = 1;
+690:              	I2C_WaitMoment();
+691:              	I2C_SCL = 0;
+692:              	return data;
+693:              }
+694:              
+695:              void I2C_WaitMoment()
+  01CF    0000    NOP
+  01D0    0000    NOP
+  01D1    0008    RET
+696:              {
+697:              	asm("nop");
+698:              	asm("nop");
+699:              }	
+700:              	
+701:              	
+702:              	
+703:              	
+704:              	
+705:              	
+706:              	
+707:              	
+708:              	
+709:              	
+710:              	
+711:              	
+712:              	
+713:              	
+714:              	
+715:              	
+716:              	
+717:              	
+718:              	
+719:              	
+720:              	
+721:              	
+722:              	
+723:              	
+724:              	
+725:              	
+726:              	
+727:              	
+728:              	
+729:              	
+730:              	
+731:              	
+732:              	
+733:              	
+734:              		
+735:              
+---- stringtab ------------------------------------------------------------------
+---- reset_enter ------------------------------------------------------------------
+  0000    120A    CLRB	0xA,4
+  0001    118A    CLRB	0xA,3
+  0002    280C    JP	0xC
+  000C    120A    CLRB	0xA,4
+  000D    118A    CLRB	0xA,3
+  000E    280F    JP	0xF
+---- start_initialization ------------------------------------------------------------------
+  000F    3020    LDIA	0x20
+  0010    01F8    CLR	0x78
+  0011    01F9    CLR	0x79
+  0012    1383    CLRB	0x3,7
+  0013    0084    LD	0x4,A
+  0014    3040    LDIA	0x40
+  0015    120A    CLRB	0xA,4
+  0016    118A    CLRB	0xA,3
+  0017    23FB    CALL	0x3FB
+---- interrupt_function_enter ----------------------------------------------------------
+  0004    00FE    LD	0x7E,A
+  0005    0E03    SWAPA	0x3
+  0006    00F0    LD	0x70,A
+  0007    080A    LD	A,0xA
+  0008    00F1    LD	0x71,A
+  0009    120A    CLRB	0xA,4
+  000A    118A    CLRB	0xA,3
+  000B    2BE7    JP	0x3E7
+---- common_function ------------------------------------------------------------------
+  0018    0183    CLR	0x3
+  0019    120A    CLRB	0xA,4
+  001A    118A    CLRB	0xA,3
+  001B    2BCF    JP	0x3CF
+  039D    30FF    LDIA	0xFF
+  039E    1283    CLRB	0x3,5
+  039F    1303    CLRB	0x3,6
+  03A0    0085    LD	0x5,A
+  03A1    0186    CLR	0x6
+  03A2    0188    CLR	0x8
+  03A3    018E    CLR	0xE
+  03A4    30C0    LDIA	0xC0
+  03A5    008B    LD	0xB,A
+  03A6    0008    RET
+  03A7    3070    LDIA	0x70
+  03A8    1283    CLRB	0x3,5
+  03A9    1303    CLRB	0x3,6
+  03AA    0094    LD	0x14,A
+  03AB    300F    LDIA	0xF
+  03AC    0081    LD	0x1,A
+  03AD    0008    RET
+  03FB    0064    CLRWDT
+  03FC    0180    CLR	0x0
+  03FD    0A84    INCR	0x4
+  03FE    0604    XORA	0x4
+  03FF    1903    SZB	0x3,2
+  0400    3400    RET	0x0
+  0401    0604    XORA	0x4
+  0402    2BFC    JP	0x3FC

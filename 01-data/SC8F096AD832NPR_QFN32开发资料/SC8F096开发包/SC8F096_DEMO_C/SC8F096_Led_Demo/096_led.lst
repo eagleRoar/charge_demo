@@ -1,0 +1,351 @@
+---- H:\MyDownloads\说明书&测试报告\开发包\SC8F096AD开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c ----------------------------------------------------------------------
+1:                #include <sc.h>
+2:                
+3:                #pragma warning disable 751,752;
+4:                
+5:                void Set_LED_Moudle();
+6:                
+7:                bit B_MainLoop;
+8:                volatile unsigned char sec;
+9:                
+10:               void main()
+  0016    0000    NOP
+  0017    0064    CLRWDT
+11:               {
+12:               	asm("nop");
+13:               	asm("clrwdt");
+14:               	
+15:               	OSCCON = 0x70;							//内部振荡器1分频
+  0018    3070    LDIA	0x70
+  0019    1283    CLRB	0x3,5
+  001A    1303    CLRB	0x3,6
+  001B    0094    LD	0x14,A
+16:               	INTCON = 0;
+  001C    018B    CLR	0xB
+17:               	
+18:               	PIR1 = 0;
+  001D    018D    CLR	0xD
+19:               	PIE1 = 0;
+  001E    018E    CLR	0xE
+20:               	PIR2 = 0;
+  001F    1703    SETB	0x3,6
+  0020    018F    CLR	0xF
+21:               	PIE2 = 0;
+  0021    0190    CLR	0x10
+22:               
+23:               	Set_LED_Moudle();						//初始化LED模块
+  0022    120A    CLRB	0xA,4
+  0023    118A    CLRB	0xA,3
+  0024    208A    CALL	0x8A
+24:               
+25:               //125us中断初始化
+26:               	PR2 = 124;				//赋初值	
+  0027    307C    LDIA	0x7C
+  0028    1283    CLRB	0x3,5
+  0029    1303    CLRB	0x3,6
+  002A    0091    LD	0x11,A
+27:               	TMR2IF = 0;				//清中断标志位
+  002B    108D    CLRB	0xD,1
+28:               	TMR2IE = 1;				//允许Timer2中断
+  002C    148E    SETB	0xE,1
+29:               	T2CON = 0x05;			//开启Timer2，预分频值为4，后分频比为1:1
+  002D    3005    LDIA	0x5
+  002E    0093    LD	0x13,A
+30:               	
+31:               	INTCON = 0XC0;							//全局中断使能
+  002F    30C0    LDIA	0xC0
+  0030    008B    LD	0xB,A
+32:               	
+33:               	TRISC = 0B11111111;
+  0031    30FF    LDIA	0xFF
+  0032    1703    SETB	0x3,6
+  0033    0085    LD	0x5,A
+34:               	TRISB = 0B11111111;
+  0034    1303    CLRB	0x3,6
+  0035    0085    LD	0x5,A
+35:               	TRISA = 0B00000001;
+  0036    3001    LDIA	0x1
+  0037    1683    SETB	0x3,5
+  0038    0085    LD	0x5,A
+36:               	
+37:               	Set_LED_Moudle();		//初始化LED寄存器
+  0039    120A    CLRB	0xA,4
+  003A    118A    CLRB	0xA,3
+  003B    208A    CALL	0x8A
+38:               
+39:               	while(1)
+40:               	{
+41:               		if(B_MainLoop)
+  003E    1C74    SNZB	0x74,0
+  003F    283E    JP	0x3E
+42:               		{
+43:               			B_MainLoop = 0;
+  0040    1074    CLRB	0x74,0
+  0041    0064    CLRWDT
+44:               			asm("clrwdt");
+45:               			++sec;
+  0042    0AF1    INCR	0x71
+46:               			if(sec >= 250)
+  0043    30FA    LDIA	0xFA
+  0044    0271    SUBA	0x71
+  0045    1C03    SNZB	0x3,0
+  0046    283E    JP	0x3E
+47:               			{
+48:               				sec = 0;
+  0047    01F1    CLR	0x71
+49:               				LCDADD = 0B10000000;		//允许读写LED数据
+  0048    3080    LDIA	0x80
+  0049    1683    SETB	0x3,5
+  004A    1703    SETB	0x3,6
+  004B    009C    LD	0x1C,A
+50:               				/***************LCDADD*******************
+51:               				Bit7  LCDCS:  LCD/LED 数据读写使能
+52:               					0:  禁止读写 LCD/LED 数据
+53:               					1:  允许读写 LCD/LED 数据
+54:               				Bit6~Bit5  B2RES<1:0>:  LCD 模式内部分压电阻选择
+55:               					00=  R=10K
+56:               					01=  R=50K
+57:               					10=  R=200K(自动使能快速充电模式，在一个 COM 周期开始时 50K、200K 分压电阻同
+58:               						时有效，经设定时间后 50K 分压电阻关闭，200K 分压电阻保持有效)
+59:               					11=  R=900K(自动使能快速充电模式，在一个 COM 周期开始时 50K、900K 分压电阻同
+60:               						时有效，经设定时间后 50K 分压电阻关闭，900K 分压电阻保持有效)
+61:               					Bit4~Bit0  LCDADD<4:0>:  LCD/LED 地址选择
+62:               											LCD/LED 地址范围 00H-017H
+63:               				***********************************************************/
+64:               				LCDDATA = 0x01;			//LED0对应的LED
+  004C    3001    LDIA	0x1
+  004D    009D    LD	0x1D,A
+65:               				LCDDATA8 = 1;			//第9位数据在SEGEN3的Bit0
+  004E    141F    SETB	0x1F,0
+66:               				LCDADD++;
+  004F    0A9C    INCR	0x1C
+67:               				
+68:               				LCDDATA = 0x02;			//LED1对应的LED
+  0050    3002    LDIA	0x2
+  0051    009D    LD	0x1D,A
+69:               				LCDDATA8 = 1;			//第9位数据在SEGEN3的Bit0
+  0052    141F    SETB	0x1F,0
+70:               				LCDADD++;
+  0053    0A9C    INCR	0x1C
+71:               				
+72:               				LCDDATA = 0x04;			//LED2对应的LED
+  0054    3004    LDIA	0x4
+  0055    009D    LD	0x1D,A
+73:               				LCDDATA8 = 1;			//第9位数据在SEGEN3的Bit0
+  0056    141F    SETB	0x1F,0
+74:               				LCDADD++;
+  0057    0A9C    INCR	0x1C
+75:               				
+76:               				LCDDATA = 0x08;			//LED3对应的LED
+  0058    3008    LDIA	0x8
+  0059    009D    LD	0x1D,A
+77:               				LCDDATA8 = 1;			//第9位数据在SEGEN3的Bit0
+  005A    141F    SETB	0x1F,0
+78:               				LCDADD++;
+  005B    0A9C    INCR	0x1C
+79:               				
+80:               				LCDDATA = 0x10;			//LED4对应的LED
+  005C    3010    LDIA	0x10
+  005D    009D    LD	0x1D,A
+81:               				LCDDATA8 = 1;			//第9位数据在SEGEN3的Bit0
+  005E    141F    SETB	0x1F,0
+82:               				LCDADD++;
+  005F    0A9C    INCR	0x1C
+83:               				
+84:               				LCDDATA = 0x20;			//LED5对应的LED
+  0060    3020    LDIA	0x20
+  0061    009D    LD	0x1D,A
+85:               				LCDDATA8 = 1;			//第9位数据在SEGEN3的Bit0
+  0062    141F    SETB	0x1F,0
+86:               				LCDADD++;
+  0063    0A9C    INCR	0x1C
+87:               				
+88:               				LCDDATA = 0x40;			//LED6对应的LED
+  0064    3040    LDIA	0x40
+  0065    009D    LD	0x1D,A
+89:               				LCDDATA8 = 1;			//第9位数据在SEGEN3的Bit0
+  0066    141F    SETB	0x1F,0
+90:               				LCDADD++;
+  0067    0A9C    INCR	0x1C
+91:               				
+92:               				LCDDATA = 0x80;			//LED7对应的LED
+  0068    3080    LDIA	0x80
+  0069    009D    LD	0x1D,A
+93:               				LCDDATA8 = 1;			//第9位数据在SEGEN3的Bit0
+  006A    141F    SETB	0x1F,0
+94:               				LCDADD++;
+  006B    0A9C    INCR	0x1C
+95:               				
+96:               				LCDDATA = 0x01F;			//LED8对应的LED
+  006C    301F    LDIA	0x1F
+  006D    009D    LD	0x1D,A
+97:               				LCDDATA8 = 1;			//第9位数据在SEGEN3的Bit0
+  006E    141F    SETB	0x1F,0
+98:               				LCDADD++;
+  006F    0A9C    INCR	0x1C
+99:               				
+100:              				LCDDATA = 0xFF;			//LED9对应的LED
+  0070    30FF    LDIA	0xFF
+  0071    009D    LD	0x1D,A
+101:              				LCDDATA8 = 1;			//第9位数据在SEGEN3的Bit0
+  0072    141F    SETB	0x1F,0
+102:              				
+103:              				LCDCS = 0;		
+  0073    139C    CLRB	0x1C,7
+104:              
+105:              				LEDEN = 1;
+  0074    1283    CLRB	0x3,5
+  0075    171D    SETB	0x1D,6
+  0076    283E    JP	0x3E
+106:              			}
+107:              			
+108:              		}
+109:              	}
+110:              
+111:              }
+112:              
+113:              void interrupt Timer_Isr()
+114:              {
+115:              	static unsigned char tcount = 0;
+116:              	
+117:              	if(TMR2IF)
+  0077    1283    CLRB	0x3,5
+  0078    1303    CLRB	0x3,6
+  0079    1C8D    SNZB	0xD,1
+  007A    2883    JP	0x83
+118:              	{
+119:              		TMR2IF = 0;
+  007B    108D    CLRB	0xD,1
+120:              		if(++tcount >= 40)					//主循环定时设置为40*125us=5ms
+  007C    3028    LDIA	0x28
+  007D    0AF0    INCR	0x70
+  007E    0270    SUBA	0x70
+  007F    1C03    SNZB	0x3,0
+  0080    2883    JP	0x83
+121:              		{
+122:              			tcount = 0;
+  0081    01F0    CLR	0x70
+123:              			B_MainLoop = 1;
+  0082    1474    SETB	0x74,0
+  0083    0873    LD	A,0x73
+  0084    008A    LD	0xA,A
+  0085    0E72    SWAPA	0x72
+  0086    0083    LD	0x3,A
+  0087    0EFE    SWAPR	0x7E
+  0088    0E7E    SWAPA	0x7E
+  0089    0009    RETI
+124:              		}
+125:              	}
+126:              }
+127:              
+128:              /**********************************************************
+129:              函数名称：Set_LED_Moudle
+130:              函数功能：初始化LED/LCD模块设置
+131:              入口参数：无
+132:              出口参数：无 
+133:              备    注：
+134:              **********************************************************/
+135:              void Set_LED_Moudle()
+136:              {
+137:              	
+138:              	LCDCON0 = 0B00111011;					//使能LED,设置为10个COM,设置频率为FHSI/8192	
+  008A    303B    LDIA	0x3B
+  008B    1283    CLRB	0x3,5
+  008C    1703    SETB	0x3,6
+  008D    009D    LD	0x1D,A
+139:              	/******* LEDCON0*****************************
+140:              	Bit7  LCDEN:  LCD 模块使能
+141:              		0:  禁止 LCD 模块
+142:              		1:  使能 LCD 模块
+143:              	Bit6  LEDEN:  LED 模块使能
+144:              		0:  禁止 LED 模块
+145:              		1:  使能 LED 模块。
+146:              	Bit5~Bit3  COMSEL[2:0]:  LCD/LED 模块 COM 口个数选择
+147:              			LCD 扫描模式  LED 扫描模式
+148:              		000:  2COM 		 3COM
+149:              		001:  3COM  	 4COM
+150:              		010:  4COM  	 5COM
+151:              		011:  5COM		 6COM
+152:              		100:  6COM		 7COM
+153:              		101:  6COM		 8COM
+154:              		110:  6COM 		 9COM
+155:              		111:  6COM		 10COM
+156:              	Bit2~Bit0  LCDCLK[2:0]:  LCD/LED 扫描频率（根据 LCDCON1 的 LCDF<1:0>选择时钟源）
+157:              				LED 扫描模式
+158:              		000：  F HSI /1024||F LSI /2||F LSE /2
+159:              		001：  F HSI /2048||F LSI /4||F LSE /4
+160:              		010：  F HSI /4096||F LSI /8||F LSE /8
+161:              		011：  F HSI /8192||F LSI /16||F LSE /16
+162:              		100：  F HSI /16384||F LSI /32||F LSE /32
+163:              		101：  F HSI /32768||F LSI /64||F LSE /64
+164:              		110：  F HSI /65536||F LSI /128||F LSE /128
+165:              		111：  F HSI /131072||F LSI /256||F LSE /256
+166:              	**************************************************************************/
+167:              	LCDCON1 = 0;					//时钟源为FHSI
+  008E    019E    CLR	0x1E
+168:              	/***************LCDCON1************************************************
+169:              	Bit1~Bit0  LCDF<1:0>:  LCD/LED 时钟源选择
+170:              		0x:  FHSI
+171:              		10:  FLSI
+172:              		11:  FLSE
+173:              	************************************************************************/
+174:              	COMEN  = 0B00000011;			//COMEN的Bit0~1对应LED8~9
+  008F    3003    LDIA	0x3
+  0090    1683    SETB	0x3,5
+  0091    009E    LD	0x1E,A
+175:              	SEGEN1 = 0xff;					//SEGEN1对应LED0~7
+  0092    30FF    LDIA	0xFF
+  0093    1283    CLRB	0x3,5
+  0094    009F    LD	0x1F,A
+176:              	SEGEN3 = 0B01000000;			//SEG驱动电流选择为8mA
+  0095    3040    LDIA	0x40
+  0096    1683    SETB	0x3,5
+  0097    009F    LD	0x1F,A
+  0098    0008    RET
+177:              	/******************SEGEN3*******************************************
+178:              	Bit7~Bit3  SEGDRI[4:0]:  SEG 口驱动电流设置
+179:              		00000:  SEG 口驱动电流为 0mA
+180:              		00001:  SEG 口驱动电流为 1mA
+181:              		00010:  SEG 口驱动电流为 2mA
+182:              		00011:  SEG 口驱动电流为 3mA
+183:              		00100:  SEG 口驱动电流为 4mA
+184:              		00101:  SEG 口驱动电流为 5mA
+185:              		00110:  SEG 口驱动电流为 6mA
+186:              		00111:  SEG 口驱动电流为 7mA
+187:              		01000:  SEG 口驱动电流为 8mA
+188:              		… 
+189:              		11101:  SEG 口驱动电流为 29mA
+190:              		11110:  SEG 口驱动电流为 30mA
+191:              		11111:  SEG 口驱动电流为 45mA
+192:              	Bit2~Bit1  未用 
+193:              	Bit0  LCDDATA<8>:  LED 模式下，LED 数据的第 8 位
+194:              	*******************************************************************/
+195:              	
+196:              }
+197:              
+------ stringtab ------------------------------------
+------ reset_enter ------------------------------------
+  0000    120A    CLRB	0xA,4
+  0001    118A    CLRB	0xA,3
+  0002    280C    JP	0xC
+  000C    120A    CLRB	0xA,4
+  000D    118A    CLRB	0xA,3
+  000E    280F    JP	0xF
+------ start_initialization ------------------------------------
+  000F    01F4    CLR	0x74
+  0010    01F0    CLR	0x70
+  0011    01F1    CLR	0x71
+------ interrupt_function_enter ------------------------------------
+  0004    00FE    LD	0x7E,A
+  0005    0E03    SWAPA	0x3
+  0006    00F2    LD	0x72,A
+  0007    080A    LD	A,0xA
+  0008    00F3    LD	0x73,A
+  0009    120A    CLRB	0xA,4
+  000A    118A    CLRB	0xA,3
+  000B    2877    JP	0x77
+------ common_function ------------------------------------
+  0012    0183    CLR	0x3
+  0013    120A    CLRB	0xA,4
+  0014    118A    CLRB	0xA,3
+  0015    2816    JP	0x16

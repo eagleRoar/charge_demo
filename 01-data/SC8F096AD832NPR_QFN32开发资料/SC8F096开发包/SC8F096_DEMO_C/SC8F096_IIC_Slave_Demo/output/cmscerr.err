@@ -1,0 +1,10 @@
+Warning[520]:	H:\MyDownloads\说明书&测试报告\开发包\SC8F096AD开发包\SC8F096_DEMO_C\SC8F096_IIC_Slave_Demo\SC8F096_IIC_Slave_C.c	第24行	function "_DelayXms" is never called
+
+Memory Summary:
+    Program space        used    57h (    87) of  2000h words   (  1.1%)
+    Data space           used     Bh (    11) of   140h bytes   (  3.4%)
+    EEPROM space         None available
+    Data stack space     used     0h (     0) of    50h bytes   (  0.0%)
+    Configuration bits   used     0h (     0) of     2h words   (  0.0%)
+    ID Location space    used     0h (     0) of     4h bytes   (  0.0%)
+

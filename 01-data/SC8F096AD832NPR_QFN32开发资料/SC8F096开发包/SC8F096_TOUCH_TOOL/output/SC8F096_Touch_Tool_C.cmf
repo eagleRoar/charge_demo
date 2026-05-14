@@ -1,0 +1,775 @@
+%CMF
+# %PSECTS Section
+# For each object file, details of its psects are enumerated here.
+# The begining of the section is indicated by %PSECTS.  The first
+# line indicates the name of the first object file, e.g.
+#    $foo.obj
+# Each line that follows describes a psect in that object file, until
+# the next object file.  The lines that describe a psect have the
+# format:
+#    <psect name> <class name> <space> <link address> <load addresses> <length> <delta>
+# All addresses and the length are given in unqualified hexadecimal
+# in delta units.  Any other numeric values are decimal.
+%PSECTS
+$SC8F096_Touch_Tool_C.obj
+cinit CODE 0 F F D 2
+text1 CODE 0 38B 38B 23 2
+text3 CODE 0 3AE 3AE 21 2
+text5 CODE 0 1C 1C 36F 2
+text12 CODE 0 3E7 3E7 14 2
+maintext CODE 0 3CF 3CF 18 2
+cstackCOMMON COMMON 1 70 70 8 1
+intentry CODE 0 4 4 8 2
+bssBANK0 BANK0 1 20 20 20 1
+clrtext CODE 0 3FB 3FB 8 2
+bssCOMMON COMMON 1 78 78 2 1
+$startup.obj
+reset_vec CODE 0 0 0 3 2
+end_init CODE 0 C C 3 2
+# %UNUSED Section
+# This section enumerates the unused ranges of each CLASS. Each entry
+# is described on a single line as follows:
+#    <class name> <range> <delta>
+# Addresses given in the range are in hexadecimal and units of delta.
+%UNUSED
+RAM 40-6F 1
+RAM A0-EF 1
+RAM 120-16F 1
+RAM 1A0-1EF 1
+BANK0 40-6F 1
+BANK1 A0-EF 1
+BANK2 120-16F 1
+BANK3 1A0-1EF 1
+CONST 3-3 2
+CONST 403-1FFF 2
+ENTRY 3-3 2
+ENTRY 403-1FFF 2
+IDLOC 2000-2003 2
+STACK A0-EF 1
+CODE 3-3 2
+CODE 403-1FFF 2
+SFR0 0-1F 1
+SFR1 80-9F 1
+SFR2 100-11F 1
+SFR3 180-19F 1
+COMMON 7A-7D 1
+CONFIG 2007-2008 2
+STRCODE 3-3 2
+STRCODE 403-1FFF 2
+STRING 3-3 2
+STRING 403-1FFF 2
+# %LINETAB Section
+# This section enumerates the file/line to address mappings.
+# The beginning of the section is indicated by %LINETAB.
+# The first line indicates the name of the first object file, e.g.
+#   $foo.obj
+# Each line that follows describes a single mapping until the next
+# object file.  Mappings have the following format:
+#    <address> <psect name> <class name> ><line number>:<file name>
+# The address is absolute and given given in unqualified hex 
+# in delta units of the psect. All mappings within an object file
+# are in ascending order of addresses.
+# All other numeric values are in decimal.
+%LINETAB
+$SC8F096_Touch_Tool_C.obj
+F cinit CODE >526:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+F cinit CODE >529:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+F cinit CODE >566:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+10 cinit CODE >561:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+11 cinit CODE >562:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+12 cinit CODE >565:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+13 cinit CODE >567:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+14 cinit CODE >568:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+15 cinit CODE >569:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+18 cinit CODE >575:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+18 cinit CODE >577:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+19 cinit CODE >578:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+4 intentry CODE >83:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3E7 text12 CODE >83:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3E7 text12 CODE >85:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3EC text12 CODE >87:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3ED text12 CODE >88:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3F0 text12 CODE >89:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3F1 text12 CODE >93:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3F3 text12 CODE >94:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3F4 text12 CODE >97:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+1C text5 CODE >565:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1C text5 CODE >567:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1D text5 CODE >340:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1D text5 CODE >343:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1E text5 CODE >346:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1F text5 CODE >349:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+20 text5 CODE >353:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+21 text5 CODE >357:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+22 text5 CODE >361:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+23 text5 CODE >365:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+24 text5 CODE >369:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+25 text5 CODE >373:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+26 text5 CODE >377:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+27 text5 CODE >381:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+28 text5 CODE >385:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+29 text5 CODE >389:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2A text5 CODE >393:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2B text5 CODE >397:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2C text5 CODE >401:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2D text5 CODE >405:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2E text5 CODE >408:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+31 text5 CODE >411:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+34 text5 CODE >414:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+37 text5 CODE >415:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+39 text5 CODE >417:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+3C text5 CODE >418:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+40 text5 CODE >419:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+44 text5 CODE >422:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+48 text5 CODE >423:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+4D text5 CODE >424:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+52 text5 CODE >425:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+53 text5 CODE >426:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+56 text5 CODE >427:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+58 text5 CODE >431:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+5C text5 CODE >432:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+61 text5 CODE >433:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+66 text5 CODE >434:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+68 text5 CODE >435:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+6B text5 CODE >436:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+6D text5 CODE >440:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+71 text5 CODE >441:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+76 text5 CODE >442:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+7B text5 CODE >443:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+7D text5 CODE >444:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+80 text5 CODE >445:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+82 text5 CODE >449:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+86 text5 CODE >450:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+8B text5 CODE >451:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+90 text5 CODE >452:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+92 text5 CODE >453:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+95 text5 CODE >454:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+97 text5 CODE >458:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+9B text5 CODE >459:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+A0 text5 CODE >460:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+A5 text5 CODE >461:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+A7 text5 CODE >462:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+AA text5 CODE >463:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+AC text5 CODE >467:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+B0 text5 CODE >468:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+B5 text5 CODE >469:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+BA text5 CODE >470:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+BC text5 CODE >471:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+BF text5 CODE >472:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+C1 text5 CODE >476:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+C5 text5 CODE >477:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+CA text5 CODE >478:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+CF text5 CODE >479:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+D1 text5 CODE >480:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+D4 text5 CODE >481:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+D6 text5 CODE >485:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+DA text5 CODE >486:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+DF text5 CODE >487:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+E4 text5 CODE >488:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+E6 text5 CODE >489:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+E9 text5 CODE >490:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+EB text5 CODE >494:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+EF text5 CODE >495:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+F4 text5 CODE >496:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+F9 text5 CODE >497:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+FB text5 CODE >498:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+FE text5 CODE >499:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+100 text5 CODE >503:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+104 text5 CODE >504:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+109 text5 CODE >505:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+10E text5 CODE >506:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+110 text5 CODE >507:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+113 text5 CODE >508:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+115 text5 CODE >512:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+119 text5 CODE >513:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+11E text5 CODE >514:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+123 text5 CODE >515:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+125 text5 CODE >516:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+128 text5 CODE >517:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+12A text5 CODE >521:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+12E text5 CODE >522:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+133 text5 CODE >523:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+138 text5 CODE >524:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+13A text5 CODE >525:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+13D text5 CODE >526:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+13F text5 CODE >530:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+143 text5 CODE >531:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+148 text5 CODE >532:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+14D text5 CODE >533:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+14F text5 CODE >534:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+152 text5 CODE >535:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+154 text5 CODE >539:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+158 text5 CODE >540:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+15D text5 CODE >541:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+162 text5 CODE >542:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+164 text5 CODE >543:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+167 text5 CODE >544:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+169 text5 CODE >548:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+16D text5 CODE >549:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+172 text5 CODE >550:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+177 text5 CODE >551:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+179 text5 CODE >552:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+17C text5 CODE >553:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+17E text5 CODE >556:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+182 text5 CODE >557:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+183 text5 CODE >622:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+184 text5 CODE >624:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+186 text5 CODE >625:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+189 text5 CODE >626:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+18A text5 CODE >629:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+18B text5 CODE >630:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+18D text5 CODE >631:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+18F text5 CODE >632:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+18F text5 CODE >633:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+190 text5 CODE >635:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+191 text5 CODE >636:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+193 text5 CODE >638:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+195 text5 CODE >639:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+196 text5 CODE >641:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+197 text5 CODE >643:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+19A text5 CODE >644:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+19D text5 CODE >645:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+19E text5 CODE >648:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1A1 text5 CODE >649:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1A2 text5 CODE >651:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1A3 text5 CODE >600:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1A3 text5 CODE >602:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1A4 text5 CODE >603:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1A5 text5 CODE >604:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1A8 text5 CODE >606:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1AB text5 CODE >607:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1AC text5 CODE >608:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1AF text5 CODE >609:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1B2 text5 CODE >611:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1B5 text5 CODE >612:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1B8 text5 CODE >613:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1B9 text5 CODE >583:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1B9 text5 CODE >585:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1BA text5 CODE >586:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1BB text5 CODE >587:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1BE text5 CODE >589:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1C1 text5 CODE >590:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1C2 text5 CODE >591:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1C5 text5 CODE >592:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1C8 text5 CODE >594:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1CB text5 CODE >595:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1CE text5 CODE >596:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1CF text5 CODE >695:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1CF text5 CODE >697:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1D0 text5 CODE >698:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1D1 text5 CODE >699:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1D2 text5 CODE >32:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1D2 text5 CODE >35:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1D6 text5 CODE >36:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1D8 text5 CODE >37:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1DA text5 CODE >38:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1DB text5 CODE >39:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1DC text5 CODE >40:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1DD text5 CODE >41:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1DE text5 CODE >42:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1DF text5 CODE >43:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1E0 text5 CODE >44:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1E1 text5 CODE >45:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1E2 text5 CODE >46:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1E3 text5 CODE >47:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1E6 text5 CODE >48:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1E8 text5 CODE >49:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1F2 text5 CODE >50:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1F4 text5 CODE >55:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1F6 text5 CODE >56:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1F8 text5 CODE >57:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1FA text5 CODE >58:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1FB text5 CODE >59:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1FC text5 CODE >60:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1FD text5 CODE >61:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1FE text5 CODE >62:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+1FF text5 CODE >63:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+200 text5 CODE >64:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+201 text5 CODE >65:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+202 text5 CODE >66:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+203 text5 CODE >67:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+206 text5 CODE >68:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+208 text5 CODE >69:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+20F text5 CODE >70:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+211 text5 CODE >75:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+213 text5 CODE >76:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+215 text5 CODE >77:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+217 text5 CODE >78:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+218 text5 CODE >79:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+219 text5 CODE >80:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+21A text5 CODE >81:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+21B text5 CODE >82:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+21C text5 CODE >83:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+21D text5 CODE >84:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+21E text5 CODE >85:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+21F text5 CODE >86:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+220 text5 CODE >87:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+223 text5 CODE >88:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+225 text5 CODE >89:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+22C text5 CODE >90:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+22E text5 CODE >96:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+230 text5 CODE >97:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+232 text5 CODE >98:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+234 text5 CODE >99:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+235 text5 CODE >100:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+236 text5 CODE >101:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+237 text5 CODE >102:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+238 text5 CODE >103:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+239 text5 CODE >104:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+23A text5 CODE >105:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+23B text5 CODE >106:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+23C text5 CODE >107:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+23D text5 CODE >108:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+240 text5 CODE >109:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+242 text5 CODE >110:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+249 text5 CODE >111:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+24B text5 CODE >115:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+24D text5 CODE >116:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+24F text5 CODE >117:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+251 text5 CODE >118:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+252 text5 CODE >119:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+253 text5 CODE >120:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+254 text5 CODE >121:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+255 text5 CODE >122:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+256 text5 CODE >123:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+257 text5 CODE >124:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+258 text5 CODE >125:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+259 text5 CODE >126:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+25A text5 CODE >127:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+25D text5 CODE >128:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+25F text5 CODE >129:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+266 text5 CODE >130:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+268 text5 CODE >135:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+26A text5 CODE >136:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+26C text5 CODE >137:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+26E text5 CODE >138:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+26F text5 CODE >139:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+270 text5 CODE >140:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+271 text5 CODE >141:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+272 text5 CODE >142:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+273 text5 CODE >143:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+274 text5 CODE >144:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+275 text5 CODE >145:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+276 text5 CODE >146:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+277 text5 CODE >147:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+27A text5 CODE >148:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+27C text5 CODE >149:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+283 text5 CODE >150:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+285 text5 CODE >154:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+287 text5 CODE >155:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+289 text5 CODE >156:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+28B text5 CODE >157:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+28C text5 CODE >158:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+28D text5 CODE >159:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+28E text5 CODE >160:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+28F text5 CODE >161:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+290 text5 CODE >162:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+291 text5 CODE >163:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+292 text5 CODE >164:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+293 text5 CODE >165:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+294 text5 CODE >166:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+297 text5 CODE >167:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+299 text5 CODE >168:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2A0 text5 CODE >169:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2A2 text5 CODE >173:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2A4 text5 CODE >174:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2A6 text5 CODE >175:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2A8 text5 CODE >176:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2A9 text5 CODE >177:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2AA text5 CODE >178:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2AB text5 CODE >179:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2AC text5 CODE >180:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2AD text5 CODE >181:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2AE text5 CODE >182:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2AF text5 CODE >183:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2B0 text5 CODE >184:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2B1 text5 CODE >185:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2B4 text5 CODE >186:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2B6 text5 CODE >187:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2BD text5 CODE >188:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2BF text5 CODE >193:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2C1 text5 CODE >194:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2C3 text5 CODE >195:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2C5 text5 CODE >196:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2C6 text5 CODE >197:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2C7 text5 CODE >198:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2C8 text5 CODE >199:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2C9 text5 CODE >200:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2CA text5 CODE >201:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2CB text5 CODE >202:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2CC text5 CODE >203:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2CD text5 CODE >204:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2CE text5 CODE >205:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2D1 text5 CODE >206:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2D3 text5 CODE >207:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2DA text5 CODE >208:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2DC text5 CODE >213:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2DE text5 CODE >214:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2E0 text5 CODE >215:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2E2 text5 CODE >216:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2E3 text5 CODE >217:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2E4 text5 CODE >218:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2E5 text5 CODE >219:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2E6 text5 CODE >220:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2E7 text5 CODE >221:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2E8 text5 CODE >222:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2E9 text5 CODE >223:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2EA text5 CODE >224:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2EB text5 CODE >225:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2EE text5 CODE >226:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2F0 text5 CODE >227:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2F7 text5 CODE >228:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2F9 text5 CODE >234:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2FB text5 CODE >235:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2FD text5 CODE >236:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+2FF text5 CODE >237:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+300 text5 CODE >238:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+301 text5 CODE >239:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+302 text5 CODE >240:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+303 text5 CODE >241:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+304 text5 CODE >242:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+305 text5 CODE >243:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+306 text5 CODE >244:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+307 text5 CODE >245:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+308 text5 CODE >246:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+30B text5 CODE >247:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+30D text5 CODE >248:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+314 text5 CODE >249:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+316 text5 CODE >253:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+318 text5 CODE >254:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+31A text5 CODE >255:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+31C text5 CODE >256:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+31D text5 CODE >257:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+31E text5 CODE >258:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+31F text5 CODE >259:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+320 text5 CODE >260:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+321 text5 CODE >261:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+322 text5 CODE >262:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+323 text5 CODE >263:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+324 text5 CODE >264:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+325 text5 CODE >265:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+328 text5 CODE >266:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+32A text5 CODE >267:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+331 text5 CODE >268:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+333 text5 CODE >273:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+335 text5 CODE >274:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+337 text5 CODE >275:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+339 text5 CODE >276:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+33A text5 CODE >277:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+33B text5 CODE >278:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+33C text5 CODE >279:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+33D text5 CODE >280:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+33E text5 CODE >281:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+33F text5 CODE >282:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+340 text5 CODE >283:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+341 text5 CODE >284:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+342 text5 CODE >285:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+345 text5 CODE >286:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+347 text5 CODE >287:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+34E text5 CODE >288:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+350 text5 CODE >292:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+352 text5 CODE >293:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+354 text5 CODE >294:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+356 text5 CODE >295:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+357 text5 CODE >296:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+358 text5 CODE >297:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+359 text5 CODE >298:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+35A text5 CODE >299:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+35B text5 CODE >300:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+35C text5 CODE >301:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+35D text5 CODE >302:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+35E text5 CODE >303:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+35F text5 CODE >304:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+362 text5 CODE >305:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+364 text5 CODE >306:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+36B text5 CODE >307:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+36D text5 CODE >311:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+36F text5 CODE >312:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+371 text5 CODE >313:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+373 text5 CODE >314:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+374 text5 CODE >315:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+375 text5 CODE >316:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+376 text5 CODE >317:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+377 text5 CODE >318:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+378 text5 CODE >319:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+379 text5 CODE >320:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+37A text5 CODE >321:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+37B text5 CODE >322:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+37C text5 CODE >323:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+37F text5 CODE >324:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+381 text5 CODE >325:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+388 text5 CODE >326:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+38A text5 CODE >331:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+3AE text3 CODE >20:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3AE text3 CODE >24:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3B8 text3 CODE >26:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3BE text3 CODE >27:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3BF text3 CODE >24:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3C3 text3 CODE >13:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3C3 text3 CODE >15:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+38B text1 CODE >34:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+38B text1 CODE >36:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+38C text1 CODE >37:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+38F text1 CODE >39:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+390 text1 CODE >41:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+391 text1 CODE >50:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+392 text1 CODE >59:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+392 text1 CODE >61:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+396 text1 CODE >64:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+398 text1 CODE >76:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+39A text1 CODE >77:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+39C text1 CODE >78:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3CF maintext CODE >101:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3CF maintext CODE >103:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3D7 maintext CODE >104:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3DC maintext CODE >106:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3DC maintext CODE >109:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3E1 maintext CODE >110:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+3FB clrtext CODE >548:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+3FB clrtext CODE >549:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+3FC clrtext CODE >550:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+3FC clrtext CODE >551:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+3FD clrtext CODE >552:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+3FE clrtext CODE >553:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+3FF clrtext CODE >554:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+400 clrtext CODE >555:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+401 clrtext CODE >556:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+402 clrtext CODE >557:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\SC8F096_Touch_Tool_C.as
+0 text0 CODE >762:H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h
+$startup.obj
+C end_init CODE >79:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\startup.as
+C init CODE >76:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\startup.as
+0 functab ENTRY >42:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\startup.as
+0 functab ENTRY >43:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\startup.as
+0 functab ENTRY >44:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\startup.as
+0 functab ENTRY >45:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\startup.as
+0 functab ENTRY >46:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\startup.as
+0 functab ENTRY >47:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\startup.as
+0 reset_vec CODE >66:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\startup.as
+0 reset_vec CODE >71:H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\output\startup.as
+# %SYMTAB Section
+# An enumeration of all symbols in the program.
+# The beginning of the section is indicated by %SYMTAB.
+# Each line describes a single symbol as follows:
+#    <label> <value> [-]<load-adj> <class> <space> <psect> <file-name>
+# The value and load-adj are both in unqualified hexadecimal.
+# All other numeric values are in decimal.  The load-adj is the
+# quantity one needs to add to the symbol value in order to obtain the load
+# address of the symbol.  This value may be signed. If the symbol
+# was defined in a psect then <psect> will be "-". File-name
+# is the name of the object file in which the symbol was defined.
+%SYMTAB
+___latbits 2 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__Hspace_0 403 0 ABS 0 - -
+__Hspace_1 7A 0 ABS 0 - -
+__Hspace_2 0 0 ABS 0 - -
+__Hspace_3 0 0 ABS 0 - -
+__end_of_I2C_WaitMoment 3A4 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+__Heeprom_data 0 0 EEDATA 3 eeprom_data -
+PL2 73A 0 CODE 0 text1 SC8F096_Touch_Tool_C.obj
+PL4 74E 0 CODE 0 text1 SC8F096_Touch_Tool_C.obj
+__Hstrings 0 0 ABS 0 strings -
+_PIE1 E 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+_PIR1 D 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+_WPUB 8 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+___sp 0 0 STACK 2 stack startup.obj
+_main 79E 0 CODE 0 maintext SC8F096_Touch_Tool_C.obj
+btemp 7E 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+start 18 0 CODE 0 init startup.obj
+__size_of_main 0 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__HbssCOMMON 0 0 ABS 0 bssCOMMON -
+_I2C_WriteStop 346 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+__size_of_System_Init 0 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__Hpowerup 0 0 CODE 0 powerup -
+intlevel0 0 0 ENTRY 0 functab startup.obj
+intlevel1 0 0 ENTRY 0 functab startup.obj
+intlevel2 0 0 ENTRY 0 functab startup.obj
+intlevel3 0 0 ENTRY 0 functab startup.obj
+intlevel4 0 0 ENTRY 0 functab startup.obj
+intlevel5 0 0 ENTRY 0 functab startup.obj
+__LbssCOMMON 0 0 ABS 0 bssCOMMON -
+wtemp0 7E 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__Hfunctab 0 0 ENTRY 0 functab -
+__Hclrtext 0 0 ABS 0 clrtext -
+__end_of_Isr_Timer 7F6 0 CODE 0 text12 SC8F096_Touch_Tool_C.obj
+__size_of_Isr_Timer 0 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__end_of_Delay_nms 786 0 CODE 0 text3 SC8F096_Touch_Tool_C.obj
+__size_of_Delay_nms 0 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__Hpa_nodes0 0 0 ABS 0 pa_nodes0 -
+_Isr_Timer 7CE 0 CODE 0 text12 SC8F096_Touch_Tool_C.obj
+__Lmaintext 0 0 ABS 0 maintext -
+_Delay_nms 75C 0 CODE 0 text3 SC8F096_Touch_Tool_C.obj
+_INTCON B 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+_OPTION_REG 1 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__Lpa_nodes0 0 0 ABS 0 pa_nodes0 -
+__size_of_Delay 0 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__size_of_I2C_WriteStop 0 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+CheckTouchKey_F@checksum 74 0 COMMON 1 cstackCOMMON SC8F096_Touch_Tool_C.obj
+start_initialization 1E 0 CODE 0 cinit SC8F096_Touch_Tool_C.obj
+_OSCCON 14 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__end_ofPL2 74E 0 CODE 0 text1 SC8F096_Touch_Tool_C.obj
+__end_ofPL4 75C 0 CODE 0 text1 SC8F096_Touch_Tool_C.obj
+clear_ram0 7F6 0 CODE 0 clrtext SC8F096_Touch_Tool_C.obj
+_KEYCON0 111 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+_KEYCON1 112 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+_KEYCON2 113 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__end_of_I2C_WriteStop 372 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+_TKdata 20 0 BANK0 1 bssBANK0 SC8F096_Touch_Tool_C.obj
+_TMR2IE 71 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+_TMR2IF 69 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+_MainTime 78 0 COMMON 1 bssCOMMON SC8F096_Touch_Tool_C.obj
+___int_sp 0 0 STACK 2 stack startup.obj
+I2C_Write1bYTE@i 73 0 COMMON 1 cstackCOMMON SC8F096_Touch_Tool_C.obj
+__size_of_I2C_Write1bYTE 0 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__Hbank0 0 0 ABS 0 bank0 -
+__Hbank1 0 0 ABS 0 bank1 -
+__Hbank2 0 0 ABS 0 bank2 -
+__Hbank3 0 0 ABS 0 bank3 -
+__Hcinit 38 0 CODE 0 cinit -
+__Hidloc 0 0 IDLOC 0 idloc -
+__Hstack 0 0 STACK 2 stack -
+__size_of_I2C_WriteStart 0 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__Hmaintext 0 0 ABS 0 maintext -
+__Hcommon 0 0 ABS 0 common -
+__Hconfig 0 0 CONFIG 0 config -
+_System_Init 716 0 CODE 0 text1 SC8F096_Touch_Tool_C.obj
+__Lbank0 0 0 ABS 0 bank0 -
+__Lbank1 0 0 ABS 0 bank1 -
+__Lbank2 0 0 ABS 0 bank2 -
+__Lbank3 0 0 ABS 0 bank3 -
+__Lcinit 1E 0 CODE 0 cinit -
+__Lidloc 0 0 IDLOC 0 idloc -
+__Lstack 0 0 STACK 2 stack -
+__Habs1 0 0 ABS 0 abs1 -
+__Hcode 0 0 ABS 0 code -
+__Hinit 18 0 CODE 0 init -
+__size_of_I2C_WaitMoment 0 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__Hsfr0 0 0 ABS 0 sfr0 -
+__Hsfr1 0 0 ABS 0 sfr1 -
+__Hsfr2 0 0 ABS 0 sfr2 -
+__Hsfr3 0 0 ABS 0 sfr3 -
+__Htext 0 0 ABS 0 text -
+__Labs1 0 0 ABS 0 abs1 -
+__Lcode 0 0 ABS 0 code -
+__Linit 18 0 CODE 0 init -
+__Lsfr0 0 0 ABS 0 sfr0 -
+__Lsfr1 0 0 ABS 0 sfr1 -
+__Lsfr2 0 0 ABS 0 sfr2 -
+__Lsfr3 0 0 ABS 0 sfr3 -
+__Ltext 0 0 ABS 0 text -
+__HcstackCOMMON 0 0 ABS 0 cstackCOMMON -
+_PR2 11 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+_RC4 834 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+_RC5 835 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__S0 403 0 ABS 0 - -
+__S1 7A 0 ABS 0 - -
+__S2 0 0 ABS 0 - -
+_I2C_SCL_IO 82C 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+_I2C_SDA_IO 82D 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__end_of_CheckTouchKey_F 306 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+saved_w 7E 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+_CheckTouchKey 38 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+__Lintentry 8 0 CODE 0 intentry -
+reset_vec 0 0 CODE 0 reset_vec startup.obj
+__LbssBANK0 0 0 ABS 0 bssBANK0 -
+Delay@dtemp 72 0 COMMON 1 cstackCOMMON SC8F096_Touch_Tool_C.obj
+_CheckTouchKey_F 3A 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+__ptext10 306 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+__ptext11 39E 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+__ptext12 7CE 0 CODE 0 text12 SC8F096_Touch_Tool_C.obj
+__pmaintext 79E 0 CODE 0 maintext SC8F096_Touch_Tool_C.obj
+__Lcommon 0 0 ABS 0 common -
+__Lconfig 0 0 CONFIG 0 config -
+Delay_nms@inittempl 74 0 COMMON 1 cstackCOMMON SC8F096_Touch_Tool_C.obj
+stackhi 0 0 ABS 0 - startup.obj
+stacklo 0 0 ABS 0 - startup.obj
+__Lspace_0 0 0 ABS 0 - -
+__Lspace_1 0 0 ABS 0 - -
+__Lspace_2 0 0 ABS 0 - -
+__Lspace_3 0 0 ABS 0 - -
+__pbssCOMMON 78 0 COMMON 1 bssCOMMON SC8F096_Touch_Tool_C.obj
+__Lend_init 18 0 CODE 0 end_init -
+__LcstackCOMMON 0 0 ABS 0 cstackCOMMON -
+_Refurbish_Sfr 724 0 CODE 0 text1 SC8F096_Touch_Tool_C.obj
+end_of_initialization 30 0 CODE 0 cinit SC8F096_Touch_Tool_C.obj
+I2C_Write1bYTE@data 72 0 COMMON 1 cstackCOMMON SC8F096_Touch_Tool_C.obj
+__Hintentry 18 0 CODE 0 intentry -
+__Lstrings 0 0 ABS 0 strings -
+__size_of_CheckTouchKey 0 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__Hreset_vec 6 0 CODE 0 reset_vec -
+__HbssBANK0 0 0 ABS 0 bssBANK0 -
+__size_of_Key_Test 0 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__ptext0 0 0 CODE 0 text0 SC8F096_Touch_Tool_C.obj
+__ptext1 716 0 CODE 0 text1 SC8F096_Touch_Tool_C.obj
+__ptext2 724 0 CODE 0 text1 SC8F096_Touch_Tool_C.obj
+__ptext3 75C 0 CODE 0 text3 SC8F096_Touch_Tool_C.obj
+__ptext4 786 0 CODE 0 text3 SC8F096_Touch_Tool_C.obj
+__ptext5 38 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+__ptext6 3A 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+__ptext7 3A4 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+__ptext8 346 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+__ptext9 372 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+__size_of_CheckTouchKey_F 0 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__Lpowerup 0 0 CODE 0 powerup -
+__Leeprom_data 0 0 EEDATA 3 eeprom_data -
+__Lreset_vec 0 0 CODE 0 reset_vec -
+__end_of_CheckTouchKey 3A 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+__end_of_System_Init 724 0 CODE 0 text1 SC8F096_Touch_Tool_C.obj
+__end_of__initialization 30 0 CODE 0 cinit SC8F096_Touch_Tool_C.obj
+__Lfunctab 0 0 ENTRY 0 functab -
+_I2C_Write1bYTE 306 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+__Lclrtext 0 0 ABS 0 clrtext -
+_I2C_WriteStart 372 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+Delay_nms@i 76 0 COMMON 1 cstackCOMMON SC8F096_Touch_Tool_C.obj
+__pcstackCOMMON 70 0 COMMON 1 cstackCOMMON SC8F096_Touch_Tool_C.obj
+_Key_Test 3A4 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+__Hend_init 1E 0 CODE 0 end_init -
+__end_of_main 7CE 0 CODE 0 maintext SC8F096_Touch_Tool_C.obj
+__end_of_Delay 79E 0 CODE 0 text3 SC8F096_Touch_Tool_C.obj
+_I2C_WaitMoment 39E 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+_Delay 786 0 CODE 0 text3 SC8F096_Touch_Tool_C.obj
+__end_of_Key_Test 716 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+_PORTB 6 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__size_of_Refurbish_Sfr 0 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+_T2CON 13 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+_TRISB 5 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__Hram 0 0 ABS 0 ram -
+__Lram 0 0 ABS 0 ram -
+interrupt_function 8 0 CODE 0 intentry SC8F096_Touch_Tool_C.obj
+__pintentry 8 0 CODE 0 intentry SC8F096_Touch_Tool_C.obj
+__initialization 1E 0 CODE 0 cinit SC8F096_Touch_Tool_C.obj
+__pbssBANK0 20 0 BANK0 1 bssBANK0 SC8F096_Touch_Tool_C.obj
+_KEYDATAH 117 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+_KEYDATAL 116 0 ABS 0 - SC8F096_Touch_Tool_C.obj
+__end_of_I2C_Write1bYTE 346 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+__end_of_I2C_WriteStart 39E 0 CODE 0 text5 SC8F096_Touch_Tool_C.obj
+__end_of_Refurbish_Sfr 73A 0 CODE 0 text1 SC8F096_Touch_Tool_C.obj
+# %SPLITSTAB Section
+# This section enumerates all the psect splits performed by the assembler.
+# The beginning of the section is indicated by %SPLITSTAB.
+# Each line is a record a particular split, where the parent psect is on
+# the left and the child on the right.  Note that a child psect is always
+# split form the top of the parent psect. All splits from a given parent
+# are listed in the order in which they occurred.
+%SPLITSTAB
+# %DABS Section
+# This section contains a table of all usuage of the assember
+# directive DABS in the program. Each line has the following format:
+#   <name> <space> <address> <size>
+# If the DABS was originally labelled then that shall be <name>,
+# otherwise name will be "-".  The <space> number is in decimal.
+# <address> and <size> are in byte units as unqaulified hexadecimal
+%DABS
+- 1 7E 2
+# %SEGMENTS Section
+# This sections enumerates the segments of the program.  Each segment
+# is described on a single line as follows:
+#    <name> <space> <link address> <file address> <size> <delta>
+# Addresses and size are in unqualified hexadecimal.  The link address
+# and size are in units of delta. The file address is in units of bytes.
+# All other numeric quantities are in decimal.
+%SEGMENTS
+cstackCOMMON 1 70 70 A 1
+intentry 0 4 8 3FF 2
+reset_vec 0 0 0 3 2
+bssBANK0 1 20 20 20 1

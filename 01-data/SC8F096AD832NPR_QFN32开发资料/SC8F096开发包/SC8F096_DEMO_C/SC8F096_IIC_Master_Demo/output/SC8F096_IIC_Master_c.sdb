@@ -1,0 +1,111 @@
+[p PRO_MODE GLOBOPT AUTOSTATIC PIC14 PICREGULAR PICMID SPACEOPT ]
+[d version 1.1 ]
+[d edition pro ]
+[d chip SC8F096AD ]
+[d frameptr 6 ]
+"62 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\sources\common\float.c
+[v ___ftpack __ftpack `(f  1 e 3 0 ]
+"86 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\sources\common\ftadd.c
+[v ___ftadd __ftadd `(f  1 e 3 0 ]
+"22 H:\MyDownloads\说明书&测试报告\开发包\SC8F096AD开发包\SC8F096_DEMO_C\SC8F096_IIC_Master_Demo\SC8F096_IIC_Master_c.c
+[v _DelayXms DelayXms `(v  1 e 1 0 ]
+"42
+[v _Write_IIC Write_IIC `(v  1 e 1 0 ]
+"98
+[v _Read_IIC Read_IIC `(uc  1 e 1 0 ]
+"152
+[v _main main `(v  1 e 1 0 ]
+"210
+[v _Init_System Init_System `(v  1 e 1 0 ]
+"18 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\include\SC8F096AD.h
+[v _OPTION_REG OPTION_REG `VEuc  1 e 1 @1 ]
+"46
+[v _TRISB TRISB `VEuc  1 e 1 @5 ]
+"53
+[v _PORTB PORTB `VEuc  1 e 1 @6 ]
+"67
+[v _WPUB WPUB `VEuc  1 e 1 @8 ]
+"88
+[v _INTCON INTCON `VEuc  1 e 1 @11 ]
+"151
+[v _OSCCON OSCCON `VEuc  1 e 1 @20 ]
+"242
+[v _TRISA TRISA `VEuc  1 e 1 @133 ]
+"249
+[v _PORTA PORTA `VEuc  1 e 1 @134 ]
+"263
+[v _WPUA WPUA `VEuc  1 e 1 @136 ]
+"655
+[v _IICCON IICCON `VEuc  1 e 1 @400 ]
+"676
+[v _IICBUF IICBUF `VEuc  1 e 1 @403 ]
+"683
+[v _IICADD IICADD `VEuc  1 e 1 @404 ]
+"798
+[v _RB5 RB5 `VEb  1 e 0 @53 ]
+"1187
+[v _IICIF IICIF `VEb  1 e 0 @2172 ]
+"1370
+[v _ACKDT ACKDT `VEb  1 e 0 @3213 ]
+"1371
+[v _ACKEN ACKEN `VEb  1 e 0 @3212 ]
+"1372
+[v _RCEN RCEN `VEb  1 e 0 @3211 ]
+"1373
+[v _PEN PEN `VEb  1 e 0 @3210 ]
+"1374
+[v _RSEN RSEN `VEb  1 e 0 @3209 ]
+"1375
+[v _SEN SEN `VEb  1 e 0 @3208 ]
+"9 H:\MyDownloads\说明书&测试报告\开发包\SC8F096AD开发包\SC8F096_DEMO_C\SC8F096_IIC_Master_Demo\SC8F096_IIC_Master_c.c
+[v _result result `VEui  1 e 2 0 ]
+[v _result1 result1 `VEui  1 e 2 0 ]
+[v _result2 result2 `VEui  1 e 2 0 ]
+"151
+[v _IICReadData IICReadData `VEuc  1 e 1 0 ]
+"152
+[v _main main `(v  1 e 1 0 ]
+{
+"199
+} 0
+"42
+[v _Write_IIC Write_IIC `(v  1 e 1 0 ]
+{
+[v Write_IIC@Adress Adress `uc  1 a 1 wreg ]
+[v Write_IIC@Adress Adress `uc  1 a 1 wreg ]
+[v Write_IIC@data data `uc  1 p 1 0 ]
+"77
+[v Write_IIC@Adress Adress `uc  1 a 1 1 ]
+"90
+} 0
+"98
+[v _Read_IIC Read_IIC `(uc  1 e 1 0 ]
+{
+[v Read_IIC@Adress Adress `uc  1 a 1 wreg ]
+"100
+[v Read_IIC@ReadData ReadData `uc  1 a 1 1 ]
+"98
+[v Read_IIC@Adress Adress `uc  1 a 1 wreg ]
+[v Read_IIC@data data `uc  1 p 1 0 ]
+"102
+[v Read_IIC@Adress Adress `uc  1 a 1 2 ]
+"150
+} 0
+"210
+[v _Init_System Init_System `(v  1 e 1 0 ]
+{
+"228
+} 0
+"22
+[v _DelayXms DelayXms `(v  1 e 1 0 ]
+{
+[v DelayXms@x x `uc  1 a 1 wreg ]
+"24
+[v DelayXms@j j `uc  1 a 1 2 ]
+[v DelayXms@i i `uc  1 a 1 1 ]
+"22
+[v DelayXms@x x `uc  1 a 1 wreg ]
+"25
+[v DelayXms@x x `uc  1 a 1 0 ]
+"27
+} 0

@@ -1,0 +1,1 @@
+ CheckTouchKey.d  CheckTouchKey.p1:  H:/MyDownloads/说明书&测试报告/开发包/SC8F096开发包/SC8F096_TOUCH_TOOL/CheckTouchKey.c H:/MyDownloads/说明书&测试报告/开发包/SC8F096开发包/SC8F096_TOUCH_TOOL/CheckTouchKey.h

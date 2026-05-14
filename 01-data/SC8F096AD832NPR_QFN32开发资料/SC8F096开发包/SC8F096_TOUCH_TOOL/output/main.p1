@@ -1,0 +1,1497 @@
+Version 3.2 HI-TECH Software Intermediate Code
+"870 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h
+[v _TMR2IE `Vb ~T0 @X0 0 e@113 ]
+"860
+[v _TMR2IF `Vb ~T0 @X0 0 e@105 ]
+[p mainexit ]
+"109 H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.h
+[v _CheckTouchKey `(v ~T0 @X0 0 ef ]
+[; ;htc.h: 26: extern const char __xc8_OPTIM_SPEED;
+[; ;htc.h: 28: extern double __fpnormalize(double);
+[; ;xc8debug.h: 14: extern void __builtin_software_breakpoint(void);
+"11 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h
+[v _INDF `Vuc ~T0 @X0 1 e@0 ]
+[; ;SC8F096.h: 11: volatile unsigned char INDF @ 0x00;
+"13
+[; ;SC8F096.h: 13: asm("INDF EQU 00H");
+[; <" INDF EQU 00H ;# ">
+"18
+[v _OPTION_REG `Vuc ~T0 @X0 1 e@1 ]
+[; ;SC8F096.h: 18: volatile unsigned char OPTION_REG @ 0x01;
+"20
+[; ;SC8F096.h: 20: asm("OPTION_REG EQU 01H");
+[; <" OPTION_REG EQU 01H ;# ">
+"25
+[v _PCL `Vuc ~T0 @X0 1 e@2 ]
+[; ;SC8F096.h: 25: volatile unsigned char PCL @ 0x02;
+"27
+[; ;SC8F096.h: 27: asm("PCL EQU 02H");
+[; <" PCL EQU 02H ;# ">
+"32
+[v _STATUS `Vuc ~T0 @X0 1 e@3 ]
+[; ;SC8F096.h: 32: volatile unsigned char STATUS @ 0x03;
+"34
+[; ;SC8F096.h: 34: asm("STATUS EQU 03H");
+[; <" STATUS EQU 03H ;# ">
+"39
+[v _FSR `Vuc ~T0 @X0 1 e@4 ]
+[; ;SC8F096.h: 39: volatile unsigned char FSR @ 0x04;
+"41
+[; ;SC8F096.h: 41: asm("FSR EQU 04H");
+[; <" FSR EQU 04H ;# ">
+"46
+[v _TRISB `Vuc ~T0 @X0 1 e@5 ]
+[; ;SC8F096.h: 46: volatile unsigned char TRISB @ 0x05;
+"48
+[; ;SC8F096.h: 48: asm("TRISB EQU 05H");
+[; <" TRISB EQU 05H ;# ">
+"53
+[v _PORTB `Vuc ~T0 @X0 1 e@6 ]
+[; ;SC8F096.h: 53: volatile unsigned char PORTB @ 0x06;
+"55
+[; ;SC8F096.h: 55: asm("PORTB EQU 06H");
+[; <" PORTB EQU 06H ;# ">
+"60
+[v _WPDB `Vuc ~T0 @X0 1 e@7 ]
+[; ;SC8F096.h: 60: volatile unsigned char WPDB @ 0x07;
+"62
+[; ;SC8F096.h: 62: asm("WPDB EQU 07H");
+[; <" WPDB EQU 07H ;# ">
+"67
+[v _WPUB `Vuc ~T0 @X0 1 e@8 ]
+[; ;SC8F096.h: 67: volatile unsigned char WPUB @ 0x08;
+"69
+[; ;SC8F096.h: 69: asm("WPUB EQU 08H");
+[; <" WPUB EQU 08H ;# ">
+"74
+[v _IOCB `Vuc ~T0 @X0 1 e@9 ]
+[; ;SC8F096.h: 74: volatile unsigned char IOCB @ 0x09;
+"76
+[; ;SC8F096.h: 76: asm("IOCB EQU 09H");
+[; <" IOCB EQU 09H ;# ">
+"81
+[v _PCLATH `Vuc ~T0 @X0 1 e@10 ]
+[; ;SC8F096.h: 81: volatile unsigned char PCLATH @ 0x0A;
+"83
+[; ;SC8F096.h: 83: asm("PCLATH EQU 0AH");
+[; <" PCLATH EQU 0AH ;# ">
+"88
+[v _INTCON `Vuc ~T0 @X0 1 e@11 ]
+[; ;SC8F096.h: 88: volatile unsigned char INTCON @ 0x0B;
+"90
+[; ;SC8F096.h: 90: asm("INTCON EQU 0BH");
+[; <" INTCON EQU 0BH ;# ">
+"95
+[v _QCCON `Vuc ~T0 @X0 1 e@12 ]
+[; ;SC8F096.h: 95: volatile unsigned char QCCON @ 0x0C;
+"97
+[; ;SC8F096.h: 97: asm("QCCON EQU 0CH");
+[; <" QCCON EQU 0CH ;# ">
+"102
+[v _PIR1 `Vuc ~T0 @X0 1 e@13 ]
+[; ;SC8F096.h: 102: volatile unsigned char PIR1 @ 0x0D;
+"104
+[; ;SC8F096.h: 104: asm("PIR1 EQU 0DH");
+[; <" PIR1 EQU 0DH ;# ">
+"109
+[v _PIE1 `Vuc ~T0 @X0 1 e@14 ]
+[; ;SC8F096.h: 109: volatile unsigned char PIE1 @ 0x0E;
+"111
+[; ;SC8F096.h: 111: asm("PIE1 EQU 0EH");
+[; <" PIE1 EQU 0EH ;# ">
+"116
+[v _CMP1CON0 `Vuc ~T0 @X0 1 e@15 ]
+[; ;SC8F096.h: 116: volatile unsigned char CMP1CON0 @ 0x0F;
+"118
+[; ;SC8F096.h: 118: asm("CMP1CON0 EQU 0FH");
+[; <" CMP1CON0 EQU 0FH ;# ">
+"123
+[v _CMP1CON1 `Vuc ~T0 @X0 1 e@16 ]
+[; ;SC8F096.h: 123: volatile unsigned char CMP1CON1 @ 0x10;
+"125
+[; ;SC8F096.h: 125: asm("CMP1CON1 EQU 10H");
+[; <" CMP1CON1 EQU 10H ;# ">
+"130
+[v _PR2 `Vuc ~T0 @X0 1 e@17 ]
+[; ;SC8F096.h: 130: volatile unsigned char PR2 @ 0x11;
+"132
+[; ;SC8F096.h: 132: asm("PR2 EQU 11H");
+[; <" PR2 EQU 11H ;# ">
+"137
+[v _TMR2 `Vuc ~T0 @X0 1 e@18 ]
+[; ;SC8F096.h: 137: volatile unsigned char TMR2 @ 0x12;
+"139
+[; ;SC8F096.h: 139: asm("TMR2 EQU 12H");
+[; <" TMR2 EQU 12H ;# ">
+"144
+[v _T2CON `Vuc ~T0 @X0 1 e@19 ]
+[; ;SC8F096.h: 144: volatile unsigned char T2CON @ 0x13;
+"146
+[; ;SC8F096.h: 146: asm("T2CON EQU 13H");
+[; <" T2CON EQU 13H ;# ">
+"151
+[v _OSCCON `Vuc ~T0 @X0 1 e@20 ]
+[; ;SC8F096.h: 151: volatile unsigned char OSCCON @ 0x14;
+"153
+[; ;SC8F096.h: 153: asm("OSCCON EQU 14H");
+[; <" OSCCON EQU 14H ;# ">
+"158
+[v _PWMCON0 `Vuc ~T0 @X0 1 e@21 ]
+[; ;SC8F096.h: 158: volatile unsigned char PWMCON0 @ 0x15;
+"160
+[; ;SC8F096.h: 160: asm("PWMCON0 EQU 15H");
+[; <" PWMCON0 EQU 15H ;# ">
+"165
+[v _PWMCON1 `Vuc ~T0 @X0 1 e@22 ]
+[; ;SC8F096.h: 165: volatile unsigned char PWMCON1 @ 0x16;
+"167
+[; ;SC8F096.h: 167: asm("PWMCON1 EQU 16H");
+[; <" PWMCON1 EQU 16H ;# ">
+"172
+[v _PWMTL `Vuc ~T0 @X0 1 e@23 ]
+[; ;SC8F096.h: 172: volatile unsigned char PWMTL @ 0x17;
+"174
+[; ;SC8F096.h: 174: asm("PWMTL EQU 17H");
+[; <" PWMTL EQU 17H ;# ">
+"179
+[v _PWMTH `Vuc ~T0 @X0 1 e@24 ]
+[; ;SC8F096.h: 179: volatile unsigned char PWMTH @ 0x18;
+"181
+[; ;SC8F096.h: 181: asm("PWMTH EQU 18H");
+[; <" PWMTH EQU 18H ;# ">
+"186
+[v _PWMD0L `Vuc ~T0 @X0 1 e@25 ]
+[; ;SC8F096.h: 186: volatile unsigned char PWMD0L @ 0x19;
+"188
+[; ;SC8F096.h: 188: asm("PWMD0L EQU 19H");
+[; <" PWMD0L EQU 19H ;# ">
+"193
+[v _PWMD1L `Vuc ~T0 @X0 1 e@26 ]
+[; ;SC8F096.h: 193: volatile unsigned char PWMD1L @ 0x1A;
+"195
+[; ;SC8F096.h: 195: asm("PWMD1L EQU 1AH");
+[; <" PWMD1L EQU 1AH ;# ">
+"200
+[v _PWMD4L `Vuc ~T0 @X0 1 e@27 ]
+[; ;SC8F096.h: 200: volatile unsigned char PWMD4L @ 0x1B;
+"202
+[; ;SC8F096.h: 202: asm("PWMD4L EQU 1BH");
+[; <" PWMD4L EQU 1BH ;# ">
+"207
+[v _PWMT4L `Vuc ~T0 @X0 1 e@28 ]
+[; ;SC8F096.h: 207: volatile unsigned char PWMT4L @ 0x1C;
+"209
+[; ;SC8F096.h: 209: asm("PWMT4L EQU 1CH");
+[; <" PWMT4L EQU 1CH ;# ">
+"214
+[v _PWMCON2 `Vuc ~T0 @X0 1 e@29 ]
+[; ;SC8F096.h: 214: volatile unsigned char PWMCON2 @ 0x1D;
+"216
+[; ;SC8F096.h: 216: asm("PWMCON2 EQU 1DH");
+[; <" PWMCON2 EQU 1DH ;# ">
+"221
+[v _PWMDH `Vuc ~T0 @X0 1 e@30 ]
+[; ;SC8F096.h: 221: volatile unsigned char PWMDH @ 0x1E;
+"223
+[; ;SC8F096.h: 223: asm("PWMDH EQU 1EH");
+[; <" PWMDH EQU 1EH ;# ">
+"228
+[v _PWM01DT `Vuc ~T0 @X0 1 e@31 ]
+[; ;SC8F096.h: 228: volatile unsigned char PWM01DT @ 0x1F;
+"230
+[; ;SC8F096.h: 230: asm("PWM01DT EQU 1FH");
+[; <" PWM01DT EQU 1FH ;# ">
+"235
+[v _TMR0 `Vuc ~T0 @X0 1 e@129 ]
+[; ;SC8F096.h: 235: volatile unsigned char TMR0 @ 0x81;
+"237
+[; ;SC8F096.h: 237: asm("TMR0 EQU 81H");
+[; <" TMR0 EQU 81H ;# ">
+"242
+[v _TRISA `Vuc ~T0 @X0 1 e@133 ]
+[; ;SC8F096.h: 242: volatile unsigned char TRISA @ 0x85;
+"244
+[; ;SC8F096.h: 244: asm("TRISA EQU 85H");
+[; <" TRISA EQU 85H ;# ">
+"249
+[v _PORTA `Vuc ~T0 @X0 1 e@134 ]
+[; ;SC8F096.h: 249: volatile unsigned char PORTA @ 0x86;
+"251
+[; ;SC8F096.h: 251: asm("PORTA EQU 86H");
+[; <" PORTA EQU 86H ;# ">
+"256
+[v _WPDA `Vuc ~T0 @X0 1 e@135 ]
+[; ;SC8F096.h: 256: volatile unsigned char WPDA @ 0x87;
+"258
+[; ;SC8F096.h: 258: asm("WPDA EQU 87H");
+[; <" WPDA EQU 87H ;# ">
+"263
+[v _WPUA `Vuc ~T0 @X0 1 e@136 ]
+[; ;SC8F096.h: 263: volatile unsigned char WPUA @ 0x88;
+"265
+[; ;SC8F096.h: 265: asm("WPUA EQU 88H");
+[; <" WPUA EQU 88H ;# ">
+"270
+[v _IOCA `Vuc ~T0 @X0 1 e@137 ]
+[; ;SC8F096.h: 270: volatile unsigned char IOCA @ 0x89;
+"272
+[; ;SC8F096.h: 272: asm("IOCA EQU 89H");
+[; <" IOCA EQU 89H ;# ">
+"277
+[v _ANSEL3 `Vuc ~T0 @X0 1 e@140 ]
+[; ;SC8F096.h: 277: volatile unsigned char ANSEL3 @ 0x8C;
+"279
+[; ;SC8F096.h: 279: asm("ANSEL3 EQU 8CH");
+[; <" ANSEL3 EQU 8CH ;# ">
+"284
+[v _EECON1 `Vuc ~T0 @X0 1 e@141 ]
+[; ;SC8F096.h: 284: volatile unsigned char EECON1 @ 0x8D;
+"286
+[; ;SC8F096.h: 286: asm("EECON1 EQU 8DH");
+[; <" EECON1 EQU 8DH ;# ">
+"291
+[v _EECON2 `Vuc ~T0 @X0 1 e@142 ]
+[; ;SC8F096.h: 291: volatile unsigned char EECON2 @ 0x8E;
+"293
+[; ;SC8F096.h: 293: asm("EECON2 EQU 8EH");
+[; <" EECON2 EQU 8EH ;# ">
+"298
+[v _EEDAT `Vuc ~T0 @X0 1 e@143 ]
+[; ;SC8F096.h: 298: volatile unsigned char EEDAT @ 0x8F;
+"300
+[; ;SC8F096.h: 300: asm("EEDAT EQU 8FH");
+[; <" EEDAT EQU 8FH ;# ">
+"305
+[v _EEDATH `Vuc ~T0 @X0 1 e@144 ]
+[; ;SC8F096.h: 305: volatile unsigned char EEDATH @ 0x90;
+"307
+[; ;SC8F096.h: 307: asm("EEDATH EQU 90H");
+[; <" EEDATH EQU 90H ;# ">
+"312
+[v _EEADR `Vuc ~T0 @X0 1 e@145 ]
+[; ;SC8F096.h: 312: volatile unsigned char EEADR @ 0x91;
+"314
+[; ;SC8F096.h: 314: asm("EEADR EQU 91H");
+[; <" EEADR EQU 91H ;# ">
+"319
+[v _EEADRH `Vuc ~T0 @X0 1 e@146 ]
+[; ;SC8F096.h: 319: volatile unsigned char EEADRH @ 0x92;
+"321
+[; ;SC8F096.h: 321: asm("EEADRH EQU 92H");
+[; <" EEADRH EQU 92H ;# ">
+"326
+[v _ANSEL0 `Vuc ~T0 @X0 1 e@147 ]
+[; ;SC8F096.h: 326: volatile unsigned char ANSEL0 @ 0x93;
+"328
+[; ;SC8F096.h: 328: asm("ANSEL0 EQU 93H");
+[; <" ANSEL0 EQU 93H ;# ">
+"333
+[v _ANSEL1 `Vuc ~T0 @X0 1 e@148 ]
+[; ;SC8F096.h: 333: volatile unsigned char ANSEL1 @ 0x94;
+"335
+[; ;SC8F096.h: 335: asm("ANSEL1 EQU 94H");
+[; <" ANSEL1 EQU 94H ;# ">
+"340
+[v _ADCON0 `Vuc ~T0 @X0 1 e@149 ]
+[; ;SC8F096.h: 340: volatile unsigned char ADCON0 @ 0x95;
+"342
+[; ;SC8F096.h: 342: asm("ADCON0 EQU 95H");
+[; <" ADCON0 EQU 95H ;# ">
+"347
+[v _ADCON1 `Vuc ~T0 @X0 1 e@150 ]
+[; ;SC8F096.h: 347: volatile unsigned char ADCON1 @ 0x96;
+"349
+[; ;SC8F096.h: 349: asm("ADCON1 EQU 96H");
+[; <" ADCON1 EQU 96H ;# ">
+"354
+[v _ADRESL `Vuc ~T0 @X0 1 e@152 ]
+[; ;SC8F096.h: 354: volatile unsigned char ADRESL @ 0x98;
+"356
+[; ;SC8F096.h: 356: asm("ADRESL EQU 98H");
+[; <" ADRESL EQU 98H ;# ">
+"361
+[v _ADRESH `Vuc ~T0 @X0 1 e@153 ]
+[; ;SC8F096.h: 361: volatile unsigned char ADRESH @ 0x99;
+"363
+[; ;SC8F096.h: 363: asm("ADRESH EQU 99H");
+[; <" ADRESH EQU 99H ;# ">
+"368
+[v _CMP2CON0 `Vuc ~T0 @X0 1 e@154 ]
+[; ;SC8F096.h: 368: volatile unsigned char CMP2CON0 @ 0x9A;
+"370
+[; ;SC8F096.h: 370: asm("CMP2CON0 EQU 9AH");
+[; <" CMP2CON0 EQU 9AH ;# ">
+"375
+[v _PWMD2L `Vuc ~T0 @X0 1 e@155 ]
+[; ;SC8F096.h: 375: volatile unsigned char PWMD2L @ 0x9B;
+"377
+[; ;SC8F096.h: 377: asm("PWMD2L EQU 9BH");
+[; <" PWMD2L EQU 9BH ;# ">
+"382
+[v _PWMD3L `Vuc ~T0 @X0 1 e@156 ]
+[; ;SC8F096.h: 382: volatile unsigned char PWMD3L @ 0x9C;
+"384
+[; ;SC8F096.h: 384: asm("PWMD3L EQU 9CH");
+[; <" PWMD3L EQU 9CH ;# ">
+"389
+[v _PWM23DT `Vuc ~T0 @X0 1 e@157 ]
+[; ;SC8F096.h: 389: volatile unsigned char PWM23DT @ 0x9D;
+"391
+[; ;SC8F096.h: 391: asm("PWM23DT EQU 9DH");
+[; <" PWM23DT EQU 9DH ;# ">
+"396
+[v _SEGEN0 `Vuc ~T0 @X0 1 e@158 ]
+[; ;SC8F096.h: 396: volatile unsigned char SEGEN0 @ 0x9E;
+"398
+[; ;SC8F096.h: 398: asm("SEGEN0 EQU 9EH");
+[; <" SEGEN0 EQU 9EH ;# ">
+"403
+[v _CMP2CON1 `Vuc ~T0 @X0 1 e@159 ]
+[; ;SC8F096.h: 403: volatile unsigned char CMP2CON1 @ 0x9F;
+"405
+[; ;SC8F096.h: 405: asm("CMP2CON1 EQU 9FH");
+[; <" CMP2CON1 EQU 9FH ;# ">
+"410
+[v _TRISC `Vuc ~T0 @X0 1 e@261 ]
+[; ;SC8F096.h: 410: volatile unsigned char TRISC @ 0x105;
+"412
+[; ;SC8F096.h: 412: asm("TRISC EQU 105H");
+[; <" TRISC EQU 105H ;# ">
+"417
+[v _PORTC `Vuc ~T0 @X0 1 e@262 ]
+[; ;SC8F096.h: 417: volatile unsigned char PORTC @ 0x106;
+"419
+[; ;SC8F096.h: 419: asm("PORTC EQU 106H");
+[; <" PORTC EQU 106H ;# ">
+"424
+[v _PORTD `Vuc ~T0 @X0 1 e@263 ]
+[; ;SC8F096.h: 424: volatile unsigned char PORTD @ 0x107;
+"426
+[; ;SC8F096.h: 426: asm("PORTD EQU 107H");
+[; <" PORTD EQU 107H ;# ">
+"431
+[v _WPUC `Vuc ~T0 @X0 1 e@264 ]
+[; ;SC8F096.h: 431: volatile unsigned char WPUC @ 0x108;
+"433
+[; ;SC8F096.h: 433: asm("WPUC EQU 108H");
+[; <" WPUC EQU 108H ;# ">
+"438
+[v _ANSEL2 `Vuc ~T0 @X0 1 e@265 ]
+[; ;SC8F096.h: 438: volatile unsigned char ANSEL2 @ 0x109;
+"440
+[; ;SC8F096.h: 440: asm("ANSEL2 EQU 109H");
+[; <" ANSEL2 EQU 109H ;# ">
+"445
+[v _TMR1L `Vuc ~T0 @X0 1 e@268 ]
+[; ;SC8F096.h: 445: volatile unsigned char TMR1L @ 0x10C;
+"447
+[; ;SC8F096.h: 447: asm("TMR1L EQU 10CH");
+[; <" TMR1L EQU 10CH ;# ">
+"452
+[v _TMR1H `Vuc ~T0 @X0 1 e@269 ]
+[; ;SC8F096.h: 452: volatile unsigned char TMR1H @ 0x10D;
+"454
+[; ;SC8F096.h: 454: asm("TMR1H EQU 10DH");
+[; <" TMR1H EQU 10DH ;# ">
+"459
+[v _T1CON `Vuc ~T0 @X0 1 e@270 ]
+[; ;SC8F096.h: 459: volatile unsigned char T1CON @ 0x10E;
+"461
+[; ;SC8F096.h: 461: asm("T1CON EQU 10EH");
+[; <" T1CON EQU 10EH ;# ">
+"466
+[v _PIR2 `Vuc ~T0 @X0 1 e@271 ]
+[; ;SC8F096.h: 466: volatile unsigned char PIR2 @ 0x10F;
+"468
+[; ;SC8F096.h: 468: asm("PIR2 EQU 10FH");
+[; <" PIR2 EQU 10FH ;# ">
+"473
+[v _PIE2 `Vuc ~T0 @X0 1 e@272 ]
+[; ;SC8F096.h: 473: volatile unsigned char PIE2 @ 0x110;
+"475
+[; ;SC8F096.h: 475: asm("PIE2 EQU 110H");
+[; <" PIE2 EQU 110H ;# ">
+"480
+[v _KEYCON0 `Vuc ~T0 @X0 1 e@273 ]
+[; ;SC8F096.h: 480: volatile unsigned char KEYCON0 @ 0x111;
+"482
+[; ;SC8F096.h: 482: asm("KEYCON0 EQU 111H");
+[; <" KEYCON0 EQU 111H ;# ">
+"487
+[v _KEYCON1 `Vuc ~T0 @X0 1 e@274 ]
+[; ;SC8F096.h: 487: volatile unsigned char KEYCON1 @ 0x112;
+"489
+[; ;SC8F096.h: 489: asm("KEYCON1 EQU 112H");
+[; <" KEYCON1 EQU 112H ;# ">
+"494
+[v _KEYCON2 `Vuc ~T0 @X0 1 e@275 ]
+[; ;SC8F096.h: 494: volatile unsigned char KEYCON2 @ 0x113;
+"496
+[; ;SC8F096.h: 496: asm("KEYCON2 EQU 113H");
+[; <" KEYCON2 EQU 113H ;# ">
+"501
+[v _TRISD `Vuc ~T0 @X0 1 e@276 ]
+[; ;SC8F096.h: 501: volatile unsigned char TRISD @ 0x114;
+"503
+[; ;SC8F096.h: 503: asm("TRISD EQU 114H");
+[; <" TRISD EQU 114H ;# ">
+"508
+[v _WPUD `Vuc ~T0 @X0 1 e@277 ]
+[; ;SC8F096.h: 508: volatile unsigned char WPUD @ 0x115;
+"510
+[; ;SC8F096.h: 510: asm("WPUD EQU 115H");
+[; <" WPUD EQU 115H ;# ">
+"515
+[v _KEYDATAL `Vuc ~T0 @X0 1 e@278 ]
+[; ;SC8F096.h: 515: volatile unsigned char KEYDATAL @ 0x116;
+"517
+[; ;SC8F096.h: 517: asm("KEYDATAL EQU 116H");
+[; <" KEYDATAL EQU 116H ;# ">
+"522
+[v _KEYDATAH `Vuc ~T0 @X0 1 e@279 ]
+[; ;SC8F096.h: 522: volatile unsigned char KEYDATAH @ 0x117;
+"524
+[; ;SC8F096.h: 524: asm("KEYDATAH EQU 117H");
+[; <" KEYDATAH EQU 117H ;# ">
+"529
+[v _TXSTA0 `Vuc ~T0 @X0 1 e@280 ]
+[; ;SC8F096.h: 529: volatile unsigned char TXSTA0 @ 0x118;
+"531
+[; ;SC8F096.h: 531: asm("TXSTA0 EQU 118H");
+[; <" TXSTA0 EQU 118H ;# ">
+"536
+[v _RCSTA0 `Vuc ~T0 @X0 1 e@281 ]
+[; ;SC8F096.h: 536: volatile unsigned char RCSTA0 @ 0x119;
+"538
+[; ;SC8F096.h: 538: asm("RCSTA0 EQU 119H");
+[; <" RCSTA0 EQU 119H ;# ">
+"543
+[v _SPBRG0 `Vuc ~T0 @X0 1 e@282 ]
+[; ;SC8F096.h: 543: volatile unsigned char SPBRG0 @ 0x11A;
+"545
+[; ;SC8F096.h: 545: asm("SPBRG0 EQU 11AH");
+[; <" SPBRG0 EQU 11AH ;# ">
+"550
+[v _TXREG0 `Vuc ~T0 @X0 1 e@283 ]
+[; ;SC8F096.h: 550: volatile unsigned char TXREG0 @ 0x11B;
+"552
+[; ;SC8F096.h: 552: asm("TXREG0 EQU 11BH");
+[; <" TXREG0 EQU 11BH ;# ">
+"557
+[v _RCREG0 `Vuc ~T0 @X0 1 e@284 ]
+[; ;SC8F096.h: 557: volatile unsigned char RCREG0 @ 0x11C;
+"559
+[; ;SC8F096.h: 559: asm("RCREG0 EQU 11CH");
+[; <" RCREG0 EQU 11CH ;# ">
+"564
+[v _LCDCON0 `Vuc ~T0 @X0 1 e@285 ]
+[; ;SC8F096.h: 564: volatile unsigned char LCDCON0 @ 0x11D;
+"566
+[; ;SC8F096.h: 566: asm("LCDCON0 EQU 11DH");
+[; <" LCDCON0 EQU 11DH ;# ">
+"571
+[v _LCDCON1 `Vuc ~T0 @X0 1 e@286 ]
+[; ;SC8F096.h: 571: volatile unsigned char LCDCON1 @ 0x11E;
+"573
+[; ;SC8F096.h: 573: asm("LCDCON1 EQU 11EH");
+[; <" LCDCON1 EQU 11EH ;# ">
+"578
+[v _SEGEN1 `Vuc ~T0 @X0 1 e@287 ]
+[; ;SC8F096.h: 578: volatile unsigned char SEGEN1 @ 0x11F;
+"580
+[; ;SC8F096.h: 580: asm("SEGEN1 EQU 11FH");
+[; <" SEGEN1 EQU 11FH ;# ">
+"585
+[v _SEGEN2 `Vuc ~T0 @X0 1 e@385 ]
+[; ;SC8F096.h: 585: volatile unsigned char SEGEN2 @ 0x181;
+"587
+[; ;SC8F096.h: 587: asm("SEGEN2 EQU 181H");
+[; <" SEGEN2 EQU 181H ;# ">
+"592
+[v _TXSTA1 `Vuc ~T0 @X0 1 e@389 ]
+[; ;SC8F096.h: 592: volatile unsigned char TXSTA1 @ 0x185;
+"594
+[; ;SC8F096.h: 594: asm("TXSTA1 EQU 185H");
+[; <" TXSTA1 EQU 185H ;# ">
+"599
+[v _RCSTA1 `Vuc ~T0 @X0 1 e@390 ]
+[; ;SC8F096.h: 599: volatile unsigned char RCSTA1 @ 0x186;
+"601
+[; ;SC8F096.h: 601: asm("RCSTA1 EQU 186H");
+[; <" RCSTA1 EQU 186H ;# ">
+"606
+[v _TXREG1 `Vuc ~T0 @X0 1 e@391 ]
+[; ;SC8F096.h: 606: volatile unsigned char TXREG1 @ 0x187;
+"608
+[; ;SC8F096.h: 608: asm("TXREG1 EQU 187H");
+[; <" TXREG1 EQU 187H ;# ">
+"613
+[v _RCREG1 `Vuc ~T0 @X0 1 e@392 ]
+[; ;SC8F096.h: 613: volatile unsigned char RCREG1 @ 0x188;
+"615
+[; ;SC8F096.h: 615: asm("RCREG1 EQU 188H");
+[; <" RCREG1 EQU 188H ;# ">
+"620
+[v _SPBRG1 `Vuc ~T0 @X0 1 e@393 ]
+[; ;SC8F096.h: 620: volatile unsigned char SPBRG1 @ 0x189;
+"622
+[; ;SC8F096.h: 622: asm("SPBRG1 EQU 189H");
+[; <" SPBRG1 EQU 189H ;# ">
+"627
+[v _OPACON `Vuc ~T0 @X0 1 e@396 ]
+[; ;SC8F096.h: 627: volatile unsigned char OPACON @ 0x18C;
+"629
+[; ;SC8F096.h: 629: asm("OPACON EQU 18CH");
+[; <" OPACON EQU 18CH ;# ">
+"634
+[v _OPAADJ `Vuc ~T0 @X0 1 e@397 ]
+[; ;SC8F096.h: 634: volatile unsigned char OPAADJ @ 0x18D;
+"636
+[; ;SC8F096.h: 636: asm("OPAADJ EQU 18DH");
+[; <" OPAADJ EQU 18DH ;# ">
+"641
+[v _LEDCTR0 `Vuc ~T0 @X0 1 e@398 ]
+[; ;SC8F096.h: 641: volatile unsigned char LEDCTR0 @ 0x18E;
+"643
+[; ;SC8F096.h: 643: asm("LEDCTR0 EQU 18EH");
+[; <" LEDCTR0 EQU 18EH ;# ">
+"648
+[v _LEDCTR1 `Vuc ~T0 @X0 1 e@399 ]
+[; ;SC8F096.h: 648: volatile unsigned char LEDCTR1 @ 0x18F;
+"650
+[; ;SC8F096.h: 650: asm("LEDCTR1 EQU 18FH");
+[; <" LEDCTR1 EQU 18FH ;# ">
+"655
+[v _IICCON `Vuc ~T0 @X0 1 e@400 ]
+[; ;SC8F096.h: 655: volatile unsigned char IICCON @ 0x190;
+"657
+[; ;SC8F096.h: 657: asm("IICCON EQU 190H");
+[; <" IICCON EQU 190H ;# ">
+"662
+[v _IICCON2 `Vuc ~T0 @X0 1 e@401 ]
+[; ;SC8F096.h: 662: volatile unsigned char IICCON2 @ 0x191;
+"664
+[; ;SC8F096.h: 664: asm("IICCON2 EQU 191H");
+[; <" IICCON2 EQU 191H ;# ">
+"669
+[v _IICSTAT `Vuc ~T0 @X0 1 e@402 ]
+[; ;SC8F096.h: 669: volatile unsigned char IICSTAT @ 0x192;
+"671
+[; ;SC8F096.h: 671: asm("IICSTAT EQU 192H");
+[; <" IICSTAT EQU 192H ;# ">
+"676
+[v _IICBUF `Vuc ~T0 @X0 1 e@403 ]
+[; ;SC8F096.h: 676: volatile unsigned char IICBUF @ 0x193;
+"678
+[; ;SC8F096.h: 678: asm("IICBUF EQU 193H");
+[; <" IICBUF EQU 193H ;# ">
+"683
+[v _IICADD `Vuc ~T0 @X0 1 e@404 ]
+[; ;SC8F096.h: 683: volatile unsigned char IICADD @ 0x194;
+"685
+[; ;SC8F096.h: 685: asm("IICADD EQU 194H");
+[; <" IICADD EQU 194H ;# ">
+"690
+[v _CC0CON `Vuc ~T0 @X0 1 e@405 ]
+[; ;SC8F096.h: 690: volatile unsigned char CC0CON @ 0x195;
+"692
+[; ;SC8F096.h: 692: asm("CC0CON EQU 195H");
+[; <" CC0CON EQU 195H ;# ">
+"697
+[v _CC1CON `Vuc ~T0 @X0 1 e@406 ]
+[; ;SC8F096.h: 697: volatile unsigned char CC1CON @ 0x196;
+"699
+[; ;SC8F096.h: 699: asm("CC1CON EQU 196H");
+[; <" CC1CON EQU 196H ;# ">
+"704
+[v _PDCON0 `Vuc ~T0 @X0 1 e@407 ]
+[; ;SC8F096.h: 704: volatile unsigned char PDCON0 @ 0x197;
+"706
+[; ;SC8F096.h: 706: asm("PDCON0 EQU 197H");
+[; <" PDCON0 EQU 197H ;# ">
+"711
+[v _PDCON1 `Vuc ~T0 @X0 1 e@408 ]
+[; ;SC8F096.h: 711: volatile unsigned char PDCON1 @ 0x198;
+"713
+[; ;SC8F096.h: 713: asm("PDCON1 EQU 198H");
+[; <" PDCON1 EQU 198H ;# ">
+"718
+[v _PDADD `Vuc ~T0 @X0 1 e@409 ]
+[; ;SC8F096.h: 718: volatile unsigned char PDADD @ 0x199;
+"720
+[; ;SC8F096.h: 720: asm("PDADD EQU 199H");
+[; <" PDADD EQU 199H ;# ">
+"725
+[v _PDRDATA `Vuc ~T0 @X0 1 e@410 ]
+[; ;SC8F096.h: 725: volatile unsigned char PDRDATA @ 0x19A;
+"727
+[; ;SC8F096.h: 727: asm("PDRDATA EQU 19AH");
+[; <" PDRDATA EQU 19AH ;# ">
+"732
+[v _PDSDATA `Vuc ~T0 @X0 1 e@411 ]
+[; ;SC8F096.h: 732: volatile unsigned char PDSDATA @ 0x19B;
+"734
+[; ;SC8F096.h: 734: asm("PDSDATA EQU 19BH");
+[; <" PDSDATA EQU 19BH ;# ">
+"739
+[v _LCDADD `Vuc ~T0 @X0 1 e@412 ]
+[; ;SC8F096.h: 739: volatile unsigned char LCDADD @ 0x19C;
+"741
+[; ;SC8F096.h: 741: asm("LCDADD EQU 19CH");
+[; <" LCDADD EQU 19CH ;# ">
+"746
+[v _LCDDATA `Vuc ~T0 @X0 1 e@413 ]
+[; ;SC8F096.h: 746: volatile unsigned char LCDDATA @ 0x19D;
+"748
+[; ;SC8F096.h: 748: asm("LCDDATA EQU 19DH");
+[; <" LCDDATA EQU 19DH ;# ">
+"753
+[v _COMEN `Vuc ~T0 @X0 1 e@414 ]
+[; ;SC8F096.h: 753: volatile unsigned char COMEN @ 0x19E;
+"755
+[; ;SC8F096.h: 755: asm("COMEN EQU 19EH");
+[; <" COMEN EQU 19EH ;# ">
+"760
+[v _SEGEN3 `Vuc ~T0 @X0 1 e@415 ]
+[; ;SC8F096.h: 760: volatile unsigned char SEGEN3 @ 0x19F;
+"762
+[; ;SC8F096.h: 762: asm("SEGEN3 EQU 19FH");
+[; <" SEGEN3 EQU 19FH ;# ">
+[; ;SC8F096.h: 766: extern volatile bit T0LSE_EN @ ((unsigned)&OPTION_REG*8)+7;
+[; ;SC8F096.h: 767: extern volatile bit INTEDG @ ((unsigned)&OPTION_REG*8)+6;
+[; ;SC8F096.h: 768: extern volatile bit T0CS @ ((unsigned)&OPTION_REG*8)+5;
+[; ;SC8F096.h: 769: extern volatile bit T0SE @ ((unsigned)&OPTION_REG*8)+4;
+[; ;SC8F096.h: 770: extern volatile bit PSA @ ((unsigned)&OPTION_REG*8)+3;
+[; ;SC8F096.h: 771: extern volatile bit PS2 @ ((unsigned)&OPTION_REG*8)+2;
+[; ;SC8F096.h: 772: extern volatile bit PS1 @ ((unsigned)&OPTION_REG*8)+1;
+[; ;SC8F096.h: 773: extern volatile bit PS0 @ ((unsigned)&OPTION_REG*8)+0;
+[; ;SC8F096.h: 776: extern volatile bit IRP @ ((unsigned)&STATUS*8)+7;
+[; ;SC8F096.h: 777: extern volatile bit RP1 @ ((unsigned)&STATUS*8)+6;
+[; ;SC8F096.h: 778: extern volatile bit RP0 @ ((unsigned)&STATUS*8)+5;
+[; ;SC8F096.h: 779: extern volatile bit TO @ ((unsigned)&STATUS*8)+4;
+[; ;SC8F096.h: 780: extern volatile bit PD @ ((unsigned)&STATUS*8)+3;
+[; ;SC8F096.h: 781: extern volatile bit Z @ ((unsigned)&STATUS*8)+2;
+[; ;SC8F096.h: 782: extern volatile bit DC @ ((unsigned)&STATUS*8)+1;
+[; ;SC8F096.h: 783: extern volatile bit C @ ((unsigned)&STATUS*8)+0;
+[; ;SC8F096.h: 786: extern volatile bit TRISB7 @ ((unsigned)&TRISB*8)+7;
+[; ;SC8F096.h: 787: extern volatile bit TRISB6 @ ((unsigned)&TRISB*8)+6;
+[; ;SC8F096.h: 788: extern volatile bit TRISB5 @ ((unsigned)&TRISB*8)+5;
+[; ;SC8F096.h: 789: extern volatile bit TRISB4 @ ((unsigned)&TRISB*8)+4;
+[; ;SC8F096.h: 790: extern volatile bit TRISB3 @ ((unsigned)&TRISB*8)+3;
+[; ;SC8F096.h: 791: extern volatile bit TRISB2 @ ((unsigned)&TRISB*8)+2;
+[; ;SC8F096.h: 792: extern volatile bit TRISB1 @ ((unsigned)&TRISB*8)+1;
+[; ;SC8F096.h: 793: extern volatile bit TRISB0 @ ((unsigned)&TRISB*8)+0;
+[; ;SC8F096.h: 796: extern volatile bit RB7 @ ((unsigned)&PORTB*8)+7;
+[; ;SC8F096.h: 797: extern volatile bit RB6 @ ((unsigned)&PORTB*8)+6;
+[; ;SC8F096.h: 798: extern volatile bit RB5 @ ((unsigned)&PORTB*8)+5;
+[; ;SC8F096.h: 799: extern volatile bit RB4 @ ((unsigned)&PORTB*8)+4;
+[; ;SC8F096.h: 800: extern volatile bit RB3 @ ((unsigned)&PORTB*8)+3;
+[; ;SC8F096.h: 801: extern volatile bit RB2 @ ((unsigned)&PORTB*8)+2;
+[; ;SC8F096.h: 802: extern volatile bit RB1 @ ((unsigned)&PORTB*8)+1;
+[; ;SC8F096.h: 803: extern volatile bit RB0 @ ((unsigned)&PORTB*8)+0;
+[; ;SC8F096.h: 806: extern volatile bit WPDB7 @ ((unsigned)&WPDB*8)+7;
+[; ;SC8F096.h: 807: extern volatile bit WPDB6 @ ((unsigned)&WPDB*8)+6;
+[; ;SC8F096.h: 808: extern volatile bit WPDB5 @ ((unsigned)&WPDB*8)+5;
+[; ;SC8F096.h: 809: extern volatile bit WPDB4 @ ((unsigned)&WPDB*8)+4;
+[; ;SC8F096.h: 810: extern volatile bit WPDB3 @ ((unsigned)&WPDB*8)+3;
+[; ;SC8F096.h: 811: extern volatile bit WPDB2 @ ((unsigned)&WPDB*8)+2;
+[; ;SC8F096.h: 812: extern volatile bit WPDB1 @ ((unsigned)&WPDB*8)+1;
+[; ;SC8F096.h: 813: extern volatile bit WPDB0 @ ((unsigned)&WPDB*8)+0;
+[; ;SC8F096.h: 816: extern volatile bit WPUB7 @ ((unsigned)&WPUB*8)+7;
+[; ;SC8F096.h: 817: extern volatile bit WPUB6 @ ((unsigned)&WPUB*8)+6;
+[; ;SC8F096.h: 818: extern volatile bit WPUB5 @ ((unsigned)&WPUB*8)+5;
+[; ;SC8F096.h: 819: extern volatile bit WPUB4 @ ((unsigned)&WPUB*8)+4;
+[; ;SC8F096.h: 820: extern volatile bit WPUB3 @ ((unsigned)&WPUB*8)+3;
+[; ;SC8F096.h: 821: extern volatile bit WPUB2 @ ((unsigned)&WPUB*8)+2;
+[; ;SC8F096.h: 822: extern volatile bit WPUB1 @ ((unsigned)&WPUB*8)+1;
+[; ;SC8F096.h: 823: extern volatile bit WPUB0 @ ((unsigned)&WPUB*8)+0;
+[; ;SC8F096.h: 826: extern volatile bit IOCB7 @ ((unsigned)&IOCB*8)+7;
+[; ;SC8F096.h: 827: extern volatile bit IOCB6 @ ((unsigned)&IOCB*8)+6;
+[; ;SC8F096.h: 828: extern volatile bit IOCB5 @ ((unsigned)&IOCB*8)+5;
+[; ;SC8F096.h: 829: extern volatile bit IOCB4 @ ((unsigned)&IOCB*8)+4;
+[; ;SC8F096.h: 830: extern volatile bit IOCB3 @ ((unsigned)&IOCB*8)+3;
+[; ;SC8F096.h: 831: extern volatile bit IOCB2 @ ((unsigned)&IOCB*8)+2;
+[; ;SC8F096.h: 832: extern volatile bit IOCB1 @ ((unsigned)&IOCB*8)+1;
+[; ;SC8F096.h: 833: extern volatile bit IOCB0 @ ((unsigned)&IOCB*8)+0;
+[; ;SC8F096.h: 836: extern volatile bit GIE @ ((unsigned)&INTCON*8)+7;
+[; ;SC8F096.h: 837: extern volatile bit PEIE @ ((unsigned)&INTCON*8)+6;
+[; ;SC8F096.h: 838: extern volatile bit T0IE @ ((unsigned)&INTCON*8)+5;
+[; ;SC8F096.h: 839: extern volatile bit INTE @ ((unsigned)&INTCON*8)+4;
+[; ;SC8F096.h: 840: extern volatile bit RBIE @ ((unsigned)&INTCON*8)+3;
+[; ;SC8F096.h: 841: extern volatile bit T0IF @ ((unsigned)&INTCON*8)+2;
+[; ;SC8F096.h: 842: extern volatile bit INTF @ ((unsigned)&INTCON*8)+1;
+[; ;SC8F096.h: 843: extern volatile bit RBIF @ ((unsigned)&INTCON*8)+0;
+[; ;SC8F096.h: 846: extern volatile bit DPDAT @ ((unsigned)&QCCON*8)+5;
+[; ;SC8F096.h: 847: extern volatile bit DMDAT @ ((unsigned)&QCCON*8)+4;
+[; ;SC8F096.h: 848: extern volatile bit DPSEL @ ((unsigned)&QCCON*8)+3;
+[; ;SC8F096.h: 849: extern volatile bit DPEN @ ((unsigned)&QCCON*8)+2;
+[; ;SC8F096.h: 850: extern volatile bit DMSEL @ ((unsigned)&QCCON*8)+1;
+[; ;SC8F096.h: 851: extern volatile bit DMEN @ ((unsigned)&QCCON*8)+0;
+[; ;SC8F096.h: 854: extern volatile bit RC0IF @ ((unsigned)&PIR1*8)+7;
+[; ;SC8F096.h: 855: extern volatile bit TX0IF @ ((unsigned)&PIR1*8)+6;
+[; ;SC8F096.h: 856: extern volatile bit CMP1IF @ ((unsigned)&PIR1*8)+5;
+[; ;SC8F096.h: 857: extern volatile bit PWMIF @ ((unsigned)&PIR1*8)+4;
+[; ;SC8F096.h: 858: extern volatile bit RAIF @ ((unsigned)&PIR1*8)+3;
+[; ;SC8F096.h: 859: extern volatile bit TMR1IF @ ((unsigned)&PIR1*8)+2;
+[; ;SC8F096.h: 860: extern volatile bit TMR2IF @ ((unsigned)&PIR1*8)+1;
+[; ;SC8F096.h: 861: extern volatile bit ADIF @ ((unsigned)&PIR1*8)+0;
+[; ;SC8F096.h: 864: extern volatile bit RC0IE @ ((unsigned)&PIE1*8)+7;
+[; ;SC8F096.h: 865: extern volatile bit TX0IE @ ((unsigned)&PIE1*8)+6;
+[; ;SC8F096.h: 866: extern volatile bit CMP1IE @ ((unsigned)&PIE1*8)+5;
+[; ;SC8F096.h: 867: extern volatile bit PWMIE @ ((unsigned)&PIE1*8)+4;
+[; ;SC8F096.h: 868: extern volatile bit RAIE @ ((unsigned)&PIE1*8)+3;
+[; ;SC8F096.h: 869: extern volatile bit TMR1IE @ ((unsigned)&PIE1*8)+2;
+[; ;SC8F096.h: 870: extern volatile bit TMR2IE @ ((unsigned)&PIE1*8)+1;
+[; ;SC8F096.h: 871: extern volatile bit ADIE @ ((unsigned)&PIE1*8)+0;
+[; ;SC8F096.h: 874: extern volatile bit CMP1EN @ ((unsigned)&CMP1CON0*8)+7;
+[; ;SC8F096.h: 875: extern volatile bit CMP1PS @ ((unsigned)&CMP1CON0*8)+6;
+[; ;SC8F096.h: 876: extern volatile bit CMP1NS2 @ ((unsigned)&CMP1CON0*8)+5;
+[; ;SC8F096.h: 877: extern volatile bit CMP1NS1 @ ((unsigned)&CMP1CON0*8)+4;
+[; ;SC8F096.h: 878: extern volatile bit CMP1NS0 @ ((unsigned)&CMP1CON0*8)+3;
+[; ;SC8F096.h: 879: extern volatile bit CMP1NV @ ((unsigned)&CMP1CON0*8)+2;
+[; ;SC8F096.h: 880: extern volatile bit CMP1OUT @ ((unsigned)&CMP1CON0*8)+1;
+[; ;SC8F096.h: 881: extern volatile bit CMP1OEN @ ((unsigned)&CMP1CON0*8)+0;
+[; ;SC8F096.h: 884: extern volatile bit CMP1IM @ ((unsigned)&CMP1CON1*8)+7;
+[; ;SC8F096.h: 885: extern volatile bit AN1_EN @ ((unsigned)&CMP1CON1*8)+6;
+[; ;SC8F096.h: 886: extern volatile bit RBIAS1_H @ ((unsigned)&CMP1CON1*8)+5;
+[; ;SC8F096.h: 887: extern volatile bit RBIAS1_L @ ((unsigned)&CMP1CON1*8)+4;
+[; ;SC8F096.h: 888: extern volatile bit LVDS13 @ ((unsigned)&CMP1CON1*8)+3;
+[; ;SC8F096.h: 889: extern volatile bit LVDS12 @ ((unsigned)&CMP1CON1*8)+2;
+[; ;SC8F096.h: 890: extern volatile bit LVDS11 @ ((unsigned)&CMP1CON1*8)+1;
+[; ;SC8F096.h: 891: extern volatile bit LVDS10 @ ((unsigned)&CMP1CON1*8)+0;
+[; ;SC8F096.h: 894: extern volatile bit CLK_SEL @ ((unsigned)&T2CON*8)+7;
+[; ;SC8F096.h: 895: extern volatile bit TOUTPS3 @ ((unsigned)&T2CON*8)+6;
+[; ;SC8F096.h: 896: extern volatile bit TOUTPS2 @ ((unsigned)&T2CON*8)+5;
+[; ;SC8F096.h: 897: extern volatile bit TOUTPS1 @ ((unsigned)&T2CON*8)+4;
+[; ;SC8F096.h: 898: extern volatile bit TOUTPS0 @ ((unsigned)&T2CON*8)+3;
+[; ;SC8F096.h: 899: extern volatile bit TMR2ON @ ((unsigned)&T2CON*8)+2;
+[; ;SC8F096.h: 900: extern volatile bit T2CKPS1 @ ((unsigned)&T2CON*8)+1;
+[; ;SC8F096.h: 901: extern volatile bit T2CKPS0 @ ((unsigned)&T2CON*8)+0;
+[; ;SC8F096.h: 904: extern volatile bit IRCF2 @ ((unsigned)&OSCCON*8)+6;
+[; ;SC8F096.h: 905: extern volatile bit IRCF1 @ ((unsigned)&OSCCON*8)+5;
+[; ;SC8F096.h: 906: extern volatile bit IRCF0 @ ((unsigned)&OSCCON*8)+4;
+[; ;SC8F096.h: 907: extern volatile bit SWDTEN @ ((unsigned)&OSCCON*8)+1;
+[; ;SC8F096.h: 910: extern volatile bit CLKDIV2 @ ((unsigned)&PWMCON0*8)+7;
+[; ;SC8F096.h: 911: extern volatile bit CLKDIV1 @ ((unsigned)&PWMCON0*8)+6;
+[; ;SC8F096.h: 912: extern volatile bit CLKDIV0 @ ((unsigned)&PWMCON0*8)+5;
+[; ;SC8F096.h: 913: extern volatile bit PWM4EN @ ((unsigned)&PWMCON0*8)+4;
+[; ;SC8F096.h: 914: extern volatile bit PWM3EN @ ((unsigned)&PWMCON0*8)+3;
+[; ;SC8F096.h: 915: extern volatile bit PWM2EN @ ((unsigned)&PWMCON0*8)+2;
+[; ;SC8F096.h: 916: extern volatile bit PWM1EN @ ((unsigned)&PWMCON0*8)+1;
+[; ;SC8F096.h: 917: extern volatile bit PWM0EN @ ((unsigned)&PWMCON0*8)+0;
+[; ;SC8F096.h: 920: extern volatile bit PWMIO_SEL1 @ ((unsigned)&PWMCON1*8)+7;
+[; ;SC8F096.h: 921: extern volatile bit PWMIO_SEL0 @ ((unsigned)&PWMCON1*8)+6;
+[; ;SC8F096.h: 922: extern volatile bit PWM2DTEN @ ((unsigned)&PWMCON1*8)+5;
+[; ;SC8F096.h: 923: extern volatile bit PWM0DTEN @ ((unsigned)&PWMCON1*8)+4;
+[; ;SC8F096.h: 924: extern volatile bit DT_DIV1 @ ((unsigned)&PWMCON1*8)+1;
+[; ;SC8F096.h: 925: extern volatile bit DT_DIV0 @ ((unsigned)&PWMCON1*8)+0;
+[; ;SC8F096.h: 928: extern volatile bit PWM4D9 @ ((unsigned)&PWMTH*8)+5;
+[; ;SC8F096.h: 929: extern volatile bit PWM4D8 @ ((unsigned)&PWMTH*8)+4;
+[; ;SC8F096.h: 930: extern volatile bit PWM4T9 @ ((unsigned)&PWMTH*8)+3;
+[; ;SC8F096.h: 931: extern volatile bit PWM4T8 @ ((unsigned)&PWMTH*8)+2;
+[; ;SC8F096.h: 932: extern volatile bit PWMT9 @ ((unsigned)&PWMTH*8)+1;
+[; ;SC8F096.h: 933: extern volatile bit PWMT8 @ ((unsigned)&PWMTH*8)+0;
+[; ;SC8F096.h: 936: extern volatile bit PWM4DIR @ ((unsigned)&PWMCON2*8)+4;
+[; ;SC8F096.h: 937: extern volatile bit PWM3DIR @ ((unsigned)&PWMCON2*8)+3;
+[; ;SC8F096.h: 938: extern volatile bit PWM2DIR @ ((unsigned)&PWMCON2*8)+2;
+[; ;SC8F096.h: 939: extern volatile bit PWM1DIR @ ((unsigned)&PWMCON2*8)+1;
+[; ;SC8F096.h: 940: extern volatile bit PWM0DIR @ ((unsigned)&PWMCON2*8)+0;
+[; ;SC8F096.h: 943: extern volatile bit PWMD39 @ ((unsigned)&PWMDH*8)+7;
+[; ;SC8F096.h: 944: extern volatile bit PWMD38 @ ((unsigned)&PWMDH*8)+6;
+[; ;SC8F096.h: 945: extern volatile bit PWMD29 @ ((unsigned)&PWMDH*8)+5;
+[; ;SC8F096.h: 946: extern volatile bit PWMD28 @ ((unsigned)&PWMDH*8)+4;
+[; ;SC8F096.h: 947: extern volatile bit PWMD19 @ ((unsigned)&PWMDH*8)+3;
+[; ;SC8F096.h: 948: extern volatile bit PWMD18 @ ((unsigned)&PWMDH*8)+2;
+[; ;SC8F096.h: 949: extern volatile bit PWMD09 @ ((unsigned)&PWMDH*8)+1;
+[; ;SC8F096.h: 950: extern volatile bit PWMD08 @ ((unsigned)&PWMDH*8)+0;
+[; ;SC8F096.h: 953: extern volatile bit PWM01DT5 @ ((unsigned)&PWM01DT*8)+5;
+[; ;SC8F096.h: 954: extern volatile bit PWM01DT4 @ ((unsigned)&PWM01DT*8)+4;
+[; ;SC8F096.h: 955: extern volatile bit PWM01DT3 @ ((unsigned)&PWM01DT*8)+3;
+[; ;SC8F096.h: 956: extern volatile bit PWM01DT2 @ ((unsigned)&PWM01DT*8)+2;
+[; ;SC8F096.h: 957: extern volatile bit PWM01DT1 @ ((unsigned)&PWM01DT*8)+1;
+[; ;SC8F096.h: 958: extern volatile bit PWM01DT0 @ ((unsigned)&PWM01DT*8)+0;
+[; ;SC8F096.h: 961: extern volatile bit TRISA7 @ ((unsigned)&TRISA*8)+7;
+[; ;SC8F096.h: 962: extern volatile bit TRISA6 @ ((unsigned)&TRISA*8)+6;
+[; ;SC8F096.h: 963: extern volatile bit TRISA5 @ ((unsigned)&TRISA*8)+5;
+[; ;SC8F096.h: 964: extern volatile bit TRISA4 @ ((unsigned)&TRISA*8)+4;
+[; ;SC8F096.h: 965: extern volatile bit TRISA3 @ ((unsigned)&TRISA*8)+3;
+[; ;SC8F096.h: 966: extern volatile bit TRISA2 @ ((unsigned)&TRISA*8)+2;
+[; ;SC8F096.h: 967: extern volatile bit TRISA1 @ ((unsigned)&TRISA*8)+1;
+[; ;SC8F096.h: 968: extern volatile bit TRISA0 @ ((unsigned)&TRISA*8)+0;
+[; ;SC8F096.h: 971: extern volatile bit RA7 @ ((unsigned)&PORTA*8)+7;
+[; ;SC8F096.h: 972: extern volatile bit RA6 @ ((unsigned)&PORTA*8)+6;
+[; ;SC8F096.h: 973: extern volatile bit RA5 @ ((unsigned)&PORTA*8)+5;
+[; ;SC8F096.h: 974: extern volatile bit RA4 @ ((unsigned)&PORTA*8)+4;
+[; ;SC8F096.h: 975: extern volatile bit RA3 @ ((unsigned)&PORTA*8)+3;
+[; ;SC8F096.h: 976: extern volatile bit RA2 @ ((unsigned)&PORTA*8)+2;
+[; ;SC8F096.h: 977: extern volatile bit RA1 @ ((unsigned)&PORTA*8)+1;
+[; ;SC8F096.h: 978: extern volatile bit RA0 @ ((unsigned)&PORTA*8)+0;
+[; ;SC8F096.h: 981: extern volatile bit WPDA7 @ ((unsigned)&WPDA*8)+7;
+[; ;SC8F096.h: 982: extern volatile bit WPDA6 @ ((unsigned)&WPDA*8)+6;
+[; ;SC8F096.h: 983: extern volatile bit WPDA5 @ ((unsigned)&WPDA*8)+5;
+[; ;SC8F096.h: 984: extern volatile bit WPDA4 @ ((unsigned)&WPDA*8)+4;
+[; ;SC8F096.h: 985: extern volatile bit WPDA3 @ ((unsigned)&WPDA*8)+3;
+[; ;SC8F096.h: 986: extern volatile bit WPDA2 @ ((unsigned)&WPDA*8)+2;
+[; ;SC8F096.h: 987: extern volatile bit WPDA1 @ ((unsigned)&WPDA*8)+1;
+[; ;SC8F096.h: 988: extern volatile bit WPDA0 @ ((unsigned)&WPDA*8)+0;
+[; ;SC8F096.h: 991: extern volatile bit WPUA7 @ ((unsigned)&WPUA*8)+7;
+[; ;SC8F096.h: 992: extern volatile bit WPUA6 @ ((unsigned)&WPUA*8)+6;
+[; ;SC8F096.h: 993: extern volatile bit WPUA5 @ ((unsigned)&WPUA*8)+5;
+[; ;SC8F096.h: 994: extern volatile bit WPUA4 @ ((unsigned)&WPUA*8)+4;
+[; ;SC8F096.h: 995: extern volatile bit WPUA3 @ ((unsigned)&WPUA*8)+3;
+[; ;SC8F096.h: 996: extern volatile bit WPUA2 @ ((unsigned)&WPUA*8)+2;
+[; ;SC8F096.h: 997: extern volatile bit WPUA1 @ ((unsigned)&WPUA*8)+1;
+[; ;SC8F096.h: 998: extern volatile bit WPUA0 @ ((unsigned)&WPUA*8)+0;
+[; ;SC8F096.h: 1001: extern volatile bit IOCA7 @ ((unsigned)&IOCA*8)+7;
+[; ;SC8F096.h: 1002: extern volatile bit IOCA6 @ ((unsigned)&IOCA*8)+6;
+[; ;SC8F096.h: 1003: extern volatile bit IOCA5 @ ((unsigned)&IOCA*8)+5;
+[; ;SC8F096.h: 1004: extern volatile bit IOCA4 @ ((unsigned)&IOCA*8)+4;
+[; ;SC8F096.h: 1005: extern volatile bit IOCA3 @ ((unsigned)&IOCA*8)+3;
+[; ;SC8F096.h: 1006: extern volatile bit IOCA2 @ ((unsigned)&IOCA*8)+2;
+[; ;SC8F096.h: 1007: extern volatile bit IOCA1 @ ((unsigned)&IOCA*8)+1;
+[; ;SC8F096.h: 1008: extern volatile bit IOCA0 @ ((unsigned)&IOCA*8)+0;
+[; ;SC8F096.h: 1011: extern volatile bit ANS29 @ ((unsigned)&ANSEL3*8)+7;
+[; ;SC8F096.h: 1012: extern volatile bit ANS28 @ ((unsigned)&ANSEL3*8)+6;
+[; ;SC8F096.h: 1013: extern volatile bit ANS27 @ ((unsigned)&ANSEL3*8)+5;
+[; ;SC8F096.h: 1014: extern volatile bit ANS26 @ ((unsigned)&ANSEL3*8)+4;
+[; ;SC8F096.h: 1015: extern volatile bit ANS25 @ ((unsigned)&ANSEL3*8)+3;
+[; ;SC8F096.h: 1016: extern volatile bit ANS24 @ ((unsigned)&ANSEL3*8)+2;
+[; ;SC8F096.h: 1017: extern volatile bit ANS23 @ ((unsigned)&ANSEL3*8)+1;
+[; ;SC8F096.h: 1018: extern volatile bit ANS22 @ ((unsigned)&ANSEL3*8)+0;
+[; ;SC8F096.h: 1021: extern volatile bit EEPGD @ ((unsigned)&EECON1*8)+7;
+[; ;SC8F096.h: 1022: extern volatile bit WRERR @ ((unsigned)&EECON1*8)+3;
+[; ;SC8F096.h: 1023: extern volatile bit WREN @ ((unsigned)&EECON1*8)+2;
+[; ;SC8F096.h: 1024: extern volatile bit WR @ ((unsigned)&EECON1*8)+1;
+[; ;SC8F096.h: 1025: extern volatile bit RD @ ((unsigned)&EECON1*8)+0;
+[; ;SC8F096.h: 1028: extern volatile bit EEDAT7 @ ((unsigned)&EEDAT*8)+7;
+[; ;SC8F096.h: 1029: extern volatile bit EEDAT6 @ ((unsigned)&EEDAT*8)+6;
+[; ;SC8F096.h: 1030: extern volatile bit EEDAT5 @ ((unsigned)&EEDAT*8)+5;
+[; ;SC8F096.h: 1031: extern volatile bit EEDAT4 @ ((unsigned)&EEDAT*8)+4;
+[; ;SC8F096.h: 1032: extern volatile bit EEDAT3 @ ((unsigned)&EEDAT*8)+3;
+[; ;SC8F096.h: 1033: extern volatile bit EEDAT2 @ ((unsigned)&EEDAT*8)+2;
+[; ;SC8F096.h: 1034: extern volatile bit EEDAT1 @ ((unsigned)&EEDAT*8)+1;
+[; ;SC8F096.h: 1035: extern volatile bit EEDAT0 @ ((unsigned)&EEDAT*8)+0;
+[; ;SC8F096.h: 1038: extern volatile bit EEDATH7 @ ((unsigned)&EEDATH*8)+7;
+[; ;SC8F096.h: 1039: extern volatile bit EEDATH6 @ ((unsigned)&EEDATH*8)+6;
+[; ;SC8F096.h: 1040: extern volatile bit EEDATH5 @ ((unsigned)&EEDATH*8)+5;
+[; ;SC8F096.h: 1041: extern volatile bit EEDATH4 @ ((unsigned)&EEDATH*8)+4;
+[; ;SC8F096.h: 1042: extern volatile bit EEDATH3 @ ((unsigned)&EEDATH*8)+3;
+[; ;SC8F096.h: 1043: extern volatile bit EEDATH2 @ ((unsigned)&EEDATH*8)+2;
+[; ;SC8F096.h: 1044: extern volatile bit EEDATH1 @ ((unsigned)&EEDATH*8)+1;
+[; ;SC8F096.h: 1045: extern volatile bit EEDATH0 @ ((unsigned)&EEDATH*8)+0;
+[; ;SC8F096.h: 1048: extern volatile bit EEADR7 @ ((unsigned)&EEADR*8)+7;
+[; ;SC8F096.h: 1049: extern volatile bit EEADR6 @ ((unsigned)&EEADR*8)+6;
+[; ;SC8F096.h: 1050: extern volatile bit EEADR5 @ ((unsigned)&EEADR*8)+5;
+[; ;SC8F096.h: 1051: extern volatile bit EEADR4 @ ((unsigned)&EEADR*8)+4;
+[; ;SC8F096.h: 1052: extern volatile bit EEADR3 @ ((unsigned)&EEADR*8)+3;
+[; ;SC8F096.h: 1053: extern volatile bit EEADR2 @ ((unsigned)&EEADR*8)+2;
+[; ;SC8F096.h: 1054: extern volatile bit EEADR1 @ ((unsigned)&EEADR*8)+1;
+[; ;SC8F096.h: 1055: extern volatile bit EEADR0 @ ((unsigned)&EEADR*8)+0;
+[; ;SC8F096.h: 1058: extern volatile bit EEADRH4 @ ((unsigned)&EEADRH*8)+4;
+[; ;SC8F096.h: 1059: extern volatile bit EEADRH3 @ ((unsigned)&EEADRH*8)+3;
+[; ;SC8F096.h: 1060: extern volatile bit EEADRH2 @ ((unsigned)&EEADRH*8)+2;
+[; ;SC8F096.h: 1061: extern volatile bit EEADRH1 @ ((unsigned)&EEADRH*8)+1;
+[; ;SC8F096.h: 1062: extern volatile bit EEADRH0 @ ((unsigned)&EEADRH*8)+0;
+[; ;SC8F096.h: 1065: extern volatile bit ANS7 @ ((unsigned)&ANSEL0*8)+7;
+[; ;SC8F096.h: 1066: extern volatile bit ANS6 @ ((unsigned)&ANSEL0*8)+6;
+[; ;SC8F096.h: 1067: extern volatile bit ANS5 @ ((unsigned)&ANSEL0*8)+5;
+[; ;SC8F096.h: 1068: extern volatile bit ANS4 @ ((unsigned)&ANSEL0*8)+4;
+[; ;SC8F096.h: 1069: extern volatile bit ANS3 @ ((unsigned)&ANSEL0*8)+3;
+[; ;SC8F096.h: 1070: extern volatile bit ANS2 @ ((unsigned)&ANSEL0*8)+2;
+[; ;SC8F096.h: 1071: extern volatile bit ANS1 @ ((unsigned)&ANSEL0*8)+1;
+[; ;SC8F096.h: 1072: extern volatile bit ANS0 @ ((unsigned)&ANSEL0*8)+0;
+[; ;SC8F096.h: 1075: extern volatile bit ANS15 @ ((unsigned)&ANSEL1*8)+7;
+[; ;SC8F096.h: 1076: extern volatile bit ANS14 @ ((unsigned)&ANSEL1*8)+6;
+[; ;SC8F096.h: 1077: extern volatile bit ANS13 @ ((unsigned)&ANSEL1*8)+5;
+[; ;SC8F096.h: 1078: extern volatile bit ANS12 @ ((unsigned)&ANSEL1*8)+4;
+[; ;SC8F096.h: 1079: extern volatile bit ANS11 @ ((unsigned)&ANSEL1*8)+3;
+[; ;SC8F096.h: 1080: extern volatile bit ANS10 @ ((unsigned)&ANSEL1*8)+2;
+[; ;SC8F096.h: 1081: extern volatile bit ANS9 @ ((unsigned)&ANSEL1*8)+1;
+[; ;SC8F096.h: 1082: extern volatile bit ANS8 @ ((unsigned)&ANSEL1*8)+0;
+[; ;SC8F096.h: 1085: extern volatile bit ADCS1 @ ((unsigned)&ADCON0*8)+7;
+[; ;SC8F096.h: 1086: extern volatile bit ADCS0 @ ((unsigned)&ADCON0*8)+6;
+[; ;SC8F096.h: 1087: extern volatile bit CHS3 @ ((unsigned)&ADCON0*8)+5;
+[; ;SC8F096.h: 1088: extern volatile bit CHS2 @ ((unsigned)&ADCON0*8)+4;
+[; ;SC8F096.h: 1089: extern volatile bit CHS1 @ ((unsigned)&ADCON0*8)+3;
+[; ;SC8F096.h: 1090: extern volatile bit CHS0 @ ((unsigned)&ADCON0*8)+2;
+[; ;SC8F096.h: 1091: extern volatile bit GODONE @ ((unsigned)&ADCON0*8)+1;
+[; ;SC8F096.h: 1092: extern volatile bit ADON @ ((unsigned)&ADCON0*8)+0;
+[; ;SC8F096.h: 1095: extern volatile bit ADFM @ ((unsigned)&ADCON1*8)+7;
+[; ;SC8F096.h: 1096: extern volatile bit CHS4 @ ((unsigned)&ADCON1*8)+6;
+[; ;SC8F096.h: 1097: extern volatile bit LDO_EN @ ((unsigned)&ADCON1*8)+2;
+[; ;SC8F096.h: 1098: extern volatile bit LDO_SEL1 @ ((unsigned)&ADCON1*8)+1;
+[; ;SC8F096.h: 1099: extern volatile bit LDO_SEL0 @ ((unsigned)&ADCON1*8)+0;
+[; ;SC8F096.h: 1102: extern volatile bit CMP2EN @ ((unsigned)&CMP2CON0*8)+7;
+[; ;SC8F096.h: 1103: extern volatile bit CMP2PS @ ((unsigned)&CMP2CON0*8)+6;
+[; ;SC8F096.h: 1104: extern volatile bit CMP2NS2 @ ((unsigned)&CMP2CON0*8)+5;
+[; ;SC8F096.h: 1105: extern volatile bit CMP2NS1 @ ((unsigned)&CMP2CON0*8)+4;
+[; ;SC8F096.h: 1106: extern volatile bit CMP2NS0 @ ((unsigned)&CMP2CON0*8)+3;
+[; ;SC8F096.h: 1107: extern volatile bit CMP2NV @ ((unsigned)&CMP2CON0*8)+2;
+[; ;SC8F096.h: 1108: extern volatile bit CMP2OUT @ ((unsigned)&CMP2CON0*8)+1;
+[; ;SC8F096.h: 1109: extern volatile bit CMP2OEN @ ((unsigned)&CMP2CON0*8)+0;
+[; ;SC8F096.h: 1112: extern volatile bit SEG7EN @ ((unsigned)&SEGEN0*8)+7;
+[; ;SC8F096.h: 1113: extern volatile bit SEG6EN @ ((unsigned)&SEGEN0*8)+6;
+[; ;SC8F096.h: 1114: extern volatile bit SEG5EN @ ((unsigned)&SEGEN0*8)+5;
+[; ;SC8F096.h: 1115: extern volatile bit SEG4EN @ ((unsigned)&SEGEN0*8)+4;
+[; ;SC8F096.h: 1116: extern volatile bit SEG3EN @ ((unsigned)&SEGEN0*8)+3;
+[; ;SC8F096.h: 1117: extern volatile bit SEG2EN @ ((unsigned)&SEGEN0*8)+2;
+[; ;SC8F096.h: 1118: extern volatile bit SEG1EN @ ((unsigned)&SEGEN0*8)+1;
+[; ;SC8F096.h: 1119: extern volatile bit SEG0EN @ ((unsigned)&SEGEN0*8)+0;
+[; ;SC8F096.h: 1122: extern volatile bit CMP2IM @ ((unsigned)&CMP2CON1*8)+7;
+[; ;SC8F096.h: 1123: extern volatile bit AN2_EN @ ((unsigned)&CMP2CON1*8)+6;
+[; ;SC8F096.h: 1124: extern volatile bit RBIAS2_H @ ((unsigned)&CMP2CON1*8)+5;
+[; ;SC8F096.h: 1125: extern volatile bit RBIAS2_L @ ((unsigned)&CMP2CON1*8)+4;
+[; ;SC8F096.h: 1126: extern volatile bit LVDS23 @ ((unsigned)&CMP2CON1*8)+3;
+[; ;SC8F096.h: 1127: extern volatile bit LVDS22 @ ((unsigned)&CMP2CON1*8)+2;
+[; ;SC8F096.h: 1128: extern volatile bit LVDS21 @ ((unsigned)&CMP2CON1*8)+1;
+[; ;SC8F096.h: 1129: extern volatile bit LVDS20 @ ((unsigned)&CMP2CON1*8)+0;
+[; ;SC8F096.h: 1132: extern volatile bit TRISC5 @ ((unsigned)&TRISC*8)+5;
+[; ;SC8F096.h: 1133: extern volatile bit TRISC4 @ ((unsigned)&TRISC*8)+4;
+[; ;SC8F096.h: 1134: extern volatile bit TRISC3 @ ((unsigned)&TRISC*8)+3;
+[; ;SC8F096.h: 1135: extern volatile bit TRISC2 @ ((unsigned)&TRISC*8)+2;
+[; ;SC8F096.h: 1136: extern volatile bit TRISC1 @ ((unsigned)&TRISC*8)+1;
+[; ;SC8F096.h: 1137: extern volatile bit TRISC0 @ ((unsigned)&TRISC*8)+0;
+[; ;SC8F096.h: 1140: extern volatile bit RC5 @ ((unsigned)&PORTC*8)+5;
+[; ;SC8F096.h: 1141: extern volatile bit RC4 @ ((unsigned)&PORTC*8)+4;
+[; ;SC8F096.h: 1142: extern volatile bit RC3 @ ((unsigned)&PORTC*8)+3;
+[; ;SC8F096.h: 1143: extern volatile bit RC2 @ ((unsigned)&PORTC*8)+2;
+[; ;SC8F096.h: 1144: extern volatile bit RC1 @ ((unsigned)&PORTC*8)+1;
+[; ;SC8F096.h: 1145: extern volatile bit RC0 @ ((unsigned)&PORTC*8)+0;
+[; ;SC8F096.h: 1148: extern volatile bit RD7 @ ((unsigned)&PORTD*8)+7;
+[; ;SC8F096.h: 1149: extern volatile bit RD6 @ ((unsigned)&PORTD*8)+6;
+[; ;SC8F096.h: 1150: extern volatile bit RD5 @ ((unsigned)&PORTD*8)+5;
+[; ;SC8F096.h: 1151: extern volatile bit RD4 @ ((unsigned)&PORTD*8)+4;
+[; ;SC8F096.h: 1152: extern volatile bit RD3 @ ((unsigned)&PORTD*8)+3;
+[; ;SC8F096.h: 1153: extern volatile bit RD2 @ ((unsigned)&PORTD*8)+2;
+[; ;SC8F096.h: 1154: extern volatile bit RD1 @ ((unsigned)&PORTD*8)+1;
+[; ;SC8F096.h: 1155: extern volatile bit RD0 @ ((unsigned)&PORTD*8)+0;
+[; ;SC8F096.h: 1158: extern volatile bit WPUC5 @ ((unsigned)&WPUC*8)+5;
+[; ;SC8F096.h: 1159: extern volatile bit WPUC4 @ ((unsigned)&WPUC*8)+4;
+[; ;SC8F096.h: 1160: extern volatile bit WPUC3 @ ((unsigned)&WPUC*8)+3;
+[; ;SC8F096.h: 1161: extern volatile bit WPUC2 @ ((unsigned)&WPUC*8)+2;
+[; ;SC8F096.h: 1162: extern volatile bit WPUC1 @ ((unsigned)&WPUC*8)+1;
+[; ;SC8F096.h: 1163: extern volatile bit WPUC0 @ ((unsigned)&WPUC*8)+0;
+[; ;SC8F096.h: 1166: extern volatile bit ANS21 @ ((unsigned)&ANSEL2*8)+5;
+[; ;SC8F096.h: 1167: extern volatile bit ANS20 @ ((unsigned)&ANSEL2*8)+4;
+[; ;SC8F096.h: 1168: extern volatile bit ANS19 @ ((unsigned)&ANSEL2*8)+3;
+[; ;SC8F096.h: 1169: extern volatile bit ANS18 @ ((unsigned)&ANSEL2*8)+2;
+[; ;SC8F096.h: 1170: extern volatile bit ANS17 @ ((unsigned)&ANSEL2*8)+1;
+[; ;SC8F096.h: 1171: extern volatile bit ANS16 @ ((unsigned)&ANSEL2*8)+0;
+[; ;SC8F096.h: 1174: extern volatile bit T1GINV @ ((unsigned)&T1CON*8)+7;
+[; ;SC8F096.h: 1175: extern volatile bit TMR1GE @ ((unsigned)&T1CON*8)+6;
+[; ;SC8F096.h: 1176: extern volatile bit T1CKPS1 @ ((unsigned)&T1CON*8)+5;
+[; ;SC8F096.h: 1177: extern volatile bit T1CKPS0 @ ((unsigned)&T1CON*8)+4;
+[; ;SC8F096.h: 1178: extern volatile bit T1OSCEN @ ((unsigned)&T1CON*8)+3;
+[; ;SC8F096.h: 1179: extern volatile bit T1SYNC @ ((unsigned)&T1CON*8)+2;
+[; ;SC8F096.h: 1180: extern volatile bit TMR1CS @ ((unsigned)&T1CON*8)+1;
+[; ;SC8F096.h: 1181: extern volatile bit TMR1ON @ ((unsigned)&T1CON*8)+0;
+[; ;SC8F096.h: 1184: extern volatile bit BCLIF @ ((unsigned)&PIR2*8)+7;
+[; ;SC8F096.h: 1185: extern volatile bit TKIF @ ((unsigned)&PIR2*8)+6;
+[; ;SC8F096.h: 1186: extern volatile bit CMP2IF @ ((unsigned)&PIR2*8)+5;
+[; ;SC8F096.h: 1187: extern volatile bit IICIF @ ((unsigned)&PIR2*8)+4;
+[; ;SC8F096.h: 1188: extern volatile bit PDSIF @ ((unsigned)&PIR2*8)+3;
+[; ;SC8F096.h: 1189: extern volatile bit PDRIF @ ((unsigned)&PIR2*8)+2;
+[; ;SC8F096.h: 1190: extern volatile bit TX1IF @ ((unsigned)&PIR2*8)+1;
+[; ;SC8F096.h: 1191: extern volatile bit RC1IF @ ((unsigned)&PIR2*8)+0;
+[; ;SC8F096.h: 1194: extern volatile bit BCLIE @ ((unsigned)&PIE2*8)+7;
+[; ;SC8F096.h: 1195: extern volatile bit TKIE @ ((unsigned)&PIE2*8)+6;
+[; ;SC8F096.h: 1196: extern volatile bit CMP2IE @ ((unsigned)&PIE2*8)+5;
+[; ;SC8F096.h: 1197: extern volatile bit IICIE @ ((unsigned)&PIE2*8)+4;
+[; ;SC8F096.h: 1198: extern volatile bit PDSIE @ ((unsigned)&PIE2*8)+3;
+[; ;SC8F096.h: 1199: extern volatile bit PDRIE @ ((unsigned)&PIE2*8)+2;
+[; ;SC8F096.h: 1200: extern volatile bit TX1IE @ ((unsigned)&PIE2*8)+1;
+[; ;SC8F096.h: 1201: extern volatile bit RC1IE @ ((unsigned)&PIE2*8)+0;
+[; ;SC8F096.h: 1204: extern volatile bit KDONE @ ((unsigned)&KEYCON0*8)+7;
+[; ;SC8F096.h: 1205: extern volatile bit KTOUT @ ((unsigned)&KEYCON0*8)+2;
+[; ;SC8F096.h: 1206: extern volatile bit KCAP @ ((unsigned)&KEYCON0*8)+1;
+[; ;SC8F096.h: 1207: extern volatile bit KEN @ ((unsigned)&KEYCON0*8)+0;
+[; ;SC8F096.h: 1210: extern volatile bit KVREF1 @ ((unsigned)&KEYCON1*8)+7;
+[; ;SC8F096.h: 1211: extern volatile bit KVREF0 @ ((unsigned)&KEYCON1*8)+6;
+[; ;SC8F096.h: 1212: extern volatile bit KCLK1 @ ((unsigned)&KEYCON1*8)+5;
+[; ;SC8F096.h: 1213: extern volatile bit KCLK0 @ ((unsigned)&KEYCON1*8)+4;
+[; ;SC8F096.h: 1214: extern volatile bit KCHS3 @ ((unsigned)&KEYCON1*8)+3;
+[; ;SC8F096.h: 1215: extern volatile bit KCHS2 @ ((unsigned)&KEYCON1*8)+2;
+[; ;SC8F096.h: 1216: extern volatile bit KCHS1 @ ((unsigned)&KEYCON1*8)+1;
+[; ;SC8F096.h: 1217: extern volatile bit KCHS0 @ ((unsigned)&KEYCON1*8)+0;
+[; ;SC8F096.h: 1220: extern volatile bit CAP_LVBO2 @ ((unsigned)&KEYCON2*8)+7;
+[; ;SC8F096.h: 1221: extern volatile bit CAP_LVBO1 @ ((unsigned)&KEYCON2*8)+6;
+[; ;SC8F096.h: 1222: extern volatile bit CAP_LVBO0 @ ((unsigned)&KEYCON2*8)+5;
+[; ;SC8F096.h: 1223: extern volatile bit TP_EN @ ((unsigned)&KEYCON2*8)+4;
+[; ;SC8F096.h: 1224: extern volatile bit TKLDOEN @ ((unsigned)&KEYCON2*8)+3;
+[; ;SC8F096.h: 1225: extern volatile bit TKLDO_SEL @ ((unsigned)&KEYCON2*8)+1;
+[; ;SC8F096.h: 1226: extern volatile bit TKEN @ ((unsigned)&KEYCON2*8)+0;
+[; ;SC8F096.h: 1229: extern volatile bit TRISD7 @ ((unsigned)&TRISD*8)+7;
+[; ;SC8F096.h: 1230: extern volatile bit TRISD6 @ ((unsigned)&TRISD*8)+6;
+[; ;SC8F096.h: 1231: extern volatile bit TRISD5 @ ((unsigned)&TRISD*8)+5;
+[; ;SC8F096.h: 1232: extern volatile bit TRISD4 @ ((unsigned)&TRISD*8)+4;
+[; ;SC8F096.h: 1233: extern volatile bit TRISD3 @ ((unsigned)&TRISD*8)+3;
+[; ;SC8F096.h: 1234: extern volatile bit TRISD2 @ ((unsigned)&TRISD*8)+2;
+[; ;SC8F096.h: 1235: extern volatile bit TRISD1 @ ((unsigned)&TRISD*8)+1;
+[; ;SC8F096.h: 1236: extern volatile bit TRISD0 @ ((unsigned)&TRISD*8)+0;
+[; ;SC8F096.h: 1239: extern volatile bit WPUD7 @ ((unsigned)&WPUD*8)+7;
+[; ;SC8F096.h: 1240: extern volatile bit WPUD6 @ ((unsigned)&WPUD*8)+6;
+[; ;SC8F096.h: 1241: extern volatile bit WPUD5 @ ((unsigned)&WPUD*8)+5;
+[; ;SC8F096.h: 1242: extern volatile bit WPUD4 @ ((unsigned)&WPUD*8)+4;
+[; ;SC8F096.h: 1243: extern volatile bit WPUD3 @ ((unsigned)&WPUD*8)+3;
+[; ;SC8F096.h: 1244: extern volatile bit WPUD2 @ ((unsigned)&WPUD*8)+2;
+[; ;SC8F096.h: 1245: extern volatile bit WPUD1 @ ((unsigned)&WPUD*8)+1;
+[; ;SC8F096.h: 1246: extern volatile bit WPUD0 @ ((unsigned)&WPUD*8)+0;
+[; ;SC8F096.h: 1249: extern volatile bit CSRC0 @ ((unsigned)&TXSTA0*8)+7;
+[; ;SC8F096.h: 1250: extern volatile bit TX9EN0 @ ((unsigned)&TXSTA0*8)+6;
+[; ;SC8F096.h: 1251: extern volatile bit TXEN0 @ ((unsigned)&TXSTA0*8)+5;
+[; ;SC8F096.h: 1252: extern volatile bit SYNC0 @ ((unsigned)&TXSTA0*8)+4;
+[; ;SC8F096.h: 1253: extern volatile bit SCKP0 @ ((unsigned)&TXSTA0*8)+3;
+[; ;SC8F096.h: 1254: extern volatile bit TRMT0 @ ((unsigned)&TXSTA0*8)+1;
+[; ;SC8F096.h: 1255: extern volatile bit TX9D0 @ ((unsigned)&TXSTA0*8)+0;
+[; ;SC8F096.h: 1258: extern volatile bit SPEN0 @ ((unsigned)&RCSTA0*8)+7;
+[; ;SC8F096.h: 1259: extern volatile bit RX9EN0 @ ((unsigned)&RCSTA0*8)+6;
+[; ;SC8F096.h: 1260: extern volatile bit SREN0 @ ((unsigned)&RCSTA0*8)+5;
+[; ;SC8F096.h: 1261: extern volatile bit CREN0 @ ((unsigned)&RCSTA0*8)+4;
+[; ;SC8F096.h: 1262: extern volatile bit RCIDL0 @ ((unsigned)&RCSTA0*8)+3;
+[; ;SC8F096.h: 1263: extern volatile bit FERR0 @ ((unsigned)&RCSTA0*8)+2;
+[; ;SC8F096.h: 1264: extern volatile bit OERR0 @ ((unsigned)&RCSTA0*8)+1;
+[; ;SC8F096.h: 1265: extern volatile bit RX9D0 @ ((unsigned)&RCSTA0*8)+0;
+[; ;SC8F096.h: 1268: extern volatile bit LCDEN @ ((unsigned)&LCDCON0*8)+7;
+[; ;SC8F096.h: 1269: extern volatile bit LEDEN @ ((unsigned)&LCDCON0*8)+6;
+[; ;SC8F096.h: 1270: extern volatile bit COMSEL2 @ ((unsigned)&LCDCON0*8)+5;
+[; ;SC8F096.h: 1271: extern volatile bit COMSEL1 @ ((unsigned)&LCDCON0*8)+4;
+[; ;SC8F096.h: 1272: extern volatile bit COMSEL0 @ ((unsigned)&LCDCON0*8)+3;
+[; ;SC8F096.h: 1273: extern volatile bit LCDCLK2 @ ((unsigned)&LCDCON0*8)+2;
+[; ;SC8F096.h: 1274: extern volatile bit LCDCLK1 @ ((unsigned)&LCDCON0*8)+1;
+[; ;SC8F096.h: 1275: extern volatile bit LCDCLK0 @ ((unsigned)&LCDCON0*8)+0;
+[; ;SC8F096.h: 1278: extern volatile bit BIAS @ ((unsigned)&LCDCON1*8)+6;
+[; ;SC8F096.h: 1279: extern volatile bit FCCTLM1 @ ((unsigned)&LCDCON1*8)+3;
+[; ;SC8F096.h: 1280: extern volatile bit FCCTLM0 @ ((unsigned)&LCDCON1*8)+2;
+[; ;SC8F096.h: 1281: extern volatile bit LCDF1 @ ((unsigned)&LCDCON1*8)+1;
+[; ;SC8F096.h: 1282: extern volatile bit LCDF0 @ ((unsigned)&LCDCON1*8)+0;
+[; ;SC8F096.h: 1285: extern volatile bit SEG15EN @ ((unsigned)&SEGEN1*8)+7;
+[; ;SC8F096.h: 1286: extern volatile bit SEG14EN @ ((unsigned)&SEGEN1*8)+6;
+[; ;SC8F096.h: 1287: extern volatile bit SEG13EN @ ((unsigned)&SEGEN1*8)+5;
+[; ;SC8F096.h: 1288: extern volatile bit SEG12EN @ ((unsigned)&SEGEN1*8)+4;
+[; ;SC8F096.h: 1289: extern volatile bit SEG11EN @ ((unsigned)&SEGEN1*8)+3;
+[; ;SC8F096.h: 1290: extern volatile bit SEG10EN @ ((unsigned)&SEGEN1*8)+2;
+[; ;SC8F096.h: 1291: extern volatile bit SEG9EN @ ((unsigned)&SEGEN1*8)+1;
+[; ;SC8F096.h: 1292: extern volatile bit SEG8EN @ ((unsigned)&SEGEN1*8)+0;
+[; ;SC8F096.h: 1295: extern volatile bit SEG23EN @ ((unsigned)&SEGEN2*8)+7;
+[; ;SC8F096.h: 1296: extern volatile bit SEG22EN @ ((unsigned)&SEGEN2*8)+6;
+[; ;SC8F096.h: 1297: extern volatile bit SEG21EN @ ((unsigned)&SEGEN2*8)+5;
+[; ;SC8F096.h: 1298: extern volatile bit SEG20EN @ ((unsigned)&SEGEN2*8)+4;
+[; ;SC8F096.h: 1299: extern volatile bit SEG19EN @ ((unsigned)&SEGEN2*8)+3;
+[; ;SC8F096.h: 1300: extern volatile bit SEG18EN @ ((unsigned)&SEGEN2*8)+2;
+[; ;SC8F096.h: 1301: extern volatile bit SEG17EN @ ((unsigned)&SEGEN2*8)+1;
+[; ;SC8F096.h: 1302: extern volatile bit SEG16EN @ ((unsigned)&SEGEN2*8)+0;
+[; ;SC8F096.h: 1305: extern volatile bit CSRC1 @ ((unsigned)&TXSTA1*8)+7;
+[; ;SC8F096.h: 1306: extern volatile bit TX9EN1 @ ((unsigned)&TXSTA1*8)+6;
+[; ;SC8F096.h: 1307: extern volatile bit TXEN1 @ ((unsigned)&TXSTA1*8)+5;
+[; ;SC8F096.h: 1308: extern volatile bit SYNC1 @ ((unsigned)&TXSTA1*8)+4;
+[; ;SC8F096.h: 1309: extern volatile bit SCKP1 @ ((unsigned)&TXSTA1*8)+3;
+[; ;SC8F096.h: 1310: extern volatile bit TRMT1 @ ((unsigned)&TXSTA1*8)+1;
+[; ;SC8F096.h: 1311: extern volatile bit TX9D1 @ ((unsigned)&TXSTA1*8)+0;
+[; ;SC8F096.h: 1314: extern volatile bit SPEN1 @ ((unsigned)&RCSTA1*8)+7;
+[; ;SC8F096.h: 1315: extern volatile bit RX9EN1 @ ((unsigned)&RCSTA1*8)+6;
+[; ;SC8F096.h: 1316: extern volatile bit SREN1 @ ((unsigned)&RCSTA1*8)+5;
+[; ;SC8F096.h: 1317: extern volatile bit CREN1 @ ((unsigned)&RCSTA1*8)+4;
+[; ;SC8F096.h: 1318: extern volatile bit RCIDL1 @ ((unsigned)&RCSTA1*8)+3;
+[; ;SC8F096.h: 1319: extern volatile bit FERR1 @ ((unsigned)&RCSTA1*8)+2;
+[; ;SC8F096.h: 1320: extern volatile bit OERR1 @ ((unsigned)&RCSTA1*8)+1;
+[; ;SC8F096.h: 1321: extern volatile bit RX9D1 @ ((unsigned)&RCSTA1*8)+0;
+[; ;SC8F096.h: 1324: extern volatile bit OPA_EN @ ((unsigned)&OPACON*8)+7;
+[; ;SC8F096.h: 1325: extern volatile bit OPA_OEN @ ((unsigned)&OPACON*8)+6;
+[; ;SC8F096.h: 1326: extern volatile bit OPA_ADC @ ((unsigned)&OPACON*8)+4;
+[; ;SC8F096.h: 1327: extern volatile bit OPA_FT @ ((unsigned)&OPACON*8)+0;
+[; ;SC8F096.h: 1330: extern volatile bit OPADOUT @ ((unsigned)&OPAADJ*8)+7;
+[; ;SC8F096.h: 1331: extern volatile bit OPACOFM @ ((unsigned)&OPAADJ*8)+6;
+[; ;SC8F096.h: 1332: extern volatile bit OPACRS @ ((unsigned)&OPAADJ*8)+5;
+[; ;SC8F096.h: 1333: extern volatile bit OPAADJ4 @ ((unsigned)&OPAADJ*8)+4;
+[; ;SC8F096.h: 1334: extern volatile bit OPAADJ3 @ ((unsigned)&OPAADJ*8)+3;
+[; ;SC8F096.h: 1335: extern volatile bit OPAADJ2 @ ((unsigned)&OPAADJ*8)+2;
+[; ;SC8F096.h: 1336: extern volatile bit OPAADJ1 @ ((unsigned)&OPAADJ*8)+1;
+[; ;SC8F096.h: 1337: extern volatile bit OPAADJ0 @ ((unsigned)&OPAADJ*8)+0;
+[; ;SC8F096.h: 1340: extern volatile bit LEDSW @ ((unsigned)&LEDCTR0*8)+7;
+[; ;SC8F096.h: 1341: extern volatile bit LEDSW_RT @ ((unsigned)&LEDCTR0*8)+6;
+[; ;SC8F096.h: 1342: extern volatile bit IF_15 @ ((unsigned)&LEDCTR0*8)+5;
+[; ;SC8F096.h: 1343: extern volatile bit IF_30 @ ((unsigned)&LEDCTR0*8)+4;
+[; ;SC8F096.h: 1344: extern volatile bit RESET_T @ ((unsigned)&LEDCTR0*8)+3;
+[; ;SC8F096.h: 1345: extern volatile bit LEDSW_CKSEL1 @ ((unsigned)&LEDCTR0*8)+2;
+[; ;SC8F096.h: 1346: extern volatile bit LEDSW_CKSEL0 @ ((unsigned)&LEDCTR0*8)+1;
+[; ;SC8F096.h: 1347: extern volatile bit LEDSW_ST @ ((unsigned)&LEDCTR0*8)+0;
+[; ;SC8F096.h: 1350: extern volatile bit LEDSW_ADR @ ((unsigned)&LEDCTR1*8)+7;
+[; ;SC8F096.h: 1351: extern volatile bit LEDSW_ADD4 @ ((unsigned)&LEDCTR1*8)+4;
+[; ;SC8F096.h: 1352: extern volatile bit LEDSW_ADD3 @ ((unsigned)&LEDCTR1*8)+3;
+[; ;SC8F096.h: 1353: extern volatile bit LEDSW_ADD2 @ ((unsigned)&LEDCTR1*8)+2;
+[; ;SC8F096.h: 1354: extern volatile bit LEDSW_ADD1 @ ((unsigned)&LEDCTR1*8)+1;
+[; ;SC8F096.h: 1355: extern volatile bit LEDSW_ADD0 @ ((unsigned)&LEDCTR1*8)+0;
+[; ;SC8F096.h: 1358: extern volatile bit IICWCOL @ ((unsigned)&IICCON*8)+7;
+[; ;SC8F096.h: 1359: extern volatile bit IICOV @ ((unsigned)&IICCON*8)+6;
+[; ;SC8F096.h: 1360: extern volatile bit IICEN @ ((unsigned)&IICCON*8)+5;
+[; ;SC8F096.h: 1361: extern volatile bit IICCKP @ ((unsigned)&IICCON*8)+4;
+[; ;SC8F096.h: 1362: extern volatile bit IICTOS1 @ ((unsigned)&IICCON*8)+3;
+[; ;SC8F096.h: 1363: extern volatile bit IICTOS0 @ ((unsigned)&IICCON*8)+2;
+[; ;SC8F096.h: 1364: extern volatile bit IICM1 @ ((unsigned)&IICCON*8)+1;
+[; ;SC8F096.h: 1365: extern volatile bit IICM0 @ ((unsigned)&IICCON*8)+0;
+[; ;SC8F096.h: 1368: extern volatile bit GCEN @ ((unsigned)&IICCON2*8)+7;
+[; ;SC8F096.h: 1369: extern volatile bit ACKSTAT @ ((unsigned)&IICCON2*8)+6;
+[; ;SC8F096.h: 1370: extern volatile bit ACKDT @ ((unsigned)&IICCON2*8)+5;
+[; ;SC8F096.h: 1371: extern volatile bit ACKEN @ ((unsigned)&IICCON2*8)+4;
+[; ;SC8F096.h: 1372: extern volatile bit RCEN @ ((unsigned)&IICCON2*8)+3;
+[; ;SC8F096.h: 1373: extern volatile bit PEN @ ((unsigned)&IICCON2*8)+2;
+[; ;SC8F096.h: 1374: extern volatile bit RSEN @ ((unsigned)&IICCON2*8)+1;
+[; ;SC8F096.h: 1375: extern volatile bit SEN @ ((unsigned)&IICCON2*8)+0;
+[; ;SC8F096.h: 1378: extern volatile bit IDLE @ ((unsigned)&IICSTAT*8)+6;
+[; ;SC8F096.h: 1379: extern volatile bit DA @ ((unsigned)&IICSTAT*8)+5;
+[; ;SC8F096.h: 1380: extern volatile bit P @ ((unsigned)&IICSTAT*8)+4;
+[; ;SC8F096.h: 1381: extern volatile bit S @ ((unsigned)&IICSTAT*8)+3;
+[; ;SC8F096.h: 1382: extern volatile bit RW @ ((unsigned)&IICSTAT*8)+2;
+[; ;SC8F096.h: 1383: extern volatile bit IICTOF @ ((unsigned)&IICSTAT*8)+1;
+[; ;SC8F096.h: 1384: extern volatile bit BF @ ((unsigned)&IICSTAT*8)+0;
+[; ;SC8F096.h: 1387: extern volatile bit IICBUF7 @ ((unsigned)&IICBUF*8)+7;
+[; ;SC8F096.h: 1388: extern volatile bit IICBUF6 @ ((unsigned)&IICBUF*8)+6;
+[; ;SC8F096.h: 1389: extern volatile bit IICBUF5 @ ((unsigned)&IICBUF*8)+5;
+[; ;SC8F096.h: 1390: extern volatile bit IICBUF4 @ ((unsigned)&IICBUF*8)+4;
+[; ;SC8F096.h: 1391: extern volatile bit IICBUF3 @ ((unsigned)&IICBUF*8)+3;
+[; ;SC8F096.h: 1392: extern volatile bit IICBUF2 @ ((unsigned)&IICBUF*8)+2;
+[; ;SC8F096.h: 1393: extern volatile bit IICBUF1 @ ((unsigned)&IICBUF*8)+1;
+[; ;SC8F096.h: 1394: extern volatile bit IICBUF0 @ ((unsigned)&IICBUF*8)+0;
+[; ;SC8F096.h: 1397: extern volatile bit IICADD7 @ ((unsigned)&IICADD*8)+7;
+[; ;SC8F096.h: 1398: extern volatile bit IICADD6 @ ((unsigned)&IICADD*8)+6;
+[; ;SC8F096.h: 1399: extern volatile bit IICADD5 @ ((unsigned)&IICADD*8)+5;
+[; ;SC8F096.h: 1400: extern volatile bit IICADD4 @ ((unsigned)&IICADD*8)+4;
+[; ;SC8F096.h: 1401: extern volatile bit IICADD3 @ ((unsigned)&IICADD*8)+3;
+[; ;SC8F096.h: 1402: extern volatile bit IICADD2 @ ((unsigned)&IICADD*8)+2;
+[; ;SC8F096.h: 1403: extern volatile bit IICADD1 @ ((unsigned)&IICADD*8)+1;
+[; ;SC8F096.h: 1404: extern volatile bit IICADD0 @ ((unsigned)&IICADD*8)+0;
+[; ;SC8F096.h: 1407: extern volatile bit CC0_EN @ ((unsigned)&CC0CON*8)+5;
+[; ;SC8F096.h: 1408: extern volatile bit CC0_HYS @ ((unsigned)&CC0CON*8)+4;
+[; ;SC8F096.h: 1409: extern volatile bit CC0_CVS1 @ ((unsigned)&CC0CON*8)+3;
+[; ;SC8F096.h: 1410: extern volatile bit CC0_CVS0 @ ((unsigned)&CC0CON*8)+2;
+[; ;SC8F096.h: 1411: extern volatile bit CC0_RD @ ((unsigned)&CC0CON*8)+1;
+[; ;SC8F096.h: 1412: extern volatile bit CC0_CMPO @ ((unsigned)&CC0CON*8)+0;
+[; ;SC8F096.h: 1415: extern volatile bit CC1_EN @ ((unsigned)&CC1CON*8)+5;
+[; ;SC8F096.h: 1416: extern volatile bit CC1_HYS @ ((unsigned)&CC1CON*8)+4;
+[; ;SC8F096.h: 1417: extern volatile bit CC1_CVS1 @ ((unsigned)&CC1CON*8)+3;
+[; ;SC8F096.h: 1418: extern volatile bit CC1_CVS0 @ ((unsigned)&CC1CON*8)+2;
+[; ;SC8F096.h: 1419: extern volatile bit CC1_RD @ ((unsigned)&CC1CON*8)+1;
+[; ;SC8F096.h: 1420: extern volatile bit CC1_CMPO @ ((unsigned)&CC1CON*8)+0;
+[; ;SC8F096.h: 1423: extern volatile bit PDEN @ ((unsigned)&PDCON0*8)+7;
+[; ;SC8F096.h: 1424: extern volatile bit PD_BUF @ ((unsigned)&PDCON0*8)+6;
+[; ;SC8F096.h: 1425: extern volatile bit SEND_ST @ ((unsigned)&PDCON0*8)+5;
+[; ;SC8F096.h: 1426: extern volatile bit CRC_RES @ ((unsigned)&PDCON0*8)+4;
+[; ;SC8F096.h: 1427: extern volatile bit CC_SEL @ ((unsigned)&PDCON0*8)+3;
+[; ;SC8F096.h: 1428: extern volatile bit PD_MODE @ ((unsigned)&PDCON0*8)+2;
+[; ;SC8F096.h: 1429: extern volatile bit REC_S @ ((unsigned)&PDCON0*8)+0;
+[; ;SC8F096.h: 1432: extern volatile bit PDSEN @ ((unsigned)&PDCON1*8)+6;
+[; ;SC8F096.h: 1433: extern volatile bit SEND_SEL @ ((unsigned)&PDCON1*8)+5;
+[; ;SC8F096.h: 1434: extern volatile bit PDCNT4 @ ((unsigned)&PDCON1*8)+4;
+[; ;SC8F096.h: 1435: extern volatile bit PDCNT3 @ ((unsigned)&PDCON1*8)+3;
+[; ;SC8F096.h: 1436: extern volatile bit PDCNT2 @ ((unsigned)&PDCON1*8)+2;
+[; ;SC8F096.h: 1437: extern volatile bit PDCNT1 @ ((unsigned)&PDCON1*8)+1;
+[; ;SC8F096.h: 1438: extern volatile bit PDCNT0 @ ((unsigned)&PDCON1*8)+0;
+[; ;SC8F096.h: 1441: extern volatile bit PDSADD2 @ ((unsigned)&PDADD*8)+7;
+[; ;SC8F096.h: 1442: extern volatile bit PDSADD1 @ ((unsigned)&PDADD*8)+6;
+[; ;SC8F096.h: 1443: extern volatile bit PDSADD0 @ ((unsigned)&PDADD*8)+5;
+[; ;SC8F096.h: 1444: extern volatile bit PDRADD4 @ ((unsigned)&PDADD*8)+4;
+[; ;SC8F096.h: 1445: extern volatile bit PDRADD3 @ ((unsigned)&PDADD*8)+3;
+[; ;SC8F096.h: 1446: extern volatile bit PDRADD2 @ ((unsigned)&PDADD*8)+2;
+[; ;SC8F096.h: 1447: extern volatile bit PDRADD1 @ ((unsigned)&PDADD*8)+1;
+[; ;SC8F096.h: 1448: extern volatile bit PDRADD0 @ ((unsigned)&PDADD*8)+0;
+[; ;SC8F096.h: 1451: extern volatile bit PDRDATA7 @ ((unsigned)&PDRDATA*8)+7;
+[; ;SC8F096.h: 1452: extern volatile bit PDRDATA6 @ ((unsigned)&PDRDATA*8)+6;
+[; ;SC8F096.h: 1453: extern volatile bit PDRDATA5 @ ((unsigned)&PDRDATA*8)+5;
+[; ;SC8F096.h: 1454: extern volatile bit PDRDATA4 @ ((unsigned)&PDRDATA*8)+4;
+[; ;SC8F096.h: 1455: extern volatile bit PDRDATA3 @ ((unsigned)&PDRDATA*8)+3;
+[; ;SC8F096.h: 1456: extern volatile bit PDRDATA2 @ ((unsigned)&PDRDATA*8)+2;
+[; ;SC8F096.h: 1457: extern volatile bit PDRDATA1 @ ((unsigned)&PDRDATA*8)+1;
+[; ;SC8F096.h: 1458: extern volatile bit PDRDATA0 @ ((unsigned)&PDRDATA*8)+0;
+[; ;SC8F096.h: 1461: extern volatile bit PDSDATA7 @ ((unsigned)&PDSDATA*8)+7;
+[; ;SC8F096.h: 1462: extern volatile bit PDSDATA6 @ ((unsigned)&PDSDATA*8)+6;
+[; ;SC8F096.h: 1463: extern volatile bit PDSDATA5 @ ((unsigned)&PDSDATA*8)+5;
+[; ;SC8F096.h: 1464: extern volatile bit PDSDATA4 @ ((unsigned)&PDSDATA*8)+4;
+[; ;SC8F096.h: 1465: extern volatile bit PDSDATA3 @ ((unsigned)&PDSDATA*8)+3;
+[; ;SC8F096.h: 1466: extern volatile bit PDSDATA2 @ ((unsigned)&PDSDATA*8)+2;
+[; ;SC8F096.h: 1467: extern volatile bit PDSDATA1 @ ((unsigned)&PDSDATA*8)+1;
+[; ;SC8F096.h: 1468: extern volatile bit PDSDATA0 @ ((unsigned)&PDSDATA*8)+0;
+[; ;SC8F096.h: 1471: extern volatile bit LCDCS @ ((unsigned)&LCDADD*8)+7;
+[; ;SC8F096.h: 1472: extern volatile bit B2RES1 @ ((unsigned)&LCDADD*8)+6;
+[; ;SC8F096.h: 1473: extern volatile bit B2RES0 @ ((unsigned)&LCDADD*8)+5;
+[; ;SC8F096.h: 1474: extern volatile bit LCDADD4 @ ((unsigned)&LCDADD*8)+4;
+[; ;SC8F096.h: 1475: extern volatile bit LCDADD3 @ ((unsigned)&LCDADD*8)+3;
+[; ;SC8F096.h: 1476: extern volatile bit LCDADD2 @ ((unsigned)&LCDADD*8)+2;
+[; ;SC8F096.h: 1477: extern volatile bit LCDADD1 @ ((unsigned)&LCDADD*8)+1;
+[; ;SC8F096.h: 1478: extern volatile bit LCDADD0 @ ((unsigned)&LCDADD*8)+0;
+[; ;SC8F096.h: 1481: extern volatile bit LCDDATA7 @ ((unsigned)&LCDDATA*8)+7;
+[; ;SC8F096.h: 1482: extern volatile bit LCDDATA6 @ ((unsigned)&LCDDATA*8)+6;
+[; ;SC8F096.h: 1483: extern volatile bit LCDDATA5 @ ((unsigned)&LCDDATA*8)+5;
+[; ;SC8F096.h: 1484: extern volatile bit LCDDATA4 @ ((unsigned)&LCDDATA*8)+4;
+[; ;SC8F096.h: 1485: extern volatile bit LCDDATA3 @ ((unsigned)&LCDDATA*8)+3;
+[; ;SC8F096.h: 1486: extern volatile bit LCDDATA2 @ ((unsigned)&LCDDATA*8)+2;
+[; ;SC8F096.h: 1487: extern volatile bit LCDDATA1 @ ((unsigned)&LCDDATA*8)+1;
+[; ;SC8F096.h: 1488: extern volatile bit LCDDATA0 @ ((unsigned)&LCDDATA*8)+0;
+[; ;SC8F096.h: 1491: extern volatile bit COM5EN @ ((unsigned)&COMEN*8)+5;
+[; ;SC8F096.h: 1492: extern volatile bit COM4EN @ ((unsigned)&COMEN*8)+4;
+[; ;SC8F096.h: 1493: extern volatile bit COM3EN @ ((unsigned)&COMEN*8)+3;
+[; ;SC8F096.h: 1494: extern volatile bit COM2EN @ ((unsigned)&COMEN*8)+2;
+[; ;SC8F096.h: 1495: extern volatile bit COM1EN @ ((unsigned)&COMEN*8)+1;
+[; ;SC8F096.h: 1496: extern volatile bit COM0EN @ ((unsigned)&COMEN*8)+0;
+[; ;SC8F096.h: 1499: extern volatile bit SEGDRI4 @ ((unsigned)&SEGEN3*8)+7;
+[; ;SC8F096.h: 1500: extern volatile bit SEGDRI3 @ ((unsigned)&SEGEN3*8)+6;
+[; ;SC8F096.h: 1501: extern volatile bit SEGDRI2 @ ((unsigned)&SEGEN3*8)+5;
+[; ;SC8F096.h: 1502: extern volatile bit SEGDRI1 @ ((unsigned)&SEGEN3*8)+4;
+[; ;SC8F096.h: 1503: extern volatile bit SEGDRI0 @ ((unsigned)&SEGEN3*8)+3;
+[; ;SC8F096.h: 1504: extern volatile bit LCDDATA8 @ ((unsigned)&SEGEN3*8)+0;
+[; ;sc.h: 28: extern void __nop(void);
+[; ;sc.h: 76: extern unsigned int flash_read(unsigned short addr);
+[; ;sc.h: 150: extern __nonreentrant void _delay(unsigned long);
+[; ;sc.h: 184: extern unsigned char __resetbits;
+[; ;sc.h: 185: extern __bit __powerdown;
+[; ;sc.h: 186: extern __bit __timeout;
+"7 H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.h
+[p n 373,752 ]
+"28
+[v _I2C_SCL_IO `Vb ~T0 @X0 1 e@2092 ]
+[; ;CheckTouchKey.h: 28: volatile bit I2C_SCL_IO @((unsigned)&TRISC*8)+4;
+"29
+[v _I2C_SDA_IO `Vb ~T0 @X0 1 e@2093 ]
+[; ;CheckTouchKey.h: 29: volatile bit I2C_SDA_IO @((unsigned)&TRISC*8)+5;
+[; ;CheckTouchKey.h: 104: extern unsigned int TKDATA0;
+[; ;CheckTouchKey.h: 109: void CheckTouchKey();
+[; ;CheckTouchKey.h: 110: unsigned char I2C_Read1bYTE(unsigned char ack);
+[; ;CheckTouchKey.h: 111: unsigned char I2C_Write1bYTE(unsigned char data);
+[; ;CheckTouchKey.h: 112: void I2C_WaitMoment();
+[; ;CheckTouchKey.h: 113: void I2C_WriteStop();
+[; ;CheckTouchKey.h: 114: void I2C_WriteStart();
+"7 H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+[v _MainTime `Vui ~T0 @X0 1 e ]
+[; ;main.c: 7: volatile unsigned int MainTime;
+"13
+[v _Delay `(v ~T0 @X0 1 sf1`ui ]
+"14
+{
+[; ;main.c: 13: static void Delay(unsigned int dtemp)
+[; ;main.c: 14: {
+[e :U _Delay ]
+"13
+[v _dtemp `ui ~T0 @X0 1 r1 ]
+"14
+[f ]
+[; ;main.c: 15: while(dtemp--);
+"15
+[e $U 2  ]
+[e :U 3 ]
+[e :U 2 ]
+[e $ != -- _dtemp -> -> 1 `i `ui -> -> 0 `i `ui 3  ]
+[e :U 4 ]
+[; ;main.c: 16: }
+"16
+[e :UE 1 ]
+}
+"20
+[v _Delay_nms `(v ~T0 @X0 1 sf1`ui ]
+"21
+{
+[; ;main.c: 20: static void Delay_nms (unsigned int inittempl)
+[; ;main.c: 21: {
+[e :U _Delay_nms ]
+"20
+[v _inittempl `ui ~T0 @X0 1 r1 ]
+"21
+[f ]
+"22
+[v _i `ui ~T0 @X0 1 a ]
+[; ;main.c: 22: unsigned int i;
+[; ;main.c: 24: for(i=0;i<inittempl;i++)
+"24
+{
+[e = _i -> -> 0 `i `ui ]
+[e $U 9  ]
+"25
+[e :U 6 ]
+[; ;main.c: 25: {
+{
+[; ;main.c: 26: Delay(154);
+"26
+[e ( _Delay (1 -> -> 154 `i `ui ]
+[; ;main.c: 27: asm("clrwdt");
+"27
+[; <" clrwdt ;# ">
+"28
+}
+"24
+[e ++ _i -> -> 1 `i `ui ]
+[e :U 9 ]
+[e $ < _i _inittempl 6  ]
+[e :U 7 ]
+"28
+}
+[; ;main.c: 28: }
+[; ;main.c: 29: }
+"29
+[e :UE 5 ]
+}
+"34
+[v _System_Init `(v ~T0 @X0 1 ef ]
+"35
+{
+[; ;main.c: 34: void System_Init()
+[; ;main.c: 35: {
+[e :U _System_Init ]
+[f ]
+[; ;main.c: 36: asm("clrwdt");
+"36
+[; <" clrwdt ;# ">
+[; ;main.c: 37: OSCCON = 0X70;
+"37
+[e = _OSCCON -> -> 112 `i `uc ]
+[; ;main.c: 38: OPTION_REG = 0B00001111;
+"38
+[e = _OPTION_REG -> -> 15 `i `uc ]
+[; ;main.c: 39: asm("clrwdt");
+"39
+[; <" clrwdt ;# ">
+[; ;main.c: 41: TRISB = 0B11111111;
+"41
+[e = _TRISB -> -> 255 `i `uc ]
+[; ;main.c: 43: PORTB = 0;
+"43
+[e = _PORTB -> -> 0 `i `uc ]
+[; ;main.c: 45: WPUB = 0;
+"45
+[e = _WPUB -> -> 0 `i `uc ]
+[; ;main.c: 47: PIE1 = 0;
+"47
+[e = _PIE1 -> -> 0 `i `uc ]
+[; ;main.c: 49: INTCON = 0xC0;
+"49
+[e = _INTCON -> -> 192 `i `uc ]
+[; ;main.c: 50: }
+"50
+[e :UE 10 ]
+}
+"59
+[v _Refurbish_Sfr `(v ~T0 @X0 1 ef ]
+"60
+{
+[; ;main.c: 59: void Refurbish_Sfr()
+[; ;main.c: 60: {
+[e :U _Refurbish_Sfr ]
+[f ]
+[; ;main.c: 61: asm("clrwdt");
+"61
+[; <" clrwdt ;# ">
+[; ;main.c: 62: OSCCON = 0X70;
+"62
+[e = _OSCCON -> -> 112 `i `uc ]
+[; ;main.c: 63: OPTION_REG = 0B00001111;
+"63
+[e = _OPTION_REG -> -> 15 `i `uc ]
+[; ;main.c: 64: asm("clrwdt");
+"64
+[; <" clrwdt ;# ">
+[; ;main.c: 66: TRISB = 0B11111111;
+"66
+[e = _TRISB -> -> 255 `i `uc ]
+[; ;main.c: 68: PORTB = 0;
+"68
+[e = _PORTB -> -> 0 `i `uc ]
+[; ;main.c: 70: WPUB = 0;
+"70
+[e = _WPUB -> -> 0 `i `uc ]
+[; ;main.c: 72: PIE1 = 0;
+"72
+[e = _PIE1 -> -> 0 `i `uc ]
+[; ;main.c: 74: INTCON = 0xC0;
+"74
+[e = _INTCON -> -> 192 `i `uc ]
+[; ;main.c: 76: T2CON =4;
+"76
+[e = _T2CON -> -> 4 `i `uc ]
+[; ;main.c: 77: PR2 =250;
+"77
+[e = _PR2 -> -> 250 `i `uc ]
+[; ;main.c: 78: }
+"78
+[e :UE 11 ]
+}
+[v $root$_Isr_Timer `(v ~T0 @X0 0 e ]
+[v F1308 `(v ~T0 @X0 1 tf ]
+"83
+[v _Isr_Timer `IF1308 ~T0 @X0 1 e ]
+"84
+{
+[; ;main.c: 83: void interrupt Isr_Timer()
+[; ;main.c: 84: {
+[e :U _Isr_Timer ]
+[f ]
+[; ;main.c: 85: if(TMR2IE==1&&TMR2IF==1)
+"85
+[e $ ! && == -> _TMR2IE `i -> 1 `i == -> _TMR2IF `i -> 1 `i 13  ]
+[; ;main.c: 86: {
+"86
+{
+[; ;main.c: 87: TMR2IF = 0;
+"87
+[e = _TMR2IF -> -> 0 `i `b ]
+[; ;main.c: 88: MainTime++;
+"88
+[e ++ _MainTime -> -> 1 `i `ui ]
+"89
+}
+[; ;main.c: 89: }
+[e $U 14  ]
+"91
+[e :U 13 ]
+[; ;main.c: 91: else
+[; ;main.c: 92: {
+"92
+{
+[; ;main.c: 93: INTCON &= 0xC0;
+"93
+[e =& _INTCON -> -> 192 `i `uc ]
+[; ;main.c: 94: PIR1 = 0;
+"94
+[e = _PIR1 -> -> 0 `i `uc ]
+"96
+}
+[e :U 14 ]
+[; ;main.c: 96: }
+[; ;main.c: 97: }
+"97
+[e :UE 12 ]
+}
+[v $root$_main `(v ~T0 @X0 0 e ]
+"101
+[v _main `(v ~T0 @X0 1 ef ]
+"102
+{
+[; ;main.c: 101: void main()
+[; ;main.c: 102: {
+[e :U _main ]
+[f ]
+[; ;main.c: 103: Delay_nms(100);
+"103
+[e ( _Delay_nms (1 -> -> 100 `i `ui ]
+[; ;main.c: 104: System_Init();
+"104
+[e ( _System_Init ..  ]
+[; ;main.c: 106: while(1)
+"106
+[e :U 17 ]
+[; ;main.c: 107: {
+"107
+{
+[; ;main.c: 109: Refurbish_Sfr();
+"109
+[e ( _Refurbish_Sfr ..  ]
+[; ;main.c: 110: CheckTouchKey();
+"110
+[e ( _CheckTouchKey ..  ]
+"112
+}
+[e :U 16 ]
+"106
+[e $U 17  ]
+[e :U 18 ]
+[; ;main.c: 112: }
+[; ;main.c: 113: }
+"113
+[e :UE 15 ]
+}

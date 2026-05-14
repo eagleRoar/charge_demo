@@ -1,0 +1,1283 @@
+---- H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_ADC_Demo\SC8F096_ADC.c ----------------------------------------------------------------------
+1:                /**********************************************************
+2:                AD检测范例程序
+3:                **********************************************************/
+4:                #pragma warning disable 752
+5:                #pragma warning disable 373			//屏蔽掉编译的1个警告
+6:                #include <sc.h>
+7:                
+8:                #ifndef _XTAL_FREQ
+9:                #define _XTAL_FREQ 16000000			//16MHz,使用内置延时函数必须定义主频，
+10:               									//如用FCPU_DIV选择2T，则定时赋值减半
+11:               #endif
+12:               
+13:               #define     POWER_RATIO  	(4096UL*1.2*1000)
+14:               
+15:               volatile unsigned int adresult;
+16:               volatile unsigned int result;
+17:               volatile unsigned char test_adc;
+18:               volatile unsigned int power_ad;
+19:               
+20:               unsigned char ADC_Sample(unsigned char adch, unsigned char adldo);
+21:               void DelayXms(unsigned char x);
+22:               unsigned char ADC_Result(unsigned char adch);
+23:               void Init_System();
+24:               void AD_Init();
+25:               
+26:               #define _DEBUG			//调试程序用
+27:               
+28:               /**********************************************************
+29:               函数名称：AD_Sample
+30:               函数功能：AD检测
+31:               入口参数：adch - 检测通道
+32:               出口参数：无
+33:               备    注：采样通道需自行设置为输入口
+34:               	      采样10次,取中间八次的平均值为采样结果存于adresult中
+35:               
+36:               	      adch 为输入AD通道 0-15，31
+37:                            31  检测内部1.2V
+38:               	
+39:                		  adldo =5,开启内部LDO 2V 作为ADC 参考
+40:                		  adldo =6,开启内部LDO 2.4V 作为ADC 参考
+41:               		  adldo =7,开启内部LDO 3V 作为ADC 参考
+42:                		  adldo =0,VDD 作为ADC 参考
+43:                		  AD转换结果左对齐
+44:                		  ADC参考电压从VDD切换到LDO时需要延时100us以上，才能进行AD转换
+45:               **********************************************************/
+46:               unsigned char ADC_Sample(unsigned char adch, unsigned char adldo) 
+  001B    1283    CLRB	0x3,5
+  001C    1303    CLRB	0x3,6
+  001D    00A1    LD	0x21,A
+47:               {
+48:               	volatile unsigned long adsum = 0;
+49:               	volatile unsigned int admin = 0, admax = 0;
+  001E    2104    CALL	0x104
+  001F    120A    CLRB	0xA,4
+  0020    118A    CLRB	0xA,3
+50:               	volatile unsigned int ad_temp = 0;
+  0021    01AB    CLR	0x2B
+  0022    01AC    CLR	0x2C
+51:               
+52:               	if ((!LDO_EN) && (adldo & 0x04) ) 
+  0023    1683    SETB	0x3,5
+  0024    1D16    SNZB	0x16,2
+  0025    1D72    SNZB	0x72,2
+  0026    282E    JP	0x2E
+53:               	{
+54:               								//如果AD参考从VDD换到内部LDO，需要延时100US以上
+55:               		ADCON1 = adldo;			//左对齐,AD值取12位
+  0027    0872    LD	A,0x72
+  0028    0096    LD	0x16,A
+56:               		__delay_us(100);		//IDE内置延时函数，延时100us
+  0029    3085    LDIA	0x85
+  002A    00F3    LD	0x73,A
+  002B    0BF3    SZDECR	0x73
+  002C    282B    JP	0x2B
+57:               	} 
+  002D    2830    JP	0x30
+58:               	else
+59:               		ADCON1 = adldo;			//如果ADCON1.7(ADFM)=1为右对齐，,AD值取10位
+  002E    0872    LD	A,0x72
+  002F    0096    LD	0x16,A
+60:               
+61:               	if(adch & 0x10) 
+  0030    1283    CLRB	0x3,5
+  0031    1303    CLRB	0x3,6
+  0032    1E21    SNZB	0x21,4
+  0033    2839    JP	0x39
+62:               	{
+63:               		CHS4 = 1;
+  0034    1683    SETB	0x3,5
+  0035    1716    SETB	0x16,6
+64:               		adch &= 0x0f;
+  0036    300F    LDIA	0xF
+  0037    1283    CLRB	0x3,5
+  0038    05A1    ANDR	0x21
+65:               	}
+66:               	unsigned char i = 0;
+67:               	for (i = 0; i < 10; i++) 
+  0039    01A2    CLR	0x22
+68:               	{
+69:               		ADCON0 = (unsigned char)(0X41 | (adch << 2));	//16分频，如果主频为16M，则必须选16分频或以上
+  003A    0821    LD	A,0x21
+  003B    00F3    LD	0x73,A
+  003C    3001    LDIA	0x1
+  003D    1003    CLRB	0x3,0
+  003E    0DF3    RLCR	0x73
+  003F    3EFF    ADDIA	0xFF
+  0040    1003    CLRB	0x3,0
+  0041    1D03    SNZB	0x3,2
+  0042    283E    JP	0x3E
+  0043    0D73    RLCA	0x73
+  0044    3841    ORIA	0x41
+  0045    1683    SETB	0x3,5
+  0046    0095    LD	0x15,A
+  0047    0000    NOP
+  0048    0000    NOP
+  0049    0000    NOP
+  004A    0000    NOP
+70:               		asm("nop");
+71:               		asm("nop");
+72:               		asm("nop");
+73:               		asm("nop");				//选择通道后需延时1uS以上
+74:               		GODONE = 1;				//开始转换
+  004B    1683    SETB	0x3,5
+  004C    1303    CLRB	0x3,6
+  004D    1495    SETB	0x15,1
+75:               
+76:               		unsigned char j = 0;
+  004E    1283    CLRB	0x3,5
+  004F    01A0    CLR	0x20
+77:               		while (GODONE) 
+  0050    1683    SETB	0x3,5
+  0051    1C95    SNZB	0x15,1
+  0052    285C    JP	0x5C
+78:               		{
+79:               			__delay_us(2);		//延时2us(编译器内置函数)
+  0053    2854    JP	0x54
+  0054    2855    JP	0x55
+  0055    2856    JP	0x56
+  0056    2857    JP	0x57
+80:               
+81:               			if (0 == (--j))		//延时0.5ms仍没有AD转换结束，跳出程序
+  0057    1283    CLRB	0x3,5
+  0058    1303    CLRB	0x3,6
+  0059    0BA0    SZDECR	0x20
+  005A    2850    JP	0x50
+82:               			return 0;
+  005B    3400    RET	0x0
+83:               		}
+84:               
+85:               		ad_temp = (unsigned int)((ADRESH << 4) + (ADRESL >> 4));	//计算12位AD值
+  005C    0819    LD	A,0x19
+  005D    1283    CLRB	0x3,5
+  005E    00AB    LD	0x2B,A
+  005F    01AC    CLR	0x2C
+  0060    0EAB    SWAPR	0x2B
+  0061    0EAC    SWAPR	0x2C
+  0062    30F0    LDIA	0xF0
+  0063    05AC    ANDR	0x2C
+  0064    082B    LD	A,0x2B
+  0065    390F    ANDIA	0xF
+  0066    04AC    ORR	0x2C
+  0067    30F0    LDIA	0xF0
+  0068    05AB    ANDR	0x2B
+  0069    1683    SETB	0x3,5
+  006A    0E18    SWAPA	0x18
+  006B    390F    ANDIA	0xF
+  006C    1283    CLRB	0x3,5
+  006D    07AB    ADDR	0x2B
+  006E    1803    SZB	0x3,0
+  006F    0AAC    INCR	0x2C
+86:               
+87:               		if (0 == admax) 
+  0070    0829    LD	A,0x29
+  0071    042A    ORA	0x2A
+  0072    1D03    SNZB	0x3,2
+  0073    2879    JP	0x79
+88:               		{
+89:               			admax = ad_temp;
+  0074    082C    LD	A,0x2C
+  0075    00AA    LD	0x2A,A
+  0076    082B    LD	A,0x2B
+  0077    00A9    LD	0x29,A
+  0078    288E    JP	0x8E
+90:               			admin = ad_temp;
+91:               		} 
+92:               		else if (ad_temp > admax)
+  0079    082C    LD	A,0x2C
+  007A    022A    SUBA	0x2A
+  007B    1D03    SNZB	0x3,2
+  007C    287F    JP	0x7F
+  007D    082B    LD	A,0x2B
+  007E    0229    SUBA	0x29
+  007F    1803    SZB	0x3,0
+  0080    2886    JP	0x86
+93:               			admax = ad_temp;				//AD采样最大值
+  0081    082C    LD	A,0x2C
+  0082    00AA    LD	0x2A,A
+  0083    082B    LD	A,0x2B
+  0084    00A9    LD	0x29,A
+  0085    2892    JP	0x92
+94:               		else if (ad_temp < admin)
+  0086    0828    LD	A,0x28
+  0087    022C    SUBA	0x2C
+  0088    1D03    SNZB	0x3,2
+  0089    288C    JP	0x8C
+  008A    0827    LD	A,0x27
+  008B    022B    SUBA	0x2B
+  008C    1803    SZB	0x3,0
+  008D    2892    JP	0x92
+95:               			admin = ad_temp;				//AD采样最小值
+  008E    082C    LD	A,0x2C
+  008F    00A8    LD	0x28,A
+  0090    082B    LD	A,0x2B
+  0091    00A7    LD	0x27,A
+96:               
+97:               		adsum += ad_temp;
+  0092    082B    LD	A,0x2B
+  0093    00F3    LD	0x73,A
+  0094    082C    LD	A,0x2C
+  0095    00F4    LD	0x74,A
+  0096    01F5    CLR	0x75
+  0097    01F6    CLR	0x76
+  0098    0873    LD	A,0x73
+  0099    07A3    ADDR	0x23
+  009A    0874    LD	A,0x74
+  009B    1103    CLRB	0x3,2
+  009C    1803    SZB	0x3,0
+  009D    3E01    ADDIA	0x1
+  009E    1D03    SNZB	0x3,2
+  009F    07A4    ADDR	0x24
+  00A0    0875    LD	A,0x75
+  00A1    1103    CLRB	0x3,2
+  00A2    1803    SZB	0x3,0
+  00A3    3E01    ADDIA	0x1
+  00A4    1D03    SNZB	0x3,2
+  00A5    07A5    ADDR	0x25
+  00A6    0876    LD	A,0x76
+  00A7    1103    CLRB	0x3,2
+  00A8    1803    SZB	0x3,0
+  00A9    3E01    ADDIA	0x1
+  00AA    1D03    SNZB	0x3,2
+  00AB    07A6    ADDR	0x26
+  00AC    300A    LDIA	0xA
+  00AD    0AA2    INCR	0x22
+  00AE    0222    SUBA	0x22
+  00AF    1C03    SNZB	0x3,0
+  00B0    283A    JP	0x3A
+98:               	}
+99:               		adsum -= admax;
+  00B1    0829    LD	A,0x29
+  00B2    00F3    LD	0x73,A
+  00B3    082A    LD	A,0x2A
+  00B4    20F5    CALL	0xF5
+  00B5    120A    CLRB	0xA,4
+  00B6    118A    CLRB	0xA,3
+  00B7    1C03    SNZB	0x3,0
+  00B8    0F76    SZINCA	0x76
+  00B9    02A6    SUBR	0x26
+100:              		if (adsum >= admin)
+  00BA    0827    LD	A,0x27
+  00BB    00F3    LD	0x73,A
+  00BC    0828    LD	A,0x28
+  00BD    00F4    LD	0x74,A
+  00BE    01F5    CLR	0x75
+  00BF    01F6    CLR	0x76
+  00C0    0876    LD	A,0x76
+  00C1    0226    SUBA	0x26
+  00C2    1D03    SNZB	0x3,2
+  00C3    28CE    JP	0xCE
+  00C4    0875    LD	A,0x75
+  00C5    0225    SUBA	0x25
+  00C6    1D03    SNZB	0x3,2
+  00C7    28CE    JP	0xCE
+  00C8    0874    LD	A,0x74
+  00C9    0224    SUBA	0x24
+  00CA    1D03    SNZB	0x3,2
+  00CB    28CE    JP	0xCE
+  00CC    0873    LD	A,0x73
+  00CD    0223    SUBA	0x23
+  00CE    1C03    SNZB	0x3,0
+  00CF    28DA    JP	0xDA
+101:              			adsum -= admin;
+  00D0    0827    LD	A,0x27
+  00D1    00F3    LD	0x73,A
+  00D2    0828    LD	A,0x28
+  00D3    20F5    CALL	0xF5
+  00D4    120A    CLRB	0xA,4
+  00D5    118A    CLRB	0xA,3
+  00D6    1C03    SNZB	0x3,0
+  00D7    0F76    SZINCA	0x76
+  00D8    02A6    SUBR	0x26
+  00D9    28DE    JP	0xDE
+102:              		else
+103:              			adsum = 0;
+  00DA    01A3    CLR	0x23
+  00DB    01A4    CLR	0x24
+  00DC    01A5    CLR	0x25
+  00DD    01A6    CLR	0x26
+104:              
+105:              		adresult = adsum >> 3;		//8次平均值作为最终结果
+  00DE    0823    LD	A,0x23
+  00DF    00F3    LD	0x73,A
+  00E0    0824    LD	A,0x24
+  00E1    00F4    LD	0x74,A
+  00E2    0825    LD	A,0x25
+  00E3    00F5    LD	0x75,A
+  00E4    0826    LD	A,0x26
+  00E5    00F6    LD	0x76,A
+  00E6    3003    LDIA	0x3
+  00E7    1003    CLRB	0x3,0
+  00E8    0CF6    RRCR	0x76
+  00E9    0CF5    RRCR	0x75
+  00EA    0CF4    RRCR	0x74
+  00EB    0CF3    RRCR	0x73
+  00EC    3EFF    ADDIA	0xFF
+  00ED    1D03    SNZB	0x3,2
+  00EE    28E7    JP	0xE7
+  00EF    0874    LD	A,0x74
+  00F0    00C7    LD	0x47,A
+  00F1    0873    LD	A,0x73
+  00F2    00C6    LD	0x46,A
+106:              
+107:              		adsum = 0;
+108:              		admin = 0;
+109:              		admax = 0;
+  00F3    2104    CALL	0x104
+110:              		return 0xA5;
+  00F4    34A5    RET	0xA5
+111:              		
+112:              }
+113:              
+114:              
+115:              /***********************************************************
+116:              main主函数
+117:              ***********************************************************/
+118:              void main() 
+119:              {
+120:              	Init_System();
+  01C7    120A    CLRB	0xA,4
+  01C8    118A    CLRB	0xA,3
+  01C9    2298    CALL	0x298
+121:              	AD_Init();
+  01CC    120A    CLRB	0xA,4
+  01CD    118A    CLRB	0xA,3
+  01CE    22D2    CALL	0x2D2
+122:              
+123:              	while (1) 
+  01D1    0064    CLRWDT
+124:              	{
+125:              		asm("clrwdt");
+126:              
+127:              #ifdef _DEBUG
+128:              		TRISB7 = 1;							//测试AN15对应的IO设为输入,
+  01D2    1283    CLRB	0x3,5
+  01D3    1303    CLRB	0x3,6
+  01D4    1785    SETB	0x5,7
+129:              		ANSEL1 |= 0X80;						//测试AN15对应的IO设为模拟输入
+  01D5    1683    SETB	0x3,5
+  01D6    1794    SETB	0x14,7
+130:              		test_adc = ADC_Sample(15, 7);		//测试AN15口的AD值，参考电压3V
+  01D7    3007    LDIA	0x7
+  01D8    00F2    LD	0x72,A
+  01D9    300F    LDIA	0xF
+  01DA    120A    CLRB	0xA,4
+  01DB    118A    CLRB	0xA,3
+  01DC    201B    CALL	0x1B
+  01DF    00C8    LD	0x48,A
+131:              		if (0xA5 == test_adc)				//测试完成，如因其他原因导致AD转换没有完成，则不处理
+  01E0    30A5    LDIA	0xA5
+  01E1    0648    XORA	0x48
+  01E2    1903    SZB	0x3,2
+  01E3    29EE    JP	0x1EE
+132:              		{
+133:              			
+134:              		}
+135:              		else
+136:              		{
+137:              			ADCON0 = 0;						//如果转换没有完成，需初始化ADCON0,1
+  01E4    1683    SETB	0x3,5
+  01E5    0195    CLR	0x15
+138:              			ADCON1 = 0;				
+  01E6    0196    CLR	0x16
+139:              			__delay_us(100);				//延时100us(编译器内置函数)
+  01E7    3084    LDIA	0x84
+  01E8    1283    CLRB	0x3,5
+  01E9    1303    CLRB	0x3,6
+  01EA    00BF    LD	0x3F,A
+  01EB    0BBF    SZDECR	0x3F
+  01EC    29EB    JP	0x1EB
+  01ED    0000    NOP
+  01EE    301F    LDIA	0x1F
+140:              		}
+141:              
+142:              		test_adc = ADC_Sample(31, 0);		//测试内部基准1.2V相对电源的AD值
+  01EF    01F2    CLR	0x72
+  01F0    120A    CLRB	0xA,4
+  01F1    118A    CLRB	0xA,3
+  01F2    201B    CALL	0x1B
+  01F5    00C8    LD	0x48,A
+143:              		if (0xA5 == test_adc)
+  01F6    30A5    LDIA	0xA5
+  01F7    0648    XORA	0x48
+  01F8    1D03    SNZB	0x3,2
+  01F9    2A2B    JP	0x22B
+144:              		{
+145:              			volatile unsigned long power_temp;
+146:              			
+147:              			power_temp = (unsigned long)((POWER_RATIO)/adresult);		//1.2*4096/AD=VDD，参数放大1000倍 
+  01FA    3096    LDIA	0x96
+  01FB    01A6    CLR	0x26
+  01FC    00A7    LD	0x27,A
+  01FD    304A    LDIA	0x4A
+  01FE    00A8    LD	0x28,A
+  01FF    0847    LD	A,0x47
+  0200    00A1    LD	0x21,A
+  0201    0846    LD	A,0x46
+  0202    00A0    LD	0x20,A
+  0203    120A    CLRB	0xA,4
+  0204    118A    CLRB	0xA,3
+  0205    210D    CALL	0x10D
+  0208    0820    LD	A,0x20
+  0209    00A3    LD	0x23,A
+  020A    0821    LD	A,0x21
+  020B    00A4    LD	0x24,A
+  020C    0822    LD	A,0x22
+  020D    00A5    LD	0x25,A
+  020E    120A    CLRB	0xA,4
+  020F    118A    CLRB	0xA,3
+  0210    211D    CALL	0x11D
+  0213    0823    LD	A,0x23
+  0214    00B2    LD	0x32,A
+  0215    0824    LD	A,0x24
+  0216    00B3    LD	0x33,A
+  0217    0825    LD	A,0x25
+  0218    00B4    LD	0x34,A
+  0219    120A    CLRB	0xA,4
+  021A    118A    CLRB	0xA,3
+  021B    2236    CALL	0x236
+  021E    0835    LD	A,0x35
+  021F    00C3    LD	0x43,A
+  0220    0834    LD	A,0x34
+  0221    00C2    LD	0x42,A
+  0222    0833    LD	A,0x33
+  0223    00C1    LD	0x41,A
+  0224    0832    LD	A,0x32
+  0225    00C0    LD	0x40,A
+148:              			power_ad = (unsigned int)(power_temp);		//通过内部基准电压推出芯片VDD电压
+  0226    0841    LD	A,0x41
+  0227    00C5    LD	0x45,A
+  0228    0840    LD	A,0x40
+  0229    00C4    LD	0x44,A
+149:              		}	
+  022A    29D1    JP	0x1D1
+150:              		else
+151:              		{
+152:              			ADCON0 = 0;						//如果转换没有完成，需初始化ADCON0,1
+  022B    1683    SETB	0x3,5
+  022C    0195    CLR	0x15
+153:              			ADCON1 = 0;				
+  022D    0196    CLR	0x16
+154:              			__delay_us(100);				//延时100us(编译器内置函数)
+  022E    3084    LDIA	0x84
+  022F    1283    CLRB	0x3,5
+  0230    1303    CLRB	0x3,6
+  0231    00BF    LD	0x3F,A
+  0232    0BBF    SZDECR	0x3F
+  0233    2A32    JP	0x232
+  0234    0000    NOP
+  0235    29D1    JP	0x1D1
+155:              		}
+156:              
+157:              #endif
+158:              	}
+159:              }
+160:              
+161:              /**********************************************************
+162:              函数名称：Init_System
+163:              函数功能：系统初始化
+164:              入口参数：无
+165:              出口参数：无
+166:              备    注：
+167:              **********************************************************/
+168:              void Init_System() 
+  0298    0000    NOP
+  0299    0064    CLRWDT
+169:              {
+170:              	asm("nop");
+171:              	asm("clrwdt");
+172:              	OPTION_REG = 0;					//预分频给TMR0 ，Timer0使用内部时钟Focs/4，预分频比为1:2
+  029A    1283    CLRB	0x3,5
+  029B    1303    CLRB	0x3,6
+  029C    0181    CLR	0x1
+  029D    0064    CLRWDT
+173:              	asm("clrwdt");
+174:              	OSCCON = 0X70;					//内部振荡器8M
+  029E    3070    LDIA	0x70
+  029F    1283    CLRB	0x3,5
+  02A0    1303    CLRB	0x3,6
+  02A1    0094    LD	0x14,A
+175:              
+176:              	WPUA = 0B00000000;				//配置上拉，1为使能上拉
+  02A2    1683    SETB	0x3,5
+  02A3    0188    CLR	0x8
+177:              	WPUB = 0B00000000;
+  02A4    1283    CLRB	0x3,5
+  02A5    0188    CLR	0x8
+178:              	WPUC = 0B00000000;
+  02A6    1703    SETB	0x3,6
+  02A7    0188    CLR	0x8
+179:              	WPUD = 0B00000000;
+  02A8    0195    CLR	0x15
+180:              
+181:              	TRISA = 0B00000000;				//配置IO状态，0为输出，1为输入
+  02A9    1683    SETB	0x3,5
+  02AA    1303    CLRB	0x3,6
+  02AB    0185    CLR	0x5
+182:              	TRISB = 0B00000000;
+  02AC    1283    CLRB	0x3,5
+  02AD    0185    CLR	0x5
+183:              	TRISC = 0B00000000;
+  02AE    1703    SETB	0x3,6
+  02AF    0185    CLR	0x5
+184:              	TRISD = 0B00000000;
+  02B0    0194    CLR	0x14
+185:              
+186:              	PORTA = 0B00000000;
+  02B1    1683    SETB	0x3,5
+  02B2    1303    CLRB	0x3,6
+  02B3    0186    CLR	0x6
+187:              	PORTB = 0B00000000;
+  02B4    1283    CLRB	0x3,5
+  02B5    0186    CLR	0x6
+188:              	PORTC = 0B00000000;
+  02B6    1703    SETB	0x3,6
+  02B7    0186    CLR	0x6
+189:              	PORTD = 0B00000000;
+  02B8    0187    CLR	0x7
+190:              	
+191:              	CC0CON = 0;					//关闭 CC0、CC1 的下拉电阻
+  02B9    1683    SETB	0x3,5
+  02BA    0195    CLR	0x15
+192:              	CC1CON = 0;
+  02BB    0196    CLR	0x16
+193:              
+194:              //---------------------------------------
+195:              //125us中断初始化
+196:              	PR2 = 249;					//设定Timer初始值，定时周期是250*4/8M=125uS
+  02BC    30F9    LDIA	0xF9
+  02BD    1283    CLRB	0x3,5
+  02BE    1303    CLRB	0x3,6
+  02BF    0091    LD	0x11,A
+197:              	TMR2IF = 0;
+  02C0    108D    CLRB	0xD,1
+198:              	TMR2IE = 1;					//使能Timer2溢出中断
+  02C1    148E    SETB	0xE,1
+199:              
+200:              	T2CON = 0B00000100;			//开启Timer2,设置TMR2的分频比为1:1
+  02C2    3004    LDIA	0x4
+  02C3    0093    LD	0x13,A
+201:              	INTCON = 0XC0;				//开启总中断
+  02C4    30C0    LDIA	0xC0
+  02C5    008B    LD	0xB,A
+  02C6    0008    RET
+202:              }
+203:              
+204:              /***********************************************************
+205:              中断服务函数
+206:              函数名称：Isr_Timer()
+207:              函数功能：中断处理函数
+208:              入口参数：
+209:              出口参数：
+210:              备    注：125US定时2中断
+211:              			所有中断都是在这个函数里面处理
+212:              ***********************************************************/
+213:              void interrupt Isr_Timer() 
+214:              {
+215:              	if (TMR2IF) 
+  02C7    1283    CLRB	0x3,5
+  02C8    1303    CLRB	0x3,6
+  02C9    188D    SZB	0xD,1
+216:              	{			//若只使能了一个中断源,可以略去判断
+217:              		TMR2IF = 0;
+  02CA    108D    CLRB	0xD,1
+  02CB    0871    LD	A,0x71
+  02CC    008A    LD	0xA,A
+  02CD    0E70    SWAPA	0x70
+  02CE    0083    LD	0x3,A
+  02CF    0EFE    SWAPR	0x7E
+  02D0    0E7E    SWAPA	0x7E
+  02D1    0009    RETI
+218:              
+219:              	}
+220:              
+221:              }
+222:              
+223:              /***********************************************************
+224:              中断服务函数
+225:              函数名称：AD_Init()
+226:              函数功能：AD初始化处理函数
+227:              入口参数：
+228:              出口参数：
+229:              备    注：第一次打开AD允许位ADON，需延时20uS以上才能进入AD采样
+230:              			如后继程序不关闭ADON，则不需要延时
+231:              ***********************************************************/
+232:              void AD_Init() 
+233:              {
+234:              	/*********** ADCON0 ****************************
+235:              		Bit7~Bit6  ADCS<1:0>:  AD转换时钟选择位。
+236:              			00=  F HSI /16
+237:              			01=  F HSI /32
+238:              			10=  F HSI /64
+239:              			11=  F HSI /128
+240:              		Bit5~Bit2  CHS<3:0>:  模拟通道选择位。与ADCON1寄存器CHS4组合CHS<3:0>
+241:              			CHS<4:0>: 
+242:              			00000=  AN0
+243:              			00001=  AN1
+244:              			00010=  AN2
+245:              			00011=  AN3
+246:              			00100=  AN4
+247:              			00101=  AN5
+248:              			… 
+249:              			11100=  AN28
+250:              			11101=  AN29
+251:              			11110=  OPA输出
+252:              			11111=  1.2V（固定参考电压）
+253:              			其他=  保留
+254:              		Bit1  GO/DONE: AD转换状态位。
+255:              			1=  AD转换正在进行。将该位置1启动AD转换。当AD转换完成以后，该位由硬件自动清零。
+256:              				当GO/DONE位从1变0或ADIF从0变1时，需至少等待两个TAD时间，才能再次启动AD转换。
+257:              			0=  AD转换完成/或不在进行中。
+258:              		Bit0  ADON:  ADC使能位。
+259:              			1=  使能ADC；
+260:              			0=  禁止ADC，不消耗工作电流。
+261:              	*********************************************/
+262:              	ADCON0 = 0X41;		//ADON开启，AD采样时间选为FSYS/32
+  02D2    3041    LDIA	0x41
+  02D3    1683    SETB	0x3,5
+  02D4    0095    LD	0x15,A
+263:              	
+264:              	/*********** ADCON1 ****************************
+265:              		Bit7  ADFM:  AD转换结果格式选择位；
+266:              			1=  右对齐；
+267:              			0=  左对齐。
+268:              		Bit6  CHS4:  通道选择位
+269:              		Bit5~Bit3  未用 
+270:              		Bit2  LDO_EN:  内部参考电压使能位。
+271:              			1=  使能ADC内部LDO参考电压；
+272:              				当选择内部LDO作参考电压时，ADC最大有效精度为8位。
+273:              			0=  VDD作为ADC参考电压。
+274:              		Bit1~Bit0  LDO_SEL<1:0>:  参考电压选择位
+275:              			0X=  2.0V
+276:              			10=  2.4V
+277:              			11=  3.0V
+278:              	*********************************************/
+279:              	ADCON1 = 0;
+  02D5    0196    CLR	0x16
+  02D6    0008    RET
+280:              }
+---- H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta13\data\sources\common\lwtoft.c ----------------------------------------------------------------------
+1:                /*	Floating point routines.
+2:                
+3:                	Copyright (c) 2012 Microchip Technology Inc. All rights reserved.
+4:                */
+5:                
+6:                // this is bigendian code right now. Need to parameterise it.
+7:                
+8:                #include	"ftarith.h"
+9:                
+10:               
+11:               // Convert unsigned int to float
+12:               
+13:               #ifdef _OLDLIB
+14:               #define	f1_as_mant1	(*(unsigned short long *)&f1)
+15:               float
+16:               __lwtoft(unsigned int c)
+17:               {
+18:               	float	f1;
+19:               	
+20:               	if(c == 0)
+21:               		return 0.0;
+22:               	f1_as_mant1 = c;
+23:               	__ftpack(&f1_as_mant1, 127+15);
+24:               	return f1;
+25:               }
+26:               #else
+27:               float
+28:               __lwtoft(unsigned int c)
+  010D    0820    LD	A,0x20
+  010E    00F2    LD	0x72,A
+  010F    0821    LD	A,0x21
+  0110    00F3    LD	0x73,A
+  0111    308E    LDIA	0x8E
+  0112    01F4    CLR	0x74
+  0113    00F5    LD	0x75,A
+  0114    01F6    CLR	0x76
+  0115    2185    CALL	0x185
+  0116    0872    LD	A,0x72
+  0117    00A0    LD	0x20,A
+  0118    0873    LD	A,0x73
+  0119    00A1    LD	0x21,A
+  011A    0874    LD	A,0x74
+  011B    00A2    LD	0x22,A
+  011C    0008    RET
+29:               {
+30:               	return __ftpack(c, 127+15, 0);
+31:               }
+32:               #endif
+---- H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta13\data\sources\common\ftdiv.c ----------------------------------------------------------------------
+1:                /*	Floating point routines.
+2:                
+3:                	Copyright (c) 2012 Microchip Technology Inc. All rights reserved.
+4:                */
+5:                
+6:                // this is bigendian code right now. Need to parameterise it.
+7:                
+8:                #include	"ftarith.h"
+9:                
+10:               #define	f1_as_dividend	(*(unsigned short long *)&f1)
+11:               #define	f2_as_divisor	(*(unsigned short long *)&f2)
+12:               #define	f3_as_quot	(*(unsigned short long *)&f3)
+13:               
+14:               // floating addition
+15:               #ifdef _OLDLIB
+16:               #define	cntr		sign2
+17:               float
+18:               #ifdef _PIC18
+19:               __ftdiv(float f1, float f2)
+20:               #else
+21:               __ftdiv(float f2, float f1)
+22:               #endif
+23:               {
+24:               	unsigned char	exp1, exp2, sign1, sign2;
+25:               	float	f3;
+26:               	
+27:               	f3_as_quot = 0;
+28:               	sign1 = __ftunpack(&f1_as_dividend, &exp1);
+29:               	if(exp1 == 0)
+30:               		return f3;
+31:               	sign2 = __ftunpack(&f2_as_divisor, &exp2);
+32:               	if(exp2 == 0)
+33:               		return f3;
+34:               	exp1 -= exp2-127+8;	// compute new exponent
+35:               	sign1 ^= sign2;
+36:               	cntr = 16+8;
+37:               	do {
+38:               		f3_as_quot <<= 1;
+39:               		if(f1_as_dividend >= f2_as_divisor) {
+40:               			f1_as_dividend -= f2_as_divisor;
+41:               			f3_as_quot |= 1;
+42:               		}
+43:               		f1_as_dividend <<= 1;
+44:               	} while(--cntr != 0);
+45:               	__ftpack(&f3_as_quot, exp1);
+46:               	if(sign1)
+47:               		f3_as_quot |= 0x800000;
+48:               	return f3;
+49:               }
+50:               #else
+51:               #define	exp2	sign
+52:               float
+53:               #ifdef _PIC18
+54:               __ftdiv(float f1, float f2)
+55:               #else
+56:               __ftdiv(float f2, float f1)
+  011D    0826    LD	A,0x26
+  011E    00A9    LD	0x29,A
+  011F    0827    LD	A,0x27
+  0120    00AA    LD	0x2A,A
+  0121    0828    LD	A,0x28
+  0122    00AB    LD	0x2B,A
+  0123    1003    CLRB	0x3,0
+  0124    0D2A    RLCA	0x2A
+  0125    0D2B    RLCA	0x2B
+  0126    00B0    LD	0x30,A
+  0127    0830    LD	A,0x30
+  0128    1D03    SNZB	0x3,2
+  0129    292E    JP	0x12E
+  012A    01A3    CLR	0x23
+  012B    01A4    CLR	0x24
+  012C    01A5    CLR	0x25
+  012D    0008    RET
+  012E    0823    LD	A,0x23
+  012F    00A9    LD	0x29,A
+  0130    0824    LD	A,0x24
+  0131    00AA    LD	0x2A,A
+  0132    0825    LD	A,0x25
+  0133    00AB    LD	0x2B,A
+  0134    1003    CLRB	0x3,0
+  0135    0D2A    RLCA	0x2A
+  0136    0D2B    RLCA	0x2B
+  0137    00B1    LD	0x31,A
+  0138    0831    LD	A,0x31
+  0139    1D03    SNZB	0x3,2
+  013A    293F    JP	0x13F
+  013B    01A3    CLR	0x23
+  013C    01A4    CLR	0x24
+  013D    01A5    CLR	0x25
+  013E    0008    RET
+  013F    3089    LDIA	0x89
+  0140    01AD    CLR	0x2D
+  0141    01AE    CLR	0x2E
+  0142    01AF    CLR	0x2F
+  0143    0731    ADDA	0x31
+  0144    00A9    LD	0x29,A
+  0145    02B0    SUBR	0x30
+  0146    0828    LD	A,0x28
+  0147    00B1    LD	0x31,A
+  0148    0825    LD	A,0x25
+  0149    06B1    XORR	0x31
+  014A    3080    LDIA	0x80
+  014B    05B1    ANDR	0x31
+  014C    3018    LDIA	0x18
+  014D    17A7    SETB	0x27,7
+  014E    01A8    CLR	0x28
+  014F    17A4    SETB	0x24,7
+  0150    01A5    CLR	0x25
+  0151    00AC    LD	0x2C,A
+  0152    1003    CLRB	0x3,0
+  0153    0DAD    RLCR	0x2D
+  0154    0DAE    RLCR	0x2E
+  0155    0DAF    RLCR	0x2F
+  0156    0825    LD	A,0x25
+  0157    0228    SUBA	0x28
+  0158    1D03    SNZB	0x3,2
+  0159    2960    JP	0x160
+  015A    0824    LD	A,0x24
+  015B    0227    SUBA	0x27
+  015C    1D03    SNZB	0x3,2
+  015D    2960    JP	0x160
+  015E    0823    LD	A,0x23
+  015F    0226    SUBA	0x26
+  0160    1C03    SNZB	0x3,0
+  0161    296E    JP	0x16E
+  0162    0823    LD	A,0x23
+  0163    02A6    SUBR	0x26
+  0164    0824    LD	A,0x24
+  0165    1C03    SNZB	0x3,0
+  0166    0F24    SZINCA	0x24
+  0167    02A7    SUBR	0x27
+  0168    0825    LD	A,0x25
+  0169    1C03    SNZB	0x3,0
+  016A    0A25    INCA	0x25
+  016B    02A8    SUBR	0x28
+  016C    142D    SETB	0x2D,0
+  016D    1003    CLRB	0x3,0
+  016E    0DA6    RLCR	0x26
+  016F    0DA7    RLCR	0x27
+  0170    0DA8    RLCR	0x28
+  0171    0BAC    SZDECR	0x2C
+  0172    2952    JP	0x152
+  0173    082D    LD	A,0x2D
+  0174    00F2    LD	0x72,A
+  0175    082E    LD	A,0x2E
+  0176    00F3    LD	0x73,A
+  0177    082F    LD	A,0x2F
+  0178    00F4    LD	0x74,A
+  0179    0830    LD	A,0x30
+  017A    00F5    LD	0x75,A
+  017B    0831    LD	A,0x31
+  017C    00F6    LD	0x76,A
+  017D    2185    CALL	0x185
+  017E    0872    LD	A,0x72
+  017F    00A3    LD	0x23,A
+  0180    0873    LD	A,0x73
+  0181    00A4    LD	0x24,A
+  0182    0874    LD	A,0x74
+  0183    00A5    LD	0x25,A
+  0184    0008    RET
+57:               #endif
+58:               {
+59:               	unsigned char	exp, sign, cntr;
+60:               	float	f3;
+61:               	
+62:               	// unpack the operands
+63:               	if((exp = f1_as_dividend >> 15) == 0)
+64:               		return 0.0;
+65:               	if((exp2 = f2_as_divisor >> 15) == 0)
+66:               		return 0.0;
+67:               	f3_as_quot = 0;
+68:               	exp -= exp2-127+8;	// compute new exponent
+69:               	sign = f1_as_dividend >> 16;
+70:               	sign ^= (unsigned char)(f2_as_divisor >> 16);
+71:               	sign &= 0x80;
+72:               	f1_as_dividend |= 0x8000UL;
+73:               	f1_as_dividend &= 0xFFFFUL;
+74:               	f2_as_divisor |= 0x8000UL;
+75:               	f2_as_divisor &= 0xFFFFUL;
+76:               	cntr = 16+8;
+77:               	do {
+78:               		f3_as_quot <<= 1;
+79:               		if(f1_as_dividend >= f2_as_divisor) {
+80:               			f1_as_dividend -= f2_as_divisor;
+81:               			f3_as_quot |= 1;
+82:               		}
+83:               		f1_as_dividend <<= 1;
+84:               	} while(--cntr != 0);
+85:               	return __ftpack(f3_as_quot, exp, sign);
+86:               }
+87:               #endif	
+---- H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta13\data\sources\common\float.c ----------------------------------------------------------------------
+1:                /*	Floating point routines.
+2:                
+3:                	Copyright (c) 2012 Microchip Technology Inc. All rights reserved.
+4:                */
+5:                
+6:                #include	"ftarith.h"
+7:                
+8:                
+9:                //	unpack the operand pointed to. Store the exponent into the location pointed to by exp,
+10:               //	and return the sign (zero is positive)
+11:               
+12:               #ifdef _OLDLIB
+13:               
+14:               unsigned char
+15:               __ftunpack(unsigned short long * arg, unsigned char * exp)
+16:               {
+17:               	unsigned char	sign;
+18:               
+19:               	*exp = sign = *arg >> 15;
+20:               	if(sign == 0) {
+21:               		*arg = 0;
+22:               		return 0;
+23:               	}
+24:               	sign = 0;
+25:               	*arg |= 0x8000;
+26:               	if(*arg & 0x800000)
+27:               		sign++;
+28:               	*arg &= 0xFFFF;
+29:               	return sign;
+30:               }
+31:               
+32:               // normalize and pack the supplied argument into floating point format
+33:               
+34:               void
+35:               __ftpack(unsigned short long * arg, unsigned char exp)
+36:               {
+37:               	if(exp == 0 || *arg == 0) {
+38:               		*arg = 0;
+39:               		return;
+40:               	}
+41:               	while(*arg & 0xFE0000UL) {
+42:               		exp++;
+43:               		*arg >>= 1;
+44:               	}
+45:               	while(*arg & 0xFF0000UL) {
+46:               		exp++;
+47:               		(*arg)++;
+48:               		*arg >>= 1;
+49:               	}
+50:               	while(!(*arg & 0x8000UL)) {
+51:               		exp--;
+52:               		*arg <<= 1;
+53:               	}
+54:               	if(!(exp & 1))
+55:               		*arg &= ~0x8000L;
+56:               	exp >>= 1;
+57:               	*arg |= (unsigned short long)exp << 16;
+58:               }
+59:               
+60:               #else
+61:               float
+62:               __ftpack(unsigned short long arg, unsigned char exp, unsigned char sign)
+  0185    0875    LD	A,0x75
+  0186    1903    SZB	0x3,2
+  0187    298D    JP	0x18D
+  0188    0874    LD	A,0x74
+  0189    0473    ORA	0x73
+  018A    0472    ORA	0x72
+  018B    1D03    SNZB	0x3,2
+  018C    2996    JP	0x196
+  018D    01F2    CLR	0x72
+  018E    01F3    CLR	0x73
+  018F    01F4    CLR	0x74
+  0190    0008    RET
+  0191    0AF5    INCR	0x75
+  0192    1003    CLRB	0x3,0
+  0193    0CF4    RRCR	0x74
+  0194    0CF3    RRCR	0x73
+  0195    0CF2    RRCR	0x72
+  0196    30FE    LDIA	0xFE
+  0197    0574    ANDA	0x74
+  0198    1903    SZB	0x3,2
+  0199    29A5    JP	0x1A5
+  019A    2991    JP	0x191
+  019B    0AF5    INCR	0x75
+  019C    0AF2    INCR	0x72
+  019D    1903    SZB	0x3,2
+  019E    0AF3    INCR	0x73
+  019F    1903    SZB	0x3,2
+  01A0    0AF4    INCR	0x74
+  01A1    1003    CLRB	0x3,0
+  01A2    0CF4    RRCR	0x74
+  01A3    0CF3    RRCR	0x73
+  01A4    0CF2    RRCR	0x72
+  01A5    30FF    LDIA	0xFF
+  01A6    0574    ANDA	0x74
+  01A7    1903    SZB	0x3,2
+  01A8    29B3    JP	0x1B3
+  01A9    299B    JP	0x19B
+  01AA    3002    LDIA	0x2
+  01AB    0275    SUBA	0x75
+  01AC    1C03    SNZB	0x3,0
+  01AD    29B5    JP	0x1B5
+  01AE    03F5    DECR	0x75
+  01AF    1003    CLRB	0x3,0
+  01B0    0DF2    RLCR	0x72
+  01B1    0DF3    RLCR	0x73
+  01B2    0DF4    RLCR	0x74
+  01B3    1FF3    SNZB	0x73,7
+  01B4    29AA    JP	0x1AA
+  01B5    1C75    SNZB	0x75,0
+  01B6    13F3    CLRB	0x73,7
+  01B7    1003    CLRB	0x3,0
+  01B8    0CF5    RRCR	0x75
+  01B9    0875    LD	A,0x75
+  01BA    00F9    LD	0x79,A
+  01BB    01F8    CLR	0x78
+  01BC    01F7    CLR	0x77
+  01BD    0877    LD	A,0x77
+  01BE    04F2    ORR	0x72
+  01BF    0878    LD	A,0x78
+  01C0    04F3    ORR	0x73
+  01C1    0879    LD	A,0x79
+  01C2    04F4    ORR	0x74
+  01C3    0876    LD	A,0x76
+  01C4    1D03    SNZB	0x3,2
+  01C5    17F4    SETB	0x74,7
+  01C6    0008    RET
+63:               {
+64:               	if(exp == 0 || arg == 0)
+65:               		return 0.0;
+66:               	while(arg & 0xFE0000UL) {
+67:               		exp++;
+68:               		arg >>= 1;
+69:               	}
+70:               	while(arg & 0xFF0000UL) {
+71:               		exp++;
+72:               		(arg)++;
+73:               		arg >>= 1;
+74:               	}
+75:               	while(!(arg & 0x8000UL) && exp > 1) {
+76:               		exp--;
+77:               		arg <<= 1;
+78:               	}
+79:               	if(!(exp & 1))
+80:               		arg &= ~0x8000L;
+81:               	exp >>= 1;
+82:               	arg |= (unsigned short long)exp << 16;
+83:               	if (sign)
+84:               		arg |= 0x800000UL;
+85:                  return *(float*)&arg;	
+86:               }
+87:               
+88:               #endif
+---- H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta13\data\sources\common\fttol.c ----------------------------------------------------------------------
+1:                /*	Floating point routines.
+2:                
+3:                	Copyright (c) 2012 Microchip Technology Inc. All rights reserved.
+4:                */
+5:                
+6:                // this is bigendian code right now. Need to parameterise it.
+7:                
+8:                #include	"ftarith.h"
+9:                
+10:               #define	f1_as_mant1	(*(unsigned short long *)&f1)
+11:               
+12:               // Convert float to long
+13:               
+14:               #ifdef _OLDLIB
+15:               long
+16:               __fttol(float f1)
+17:               {
+18:               	unsigned char	sign1, exp1;
+19:               	unsigned long	lval;
+20:               
+21:               	sign1 = __ftunpack(&f1_as_mant1, &exp1);
+22:               	lval = f1_as_mant1;
+23:               	exp1 -= 127+15;
+24:               	if((signed char)exp1 < 0) {
+25:               		if((signed char)exp1 < -15)
+26:               			return 0;
+27:               		do
+28:               			lval >>= 1;
+29:               		while(++exp1 != 0);
+30:               	} else {
+31:               		if(exp1 >= 32)
+32:               			return 00;
+33:               		while(exp1 != 0) {
+34:               			lval <<= 1;
+35:               			exp1--;
+36:               		}
+37:               	}
+38:               	if(sign1)
+39:               		lval = -lval;
+40:               	return lval;
+41:               }
+42:               #else
+43:               long
+44:               __fttol(float f1)
+  0236    2291    CALL	0x291
+  0237    120A    CLRB	0xA,4
+  0238    118A    CLRB	0xA,3
+  0239    1003    CLRB	0x3,0
+  023A    0D37    RLCA	0x37
+  023B    0D38    RLCA	0x38
+  023C    00BE    LD	0x3E,A
+  023D    083E    LD	A,0x3E
+  023E    1D03    SNZB	0x3,2
+  023F    2A45    JP	0x245
+  0240    01B2    CLR	0x32
+  0241    01B3    CLR	0x33
+  0242    01B4    CLR	0x34
+  0243    01B5    CLR	0x35
+  0244    0008    RET
+  0245    2291    CALL	0x291
+  0246    120A    CLRB	0xA,4
+  0247    118A    CLRB	0xA,3
+  0248    3017    LDIA	0x17
+  0249    1003    CLRB	0x3,0
+  024A    0CB8    RRCR	0x38
+  024B    0CB7    RRCR	0x37
+  024C    0CB6    RRCR	0x36
+  024D    3EFF    ADDIA	0xFF
+  024E    1D03    SNZB	0x3,2
+  024F    2A49    JP	0x249
+  0250    0836    LD	A,0x36
+  0251    00B9    LD	0x39,A
+  0252    17B3    SETB	0x33,7
+  0253    01B4    CLR	0x34
+  0254    0832    LD	A,0x32
+  0255    00BA    LD	0x3A,A
+  0256    0833    LD	A,0x33
+  0257    00BB    LD	0x3B,A
+  0258    0834    LD	A,0x34
+  0259    00BC    LD	0x3C,A
+  025A    308E    LDIA	0x8E
+  025B    01BD    CLR	0x3D
+  025C    02BE    SUBR	0x3E
+  025D    1FBE    SNZB	0x3E,7
+  025E    2A6C    JP	0x26C
+  025F    083E    LD	A,0x3E
+  0260    3A80    XORIA	0x80
+  0261    3E8F    ADDIA	0x8F
+  0262    1C03    SNZB	0x3,0
+  0263    2A40    JP	0x240
+  0264    1003    CLRB	0x3,0
+  0265    0CBD    RRCR	0x3D
+  0266    0CBC    RRCR	0x3C
+  0267    0CBB    RRCR	0x3B
+  0268    0CBA    RRCR	0x3A
+  0269    0FBE    SZINCR	0x3E
+  026A    2A64    JP	0x264
+  026B    2A7A    JP	0x27A
+  026C    3018    LDIA	0x18
+  026D    023E    SUBA	0x3E
+  026E    1803    SZB	0x3,0
+  026F    2A40    JP	0x240
+  0270    083E    LD	A,0x3E
+  0271    1903    SZB	0x3,2
+  0272    2A7A    JP	0x27A
+  0273    1003    CLRB	0x3,0
+  0274    0DBA    RLCR	0x3A
+  0275    0DBB    RLCR	0x3B
+  0276    0DBC    RLCR	0x3C
+  0277    0DBD    RLCR	0x3D
+  0278    03BE    DECR	0x3E
+  0279    2A70    JP	0x270
+  027A    0839    LD	A,0x39
+  027B    1903    SZB	0x3,2
+  027C    2A88    JP	0x288
+  027D    09BA    COMR	0x3A
+  027E    09BB    COMR	0x3B
+  027F    09BC    COMR	0x3C
+  0280    09BD    COMR	0x3D
+  0281    0ABA    INCR	0x3A
+  0282    1903    SZB	0x3,2
+  0283    0ABB    INCR	0x3B
+  0284    1903    SZB	0x3,2
+  0285    0ABC    INCR	0x3C
+  0286    1903    SZB	0x3,2
+  0287    0ABD    INCR	0x3D
+  0288    083D    LD	A,0x3D
+  0289    00B5    LD	0x35,A
+  028A    083C    LD	A,0x3C
+  028B    00B4    LD	0x34,A
+  028C    083B    LD	A,0x3B
+  028D    00B3    LD	0x33,A
+  028E    083A    LD	A,0x3A
+  028F    00B2    LD	0x32,A
+  0290    0008    RET
+45:               {
+46:               	unsigned char	sign1, exp1;
+47:               	unsigned long	lval;
+48:               
+49:               	if((exp1 = f1_as_mant1 >> 15) == 0)
+50:               		return 0;
+51:               	sign1 = f1_as_mant1 >> 23;
+52:               	f1_as_mant1 |= 0x8000UL;
+53:               	f1_as_mant1 &= 0xFFFFUL;
+54:               	lval = f1_as_mant1;
+55:               	exp1 -= 127+15;
+56:               	if((signed char)exp1 < 0) {
+57:               		if((signed char)exp1 < -15)
+58:               			return 0;
+59:               		do
+60:               			lval >>= 1;
+61:               		while(++exp1 != 0);
+62:               	} else {
+63:               		if(exp1 >= 24)
+64:               			return 0;
+65:               		while(exp1 != 0) {
+66:               			lval <<= 1;
+67:               			exp1--;
+68:               		}
+69:               	}
+70:               	if(sign1)
+71:               		lval = -lval;
+72:               	return lval;
+73:               }
+74:               #endif
+---- stringtab ------------------------------------------------------------------
+---- reset_enter ------------------------------------------------------------------
+  0000    120A    CLRB	0xA,4
+  0001    118A    CLRB	0xA,3
+  0002    280C    JP	0xC
+  000C    120A    CLRB	0xA,4
+  000D    118A    CLRB	0xA,3
+  000E    280F    JP	0xF
+---- start_initialization ------------------------------------------------------------------
+  000F    01FA    CLR	0x7A
+  0010    01FB    CLR	0x7B
+  0011    1283    CLRB	0x3,5
+  0012    1303    CLRB	0x3,6
+  0013    01C4    CLR	0x44
+  0014    01C5    CLR	0x45
+  0015    01C6    CLR	0x46
+  0016    01C7    CLR	0x47
+---- interrupt_function_enter ----------------------------------------------------------
+  0004    00FE    LD	0x7E,A
+  0005    0E03    SWAPA	0x3
+  0006    00F0    LD	0x70,A
+  0007    080A    LD	A,0xA
+  0008    00F1    LD	0x71,A
+  0009    120A    CLRB	0xA,4
+  000A    118A    CLRB	0xA,3
+  000B    2AC7    JP	0x2C7
+---- common_function ------------------------------------------------------------------
+  0017    0183    CLR	0x3
+  0018    120A    CLRB	0xA,4
+  0019    118A    CLRB	0xA,3
+  001A    29C7    JP	0x1C7
+  00F5    00F4    LD	0x74,A
+  00F6    01F5    CLR	0x75
+  00F7    01F6    CLR	0x76
+  00F8    0873    LD	A,0x73
+  00F9    02A3    SUBR	0x23
+  00FA    0874    LD	A,0x74
+  00FB    1C03    SNZB	0x3,0
+  00FC    0F74    SZINCA	0x74
+  00FD    02A4    SUBR	0x24
+  00FE    0875    LD	A,0x75
+  00FF    1C03    SNZB	0x3,0
+  0100    0F75    SZINCA	0x75
+  0101    02A5    SUBR	0x25
+  0102    0876    LD	A,0x76
+  0103    0008    RET
+  0104    01A3    CLR	0x23
+  0105    01A4    CLR	0x24
+  0106    01A5    CLR	0x25
+  0107    01A6    CLR	0x26
+  0108    01A7    CLR	0x27
+  0109    01A8    CLR	0x28
+  010A    01A9    CLR	0x29
+  010B    01AA    CLR	0x2A
+  010C    0008    RET
+  0291    0832    LD	A,0x32
+  0292    00B6    LD	0x36,A
+  0293    0833    LD	A,0x33
+  0294    00B7    LD	0x37,A
+  0295    0834    LD	A,0x34
+  0296    00B8    LD	0x38,A
+  0297    0008    RET

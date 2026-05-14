@@ -1,0 +1,757 @@
+Microchip MPLAB XC8 Compiler V1.45 ()
+
+Linker command line:
+
+-W-9 \
+  --edf=H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\dat\en_msgs.txt \
+  -cs -h+SC8F096_Touch_Tool_C.sym --cmf=SC8F096_Touch_Tool_C.cmf -z \
+  -QSC8F096 -oC:\Users\ADMINI~1\AppData\Local\Temp\s9u8.2 \
+  -MSC8F096_Touch_Tool_C.map -E1 -ver=XC8 -ASTACK=0A0h-0efh -pstack=STACK \
+  -ACODE=00h-07FFhx4 -ASTRCODE=00h-01FFFh -ASTRING=00h-0FFhx32 \
+  -ACONST=00h-0FFhx32 -AENTRY=00h-0FFhx32 -ACOMMON=070h-07Fh \
+  -ABANK0=020h-06Fh -ABANK1=0A0h-0EFh -ABANK2=0120h-016Fh \
+  -ABANK3=01A0h-01EFh -ARAM=020h-06Fh,0A0h-0EFh,0120h-016Fh,01A0h-01EFh \
+  -AABS1=020h-07Fh,0A0h-0EFh,0120h-016Fh,01A0h-01EFh -ASFR0=00h-01Fh \
+  -ASFR1=080h-09Fh -ASFR2=0100h-011Fh -ASFR3=0180h-019Fh \
+  -preset_vec=00h,intentry=04h,init,end_init -ppowerup=CODE -pcinit=CODE \
+  -pfunctab=ENTRY -ACONFIG=02007h-02008h -pconfig=CONFIG -DCONFIG=2 \
+  -AIDLOC=02000h-02003h -pidloc=IDLOC -DIDLOC=2 -DCODE=2 -DSTRCODE=2 \
+  -DSTRING=2 -DCONST=2 -DENTRY=2 -k startup.obj SC8F096_Touch_Tool_C.obj 
+
+Object code version is 3.11
+
+Machine type is SC8F096
+
+
+
+                Name                               Link     Load   Length Selector   Space Scale
+startup.obj     end_init                              C        C        3        8       0
+                reset_vec                             0        0        3        0       0
+SC8F096_Touch_Tool_C.obj
+                cinit                                 F        F        D        8       0
+                intentry                              4        4        8        8       0
+                text12                              3E7      3E7       14        8       0
+                text5                                1C       1C      36F        8       0
+                text3                               3AE      3AE       21        8       0
+                text1                               38B      38B       23        8       0
+                maintext                            3CF      3CF       18        8       0
+                cstackCOMMON                         70       70        8       70       1
+                clrtext                             3FB      3FB        8        8       0
+                bssBANK0                             20       20       20       20       1
+                bssCOMMON                            78       78        2       70       1
+
+TOTAL           Name                               Link     Load   Length     Space
+        CLASS   STACK          
+
+        CLASS   CODE           
+                end_init                              C        C        3         0
+                cinit                                 F        F        D         0
+                intentry                              4        4        8         0
+                reset_vec                             0        0        3         0
+                text12                              3E7      3E7       14         0
+                text5                                1C       1C      36F         0
+                text3                               3AE      3AE       21         0
+                text1                               38B      38B       23         0
+                maintext                            3CF      3CF       18         0
+                clrtext                             3FB      3FB        8         0
+
+        CLASS   STRCODE        
+
+        CLASS   STRING         
+
+        CLASS   CONST          
+
+        CLASS   ENTRY          
+
+        CLASS   COMMON         
+                cstackCOMMON                         70       70        8         1
+                bssCOMMON                            78       78        2         1
+
+        CLASS   BANK0          
+                bssBANK0                             20       20       20         1
+
+        CLASS   BANK1          
+
+        CLASS   BANK2          
+
+        CLASS   BANK3          
+
+        CLASS   RAM            
+
+        CLASS   ABS1           
+                abs_s1                               7E       7E        2         1
+
+        CLASS   SFR0           
+
+        CLASS   SFR1           
+
+        CLASS   SFR2           
+
+        CLASS   SFR3           
+
+        CLASS   CONFIG         
+
+        CLASS   IDLOC          
+
+        CLASS   EEDATA         
+
+
+
+SEGMENTS        Name                           Load    Length   Top    Selector   Space  Class     Delta
+
+                reset_vec                      000000  000003  000003         0       0  CODE        2
+                intentry                       000004  0003FF  000403         8       0  CODE        2
+                bssBANK0                       000020  000020  000040        20       1  BANK0       1
+                cstackCOMMON                   000070  00000A  00007A        70       1  COMMON      1
+
+
+UNUSED ADDRESS RANGES
+
+        Name                Unused          Largest block    Delta
+        BANK0            040-06F            30           1
+        BANK1            0A0-0EF            50           1
+        BANK2            120-16F            50           1
+        BANK3            1A0-1EF            50           1
+        CODE             003-003             1           2
+                         403-1FFF           800
+        COMMON           07A-07D             4           1
+        CONFIG           2007-2008             2           2
+        CONST            003-003             1           2
+                         403-1FFF           100
+        ENTRY            003-003             1           2
+                         403-1FFF           100
+        IDLOC            2000-2003             4           2
+        RAM              040-06F            30           1
+                         0A0-0EF            50
+                         120-16F            50
+                         1A0-1EF            50
+        SFR0             000-01F            20           1
+        SFR1             080-09F            20           1
+        SFR2             100-11F            20           1
+        SFR3             180-19F            20           1
+        STACK            0A0-0EF            50           1
+        STRCODE          003-003             1           2
+                         403-1FFF          1BFD
+        STRING           003-003             1           2
+                         403-1FFF           100
+
+                                  Symbol Table
+
+CheckTouchKey_F@checksum  cstackCOMMON 074
+Delay@dtemp               cstackCOMMON 072
+Delay_nms@i               cstackCOMMON 076
+Delay_nms@inittempl       cstackCOMMON 074
+I2C_Write1bYTE@data       cstackCOMMON 072
+I2C_Write1bYTE@i          cstackCOMMON 073
+PL2                       text1        39D
+PL4                       text1        3A7
+_CheckTouchKey            text5        01C
+_CheckTouchKey_F          text5        01D
+_Delay                    text3        3C3
+_Delay_nms                text3        3AE
+_I2C_SCL_IO               (abs)        82C
+_I2C_SDA_IO               (abs)        82D
+_I2C_WaitMoment           text5        1CF
+_I2C_Write1bYTE           text5        183
+_I2C_WriteStart           text5        1B9
+_I2C_WriteStop            text5        1A3
+_INTCON                   (abs)        00B
+_Isr_Timer                text12       3E7
+_KEYCON0                  (abs)        111
+_KEYCON1                  (abs)        112
+_KEYCON2                  (abs)        113
+_KEYDATAH                 (abs)        117
+_KEYDATAL                 (abs)        116
+_Key_Test                 text5        1D2
+_MainTime                 bssCOMMON    078
+_OPTION_REG               (abs)        001
+_OSCCON                   (abs)        014
+_PIE1                     (abs)        00E
+_PIR1                     (abs)        00D
+_PORTB                    (abs)        006
+_PR2                      (abs)        011
+_RC4                      (abs)        834
+_RC5                      (abs)        835
+_Refurbish_Sfr            text1        392
+_System_Init              text1        38B
+_T2CON                    (abs)        013
+_TKdata                   bssBANK0     020
+_TMR2IE                   (abs)        071
+_TMR2IF                   (abs)        069
+_TRISB                    (abs)        005
+_WPUB                     (abs)        008
+__Habs1                   abs1         000
+__Hbank0                  bank0        000
+__Hbank1                  bank1        000
+__Hbank2                  bank2        000
+__Hbank3                  bank3        000
+__HbssBANK0               bssBANK0     000
+__HbssCOMMON              bssCOMMON    000
+__Hcinit                  cinit        01C
+__Hclrtext                clrtext      000
+__Hcode                   code         000
+__Hcommon                 common       000
+__Hconfig                 config       000
+__HcstackCOMMON           cstackCOMMON 000
+__Heeprom_data            eeprom_data  000
+__Hend_init               end_init     00F
+__Hfunctab                functab      000
+__Hidloc                  idloc        000
+__Hinit                   init         00C
+__Hintentry               intentry     00C
+__Hmaintext               maintext     000
+__Hpa_nodes0              pa_nodes0    000
+__Hpowerup                powerup      000
+__Hram                    ram          000
+__Hreset_vec              reset_vec    003
+__Hsfr0                   sfr0         000
+__Hsfr1                   sfr1         000
+__Hsfr2                   sfr2         000
+__Hsfr3                   sfr3         000
+__Hspace_0                (abs)        403
+__Hspace_1                (abs)        07A
+__Hspace_2                (abs)        000
+__Hspace_3                (abs)        000
+__Hstack                  stack        000
+__Hstrings                strings      000
+__Htext                   text         000
+__Labs1                   abs1         000
+__Lbank0                  bank0        000
+__Lbank1                  bank1        000
+__Lbank2                  bank2        000
+__Lbank3                  bank3        000
+__LbssBANK0               bssBANK0     000
+__LbssCOMMON              bssCOMMON    000
+__Lcinit                  cinit        00F
+__Lclrtext                clrtext      000
+__Lcode                   code         000
+__Lcommon                 common       000
+__Lconfig                 config       000
+__LcstackCOMMON           cstackCOMMON 000
+__Leeprom_data            eeprom_data  000
+__Lend_init               end_init     00C
+__Lfunctab                functab      000
+__Lidloc                  idloc        000
+__Linit                   init         00C
+__Lintentry               intentry     004
+__Lmaintext               maintext     000
+__Lpa_nodes0              pa_nodes0    000
+__Lpowerup                powerup      000
+__Lram                    ram          000
+__Lreset_vec              reset_vec    000
+__Lsfr0                   sfr0         000
+__Lsfr1                   sfr1         000
+__Lsfr2                   sfr2         000
+__Lsfr3                   sfr3         000
+__Lspace_0                (abs)        000
+__Lspace_1                (abs)        000
+__Lspace_2                (abs)        000
+__Lspace_3                (abs)        000
+__Lstack                  stack        000
+__Lstrings                strings      000
+__Ltext                   text         000
+__S0                      (abs)        403
+__S1                      (abs)        07A
+__S2                      (abs)        000
+___int_sp                 stack        000
+___latbits                (abs)        002
+___sp                     stack        000
+__end_ofPL2               text1        3A7
+__end_ofPL4               text1        3AE
+__end_of_CheckTouchKey    text5        01D
+__end_of_CheckTouchKey_F  text5        183
+__end_of_Delay            text3        3CF
+__end_of_Delay_nms        text3        3C3
+__end_of_I2C_WaitMoment   text5        1D2
+__end_of_I2C_Write1bYTE   text5        1A3
+__end_of_I2C_WriteStart   text5        1CF
+__end_of_I2C_WriteStop    text5        1B9
+__end_of_Isr_Timer        text12       3FB
+__end_of_Key_Test         text5        38B
+__end_of_Refurbish_Sfr    text1        39D
+__end_of_System_Init      text1        392
+__end_of__initialization  cinit        018
+__end_of_main             maintext     3E7
+__initialization          cinit        00F
+__pbssBANK0               bssBANK0     020
+__pbssCOMMON              bssCOMMON    078
+__pcstackCOMMON           cstackCOMMON 070
+__pintentry               intentry     004
+__pmaintext               maintext     3CF
+__ptext0                  text0        000
+__ptext1                  text1        38B
+__ptext10                 text5        183
+__ptext11                 text5        1CF
+__ptext12                 text12       3E7
+__ptext2                  text1        392
+__ptext3                  text3        3AE
+__ptext4                  text3        3C3
+__ptext5                  text5        01C
+__ptext6                  text5        01D
+__ptext7                  text5        1D2
+__ptext8                  text5        1A3
+__ptext9                  text5        1B9
+__size_of_CheckTouchKey   (abs)        000
+__size_of_CheckTouchKey_F (abs)        000
+__size_of_Delay           (abs)        000
+__size_of_Delay_nms       (abs)        000
+__size_of_I2C_WaitMoment  (abs)        000
+__size_of_I2C_Write1bYTE  (abs)        000
+__size_of_I2C_WriteStart  (abs)        000
+__size_of_I2C_WriteStop   (abs)        000
+__size_of_Isr_Timer       (abs)        000
+__size_of_Key_Test        (abs)        000
+__size_of_Refurbish_Sfr   (abs)        000
+__size_of_System_Init     (abs)        000
+__size_of_main            (abs)        000
+_main                     maintext     3CF
+btemp                     (abs)        07E
+clear_ram0                clrtext      3FB
+end_of_initialization     cinit        018
+interrupt_function        intentry     004
+intlevel0                 functab      000
+intlevel1                 functab      000
+intlevel2                 functab      000
+intlevel3                 functab      000
+intlevel4                 functab      000
+intlevel5                 functab      000
+reset_vec                 reset_vec    000
+saved_w                   (abs)        07E
+stackhi                   (abs)        000
+stacklo                   (abs)        000
+start                     init         00C
+start_initialization      cinit        00F
+wtemp0                    (abs)        07E
+
+
+FUNCTION INFORMATION:
+
+ *************** function _main *****************
+ Defined at:
+		line 101 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c"
+ Parameters:    Size  Location     Type
+		None
+ Auto vars:     Size  Location     Type
+		None
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		wreg, status,2, status,0, pclath, cstack
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         0       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         0       0       0       0       0
+Total ram usage:        0 bytes
+ Hardware stack levels required when called:    5
+ This function calls:
+		_CheckTouchKey
+		_Delay_nms
+		_Refurbish_Sfr
+		_System_Init
+ This function is called by:
+		Startup code after reset
+ This function uses a non-reentrant model
+
+
+ *************** function _System_Init *****************
+ Defined at:
+		line 34 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c"
+ Parameters:    Size  Location     Type
+		None
+ Auto vars:     Size  Location     Type
+		None
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		wreg, status,2
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         0       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         0       0       0       0       0
+Total ram usage:        0 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    1
+ This function calls:
+		Nothing
+ This function is called by:
+		_main
+ This function uses a non-reentrant model
+
+
+ *************** function _Refurbish_Sfr *****************
+ Defined at:
+		line 59 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c"
+ Parameters:    Size  Location     Type
+		None
+ Auto vars:     Size  Location     Type
+		None
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		wreg, status,2
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         0       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         0       0       0       0       0
+Total ram usage:        0 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    1
+ This function calls:
+		Nothing
+ This function is called by:
+		_main
+ This function uses a non-reentrant model
+
+
+ *************** function _Delay_nms *****************
+ Defined at:
+		line 20 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c"
+ Parameters:    Size  Location     Type
+  inittempl       2    4[COMMON] unsigned int 
+ Auto vars:     Size  Location     Type
+  i               2    6[COMMON] unsigned int 
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		wreg, status,2, status,0, pclath, cstack
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         2       0       0       0       0
+      Locals:         2       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         4       0       0       0       0
+Total ram usage:        4 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    2
+ This function calls:
+		_Delay
+ This function is called by:
+		_main
+ This function uses a non-reentrant model
+
+
+ *************** function _Delay *****************
+ Defined at:
+		line 13 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c"
+ Parameters:    Size  Location     Type
+  dtemp           2    2[COMMON] unsigned int 
+ Auto vars:     Size  Location     Type
+		None
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		wreg, status,2, status,0
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         2       0       0       0       0
+      Locals:         0       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         2       0       0       0       0
+Total ram usage:        2 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    1
+ This function calls:
+		Nothing
+ This function is called by:
+		_Delay_nms
+ This function uses a non-reentrant model
+
+
+ *************** function _CheckTouchKey *****************
+ Defined at:
+		line 565 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c"
+ Parameters:    Size  Location     Type
+		None
+ Auto vars:     Size  Location     Type
+		None
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		wreg, status,2, status,0, pclath, cstack
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         0       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         0       0       0       0       0
+Total ram usage:        0 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    4
+ This function calls:
+		_CheckTouchKey_F
+ This function is called by:
+		_main
+ This function uses a non-reentrant model
+
+
+ *************** function _CheckTouchKey_F *****************
+ Defined at:
+		line 340 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c"
+ Parameters:    Size  Location     Type
+		None
+ Auto vars:     Size  Location     Type
+  checksum        1    4[COMMON] unsigned char 
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		wreg, status,2, status,0, pclath, cstack
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         1       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         1       0       0       0       0
+Total ram usage:        1 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    3
+ This function calls:
+		_I2C_Write1bYTE
+		_I2C_WriteStart
+		_I2C_WriteStop
+		_Key_Test
+ This function is called by:
+		_CheckTouchKey
+ This function uses a non-reentrant model
+
+
+ *************** function _Key_Test *****************
+ Defined at:
+		line 32 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c"
+ Parameters:    Size  Location     Type
+		None
+ Auto vars:     Size  Location     Type
+		None
+ Return value:  Size  Location     Type
+                  2  236[None  ] unsigned int 
+ Registers used:
+		wreg, status,2
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         0       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         0       0       0       0       0
+Total ram usage:        0 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    1
+ This function calls:
+		Nothing
+ This function is called by:
+		_CheckTouchKey_F
+ This function uses a non-reentrant model
+
+
+ *************** function _I2C_WriteStop *****************
+ Defined at:
+		line 600 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c"
+ Parameters:    Size  Location     Type
+		None
+ Auto vars:     Size  Location     Type
+		None
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		status,2, status,0, pclath, cstack
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         0       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         0       0       0       0       0
+Total ram usage:        0 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    2
+ This function calls:
+		_I2C_WaitMoment
+ This function is called by:
+		_CheckTouchKey_F
+ This function uses a non-reentrant model
+
+
+ *************** function _I2C_WriteStart *****************
+ Defined at:
+		line 583 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c"
+ Parameters:    Size  Location     Type
+		None
+ Auto vars:     Size  Location     Type
+		None
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		status,2, status,0, pclath, cstack
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         0       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         0       0       0       0       0
+Total ram usage:        0 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    2
+ This function calls:
+		_I2C_WaitMoment
+ This function is called by:
+		_CheckTouchKey_F
+ This function uses a non-reentrant model
+
+
+ *************** function _I2C_Write1bYTE *****************
+ Defined at:
+		line 622 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c"
+ Parameters:    Size  Location     Type
+  data            1    wreg     unsigned char 
+ Auto vars:     Size  Location     Type
+  data            1    2[COMMON] unsigned char 
+  i               1    3[COMMON] unsigned char 
+ Return value:  Size  Location     Type
+                  1    wreg      unsigned char 
+ Registers used:
+		wreg, status,2, status,0, pclath, cstack
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         2       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         2       0       0       0       0
+Total ram usage:        2 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    2
+ This function calls:
+		_I2C_WaitMoment
+ This function is called by:
+		_CheckTouchKey_F
+ This function uses a non-reentrant model
+
+
+ *************** function _I2C_WaitMoment *****************
+ Defined at:
+		line 695 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c"
+ Parameters:    Size  Location     Type
+		None
+ Auto vars:     Size  Location     Type
+		None
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		None
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         0       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         0       0       0       0       0
+Total ram usage:        0 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    1
+ This function calls:
+		Nothing
+ This function is called by:
+		_I2C_WriteStart
+		_I2C_WriteStop
+		_I2C_Write1bYTE
+ This function uses a non-reentrant model
+
+
+ *************** function _Isr_Timer *****************
+ Defined at:
+		line 83 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c"
+ Parameters:    Size  Location     Type
+		None
+ Auto vars:     Size  Location     Type
+		None
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		wreg, status,2, status,0
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         0       0       0       0       0
+      Temps:          2       0       0       0       0
+      Totals:         2       0       0       0       0
+Total ram usage:        2 bytes
+ Hardware stack levels used:    1
+ This function calls:
+		Nothing
+ This function is called by:
+		Interrupt level 1
+ This function uses a non-reentrant model
+
+
+
+MODULE INFORMATION
+
+Module		Function		Class		Link	Load	Size
+shared
+		__initialization		CODE           	000F	0000	10
+		PL2            		CODE           	039D	0000	11
+		PL4            		CODE           	03A7	0000	8
+
+shared estimated size: 29
+
+H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c
+		_CheckTouchKey_F		CODE           	001D	0000	359
+		_I2C_WriteStop 		CODE           	01A3	0000	23
+		_I2C_Write1bYTE		CODE           	0183	0000	33
+		_CheckTouchKey 		CODE           	001C	0000	2
+		_I2C_WriteStart		CODE           	01B9	0000	23
+		_Key_Test      		CODE           	01D2	0000	442
+		_I2C_WaitMoment		CODE           	01CF	0000	4
+
+H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\CheckTouchKey.c estimated size: 886
+
+H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c
+		_Delay_nms     		CODE           	03AE	0000	22
+		_Refurbish_Sfr 		CODE           	0392	0000	12
+		_main          		CODE           	03CF	0000	25
+		_System_Init   		CODE           	038B	0000	8
+		_Delay         		CODE           	03C3	0000	13
+		_Isr_Timer     		CODE           	03E7	0000	21
+
+H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_TOUCH_TOOL\main.c estimated size: 101
+
