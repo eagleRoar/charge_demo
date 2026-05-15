@@ -105,10 +105,10 @@ void Init_System()
 	OPTION_REG = 0;
 	asm("clrwdt");
 	
-	TRISA = 0B00011111;			//初始化IO状态
+	TRISA = 0B00011111;			//初始化IO状态 1：输入 0：输出
 	TRISB = 0B00000000;
 
-	PORTA = 0B00000000;
+	PORTA = 0B00000000;			//1：高电平 0：低电平
 	PORTB = 0B00000000;			//初始化输出
 
 }

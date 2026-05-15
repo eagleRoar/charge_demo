@@ -3,9 +3,9 @@ Microchip MPLAB XC8 Compiler V1.45 ()
 Linker command line:
 
 -W-9 \
-  --edf=H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\dat\en_msgs.txt \
+  --edf=D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\dat\en_msgs.txt \
   -cs -h+SC8F096_Led_Demo.sym --cmf=SC8F096_Led_Demo.cmf -z -QSC8F096 \
-  -oC:\Users\ADMINI~1\AppData\Local\Temp\sd50.2 -MSC8F096_Led_Demo.map -E1 \
+  -oC:\Users\YQ23405\AppData\Local\Temp\s5os.2 -MSC8F096_Led_Demo.map -E1 \
   -ver=XC8 -ASTACK=020h-06fh -pstack=STACK -ACODE=00h-07FFhx4 \
   -ASTRCODE=00h-01FFFh -ASTRING=00h-0FFhx32 -ACONST=00h-0FFhx32 \
   -AENTRY=00h-0FFhx32 -ACOMMON=070h-07Fh -ABANK0=020h-06Fh \
@@ -273,7 +273,7 @@ FUNCTION INFORMATION:
 
  *************** function _main *****************
  Defined at:
-		line 10 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
+		line 10 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
  Parameters:    Size  Location     Type
 		None
  Auto vars:     Size  Location     Type
@@ -302,7 +302,7 @@ Total ram usage:        0 bytes
 
  *************** function _Set_LED_Moudle *****************
  Defined at:
-		line 132 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
+		line 132 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
  Parameters:    Size  Location     Type
 		None
  Auto vars:     Size  Location     Type
@@ -332,7 +332,7 @@ Total ram usage:        0 bytes
 
  *************** function _Timer_Isr *****************
  Defined at:
-		line 110 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
+		line 110 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
  Parameters:    Size  Location     Type
 		None
  Auto vars:     Size  Location     Type
@@ -363,15 +363,15 @@ Total ram usage:        2 bytes
 MODULE INFORMATION
 
 Module		Function		Class		Link	Load	Size
-H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c
-		_Timer_Isr     		CODE           	0072	0000	20
-		_Set_LED_Moudle		CODE           	0085	0000	16
-		_main          		CODE           	0016	0000	93
-
-H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c estimated size: 129
-
 shared
 		__initialization		CODE           	000F	0000	4
 
 shared estimated size: 4
+
+E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c
+		_Timer_Isr     		CODE           	0072	0000	20
+		_Set_LED_Moudle		CODE           	0085	0000	16
+		_main          		CODE           	0016	0000	93
+
+E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c estimated size: 129
 

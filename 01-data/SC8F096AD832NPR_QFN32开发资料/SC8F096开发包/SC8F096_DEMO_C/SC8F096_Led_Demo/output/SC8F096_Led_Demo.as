@@ -5,7 +5,7 @@ opt pagewidth 120
 	opt pm
 
 	processor	SC8F096
-opt include "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\sc8f096.cgen.inc"
+opt include "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\sc8f096.cgen.inc"
 clrc	macro
 	bcf	3,0
 	endm
@@ -30,221 +30,221 @@ skipnc	macro
 skipnz	macro
 	btfsc	3,2
 	endm
-# 13 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 13 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 INDF EQU 00H ;# 
-# 20 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 20 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 OPTION_REG EQU 01H ;# 
-# 27 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 27 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PCL EQU 02H ;# 
-# 34 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 34 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 STATUS EQU 03H ;# 
-# 41 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 41 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 FSR EQU 04H ;# 
-# 48 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 48 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 TRISB EQU 05H ;# 
-# 55 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 55 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PORTB EQU 06H ;# 
-# 62 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 62 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 WPDB EQU 07H ;# 
-# 69 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 69 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 WPUB EQU 08H ;# 
-# 76 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 76 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 IOCB EQU 09H ;# 
-# 83 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 83 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PCLATH EQU 0AH ;# 
-# 90 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 90 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 INTCON EQU 0BH ;# 
-# 97 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 97 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 QCCON EQU 0CH ;# 
-# 104 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 104 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PIR1 EQU 0DH ;# 
-# 111 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 111 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PIE1 EQU 0EH ;# 
-# 118 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 118 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 CMP1CON0 EQU 0FH ;# 
-# 125 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 125 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 CMP1CON1 EQU 10H ;# 
-# 132 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 132 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PR2 EQU 11H ;# 
-# 139 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 139 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 TMR2 EQU 12H ;# 
-# 146 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 146 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 T2CON EQU 13H ;# 
-# 153 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 153 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 OSCCON EQU 14H ;# 
-# 160 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 160 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PWMCON0 EQU 15H ;# 
-# 167 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 167 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PWMCON1 EQU 16H ;# 
-# 174 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 174 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PWMTL EQU 17H ;# 
-# 181 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 181 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PWMTH EQU 18H ;# 
-# 188 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 188 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PWMD0L EQU 19H ;# 
-# 195 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 195 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PWMD1L EQU 1AH ;# 
-# 202 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 202 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PWMD4L EQU 1BH ;# 
-# 209 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 209 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PWMT4L EQU 1CH ;# 
-# 216 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 216 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PWMCON2 EQU 1DH ;# 
-# 223 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 223 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PWMDH EQU 1EH ;# 
-# 230 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 230 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PWM01DT EQU 1FH ;# 
-# 237 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 237 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 TMR0 EQU 81H ;# 
-# 244 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 244 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 TRISA EQU 85H ;# 
-# 251 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 251 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PORTA EQU 86H ;# 
-# 258 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 258 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 WPDA EQU 87H ;# 
-# 265 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 265 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 WPUA EQU 88H ;# 
-# 272 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 272 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 IOCA EQU 89H ;# 
-# 279 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 279 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 ANSEL3 EQU 8CH ;# 
-# 286 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 286 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 EECON1 EQU 8DH ;# 
-# 293 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 293 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 EECON2 EQU 8EH ;# 
-# 300 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 300 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 EEDAT EQU 8FH ;# 
-# 307 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 307 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 EEDATH EQU 90H ;# 
-# 314 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 314 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 EEADR EQU 91H ;# 
-# 321 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 321 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 EEADRH EQU 92H ;# 
-# 328 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 328 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 ANSEL0 EQU 93H ;# 
-# 335 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 335 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 ANSEL1 EQU 94H ;# 
-# 342 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 342 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 ADCON0 EQU 95H ;# 
-# 349 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 349 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 ADCON1 EQU 96H ;# 
-# 356 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 356 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 ADRESL EQU 98H ;# 
-# 363 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 363 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 ADRESH EQU 99H ;# 
-# 370 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 370 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 CMP2CON0 EQU 9AH ;# 
-# 377 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 377 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PWMD2L EQU 9BH ;# 
-# 384 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 384 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PWMD3L EQU 9CH ;# 
-# 391 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 391 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PWM23DT EQU 9DH ;# 
-# 398 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 398 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 SEGEN0 EQU 9EH ;# 
-# 405 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 405 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 CMP2CON1 EQU 9FH ;# 
-# 412 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 412 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 TRISC EQU 105H ;# 
-# 419 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 419 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PORTC EQU 106H ;# 
-# 426 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 426 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PORTD EQU 107H ;# 
-# 433 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 433 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 WPUC EQU 108H ;# 
-# 440 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 440 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 ANSEL2 EQU 109H ;# 
-# 447 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 447 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 TMR1L EQU 10CH ;# 
-# 454 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 454 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 TMR1H EQU 10DH ;# 
-# 461 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 461 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 T1CON EQU 10EH ;# 
-# 468 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 468 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PIR2 EQU 10FH ;# 
-# 475 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 475 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PIE2 EQU 110H ;# 
-# 482 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 482 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 KEYCON0 EQU 111H ;# 
-# 489 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 489 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 KEYCON1 EQU 112H ;# 
-# 496 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 496 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 KEYCON2 EQU 113H ;# 
-# 503 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 503 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 TRISD EQU 114H ;# 
-# 510 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 510 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 WPUD EQU 115H ;# 
-# 517 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 517 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 KEYDATAL EQU 116H ;# 
-# 524 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 524 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 KEYDATAH EQU 117H ;# 
-# 531 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 531 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 TXSTA0 EQU 118H ;# 
-# 538 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 538 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 RCSTA0 EQU 119H ;# 
-# 545 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 545 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 SPBRG0 EQU 11AH ;# 
-# 552 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 552 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 TXREG0 EQU 11BH ;# 
-# 559 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 559 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 RCREG0 EQU 11CH ;# 
-# 566 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 566 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 LCDCON0 EQU 11DH ;# 
-# 573 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 573 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 LCDCON1 EQU 11EH ;# 
-# 580 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 580 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 SEGEN1 EQU 11FH ;# 
-# 587 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 587 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 SEGEN2 EQU 181H ;# 
-# 594 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 594 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 TXSTA1 EQU 185H ;# 
-# 601 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 601 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 RCSTA1 EQU 186H ;# 
-# 608 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 608 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 TXREG1 EQU 187H ;# 
-# 615 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 615 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 RCREG1 EQU 188H ;# 
-# 622 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 622 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 SPBRG1 EQU 189H ;# 
-# 629 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 629 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 OPACON EQU 18CH ;# 
-# 636 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 636 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 OPAADJ EQU 18DH ;# 
-# 643 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 643 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 LEDCTR0 EQU 18EH ;# 
-# 650 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 650 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 LEDCTR1 EQU 18FH ;# 
-# 657 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 657 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 IICCON EQU 190H ;# 
-# 664 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 664 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 IICCON2 EQU 191H ;# 
-# 671 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 671 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 IICSTAT EQU 192H ;# 
-# 678 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 678 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 IICBUF EQU 193H ;# 
-# 685 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 685 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 IICADD EQU 194H ;# 
-# 692 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 692 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 CC0CON EQU 195H ;# 
-# 699 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 699 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 CC1CON EQU 196H ;# 
-# 706 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 706 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PDCON0 EQU 197H ;# 
-# 713 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 713 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PDCON1 EQU 198H ;# 
-# 720 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 720 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PDADD EQU 199H ;# 
-# 727 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 727 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PDRDATA EQU 19AH ;# 
-# 734 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 734 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 PDSDATA EQU 19BH ;# 
-# 741 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 741 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 LCDADD EQU 19CH ;# 
-# 748 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 748 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 LCDDATA EQU 19DH ;# 
-# 755 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 755 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 COMEN EQU 19EH ;# 
-# 762 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta12\data\include\SC8F096.h"
+# 762 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
 SEGEN3 EQU 19FH ;# 
 	FNCALL	_main,_Set_LED_Moudle
 	FNROOT	_main
@@ -483,7 +483,7 @@ __pcstackCOMMON:
 
 ;; *************** function _main *****************
 ;; Defined at:
-;;		line 10 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
+;;		line 10 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
 ;; Parameters:    Size  Location     Type
 ;;		None
 ;; Auto vars:     Size  Location     Type
@@ -510,12 +510,12 @@ __pcstackCOMMON:
 ;; This function uses a non-reentrant model
 ;;
 psect	maintext,global,class=CODE,delta=2,split=1,group=0
-	file	"H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
+	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
 	line	10
 global __pmaintext
 __pmaintext:	;psect for function _main
 psect	maintext
-	file	"H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
+	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
 	line	10
 	global	__size_of_main
 	__size_of_main	equ	__end_of_main-_main
@@ -527,10 +527,10 @@ _main:
 	line	12
 	
 l640:	
-# 12 "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
+# 12 "E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
 nop ;# 
 	line	13
-# 13 "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
+# 13 "E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
 clrwdt ;# 
 psect	maintext
 	line	15
@@ -640,7 +640,7 @@ l674:
 ;SC8F096_Led_Demo.c: 40: B_MainLoop = 0;
 	bcf	(_B_MainLoop/8),(_B_MainLoop)&7
 	line	41
-# 41 "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
+# 41 "E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
 clrwdt ;# 
 psect	maintext
 	line	42
@@ -852,7 +852,7 @@ GLOBAL	__end_of_main
 
 ;; *************** function _Set_LED_Moudle *****************
 ;; Defined at:
-;;		line 132 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
+;;		line 132 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
 ;; Parameters:    Size  Location     Type
 ;;		None
 ;; Auto vars:     Size  Location     Type
@@ -884,7 +884,7 @@ psect	text1,local,class=CODE,delta=2,merge=1,group=0
 global __ptext1
 __ptext1:	;psect for function _Set_LED_Moudle
 psect	text1
-	file	"H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
+	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
 	line	132
 	global	__size_of_Set_LED_Moudle
 	__size_of_Set_LED_Moudle	equ	__end_of_Set_LED_Moudle-_Set_LED_Moudle
@@ -939,7 +939,7 @@ GLOBAL	__end_of_Set_LED_Moudle
 
 ;; *************** function _Timer_Isr *****************
 ;; Defined at:
-;;		line 110 in file "H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
+;;		line 110 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
 ;; Parameters:    Size  Location     Type
 ;;		None
 ;; Auto vars:     Size  Location     Type
@@ -970,7 +970,7 @@ psect	text2,local,class=CODE,delta=2,merge=1,group=0
 global __ptext2
 __ptext2:	;psect for function _Timer_Isr
 psect	text2
-	file	"H:\MyDownloads\说明书&测试报告\开发包\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
+	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Led_Demo\SC8F096_Led_Demo.c"
 	line	110
 	global	__size_of_Timer_Isr
 	__size_of_Timer_Isr	equ	__end_of_Timer_Isr-_Timer_Isr
