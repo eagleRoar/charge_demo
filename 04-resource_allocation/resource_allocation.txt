@@ -1,0 +1,14 @@
+B1
+控制			引脚
+B1			31				PWMA0
+B2			30				PWMA1
+B3			12				PWMD2
+B4			13				PWMD4
+B5			28				PWMA3
+B6			29				PWMA2
+B7			22				PWMD1	
+B8			20				PWMD3
+B9			15				PWMD0	
+B10			14				PWMD1
+B11			21				PWMD2
+B12			23				PWMD0
