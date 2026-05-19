@@ -1,0 +1,12 @@
+Warning[520]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c	第20行	function "_test_io_high" is never called
+Warning[520]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c	第25行	function "_test_io_low" is never called
+Warning[520]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c	第30行	function "_control_test_io" is never called
+
+Memory Summary:
+    Program space        used    53h (    83) of  2000h words   (  1.0%)
+    Data space           used     6h (     6) of   140h bytes   (  1.9%)
+    EEPROM space         None available
+    Data stack space     used     0h (     0) of    50h bytes   (  0.0%)
+    Configuration bits   used     0h (     0) of     2h words   (  0.0%)
+    ID Location space    used     0h (     0) of     4h bytes   (  0.0%)
+

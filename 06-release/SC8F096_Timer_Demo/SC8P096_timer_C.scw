@@ -1,0 +1,13 @@
+[PROJECT]
+Version=200
+Compile=1
+Device=SC8F096
+OptValue=-local,-asmfile,+asm,-speed,+space,-debug
+RuntimeValue=
+WarningValue=-9
+config=FFFF,FFEF,FFFF,FFFF,
+[FILE]
+SourceFile=SC8P096_Timer0_C.c
+OtherFile=SC8P096_OSC_Timer2_C.c
+OtherFile=SC8P096_Timer0_C.c
+OtherFile=SC8P096_Timer2_C.c
