@@ -9,12 +9,13 @@
 -------------------------------------------*/
 #include <sc.h>					//芯片头文件，会根据工程选项自动寻找对应型号头文件
 static unsigned int timer_cnt = 0;
+static unsigned int level = 0;
 
 void gpio_init(void)
 {
 	//RA0输出高电平
 	TRISA = 0B11111110;//RA0 方向:输出
-	PORTA = 0B00000001;//RA0 电平:高
+	PORTA = 0B0000001;//RA0 电平:高
 }
 
 void test_io_high()
@@ -118,6 +119,7 @@ void interrupt Timer0_Isr(void)
 	if(timer_cnt > 8000)
 	{
 		timer_cnt = 0;
+		control_test_io((level++)%2);
 	}
 }
 

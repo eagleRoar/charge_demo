@@ -248,9 +248,13 @@ COMEN EQU 19EH ;#
 SEGEN3 EQU 19FH ;# 
 	FNCALL	_main,_gpio_init
 	FNROOT	_main
+	FNCALL	_Timer0_Isr,_control_test_io
+	FNCALL	_control_test_io,_test_io_high
+	FNCALL	_control_test_io,_test_io_low
 	FNCALL	intlevel1,_Timer0_Isr
 	global	intlevel1
 	FNROOT	intlevel1
+	global	_level
 	global	_timer_cnt
 	global	_OSCCON
 psect	text0,local,class=CODE,delta=2,merge=1
@@ -299,6 +303,9 @@ __initialization:
 psect	bssCOMMON,class=COMMON,space=1,noexec
 global __pbssCOMMON
 __pbssCOMMON:
+_level:
+       ds      2
+
 _timer_cnt:
        ds      2
 
@@ -308,6 +315,8 @@ _timer_cnt:
 psect cinit,class=CODE,delta=2,merge=1
 	clrf	((__pbssCOMMON)+0)&07Fh
 	clrf	((__pbssCOMMON)+1)&07Fh
+	clrf	((__pbssCOMMON)+2)&07Fh
+	clrf	((__pbssCOMMON)+3)&07Fh
 psect cinit,class=CODE,delta=2,merge=1
 global end_of_initialization,__end_of__initialization
 
@@ -321,24 +330,33 @@ psect	cstackCOMMON,class=COMMON,space=1,noexec
 global __pcstackCOMMON
 __pcstackCOMMON:
 ?_gpio_init:	; 1 bytes @ 0x0
+?_test_io_high:	; 1 bytes @ 0x0
+??_test_io_high:	; 1 bytes @ 0x0
+?_test_io_low:	; 1 bytes @ 0x0
+??_test_io_low:	; 1 bytes @ 0x0
+?_control_test_io:	; 1 bytes @ 0x0
 ?_main:	; 1 bytes @ 0x0
 ?_Timer0_Isr:	; 1 bytes @ 0x0
-??_Timer0_Isr:	; 1 bytes @ 0x0
+	global	control_test_io@flag
+control_test_io@flag:	; 2 bytes @ 0x0
 	ds	2
-??_gpio_init:	; 1 bytes @ 0x2
-??_main:	; 1 bytes @ 0x2
+??_control_test_io:	; 1 bytes @ 0x2
+??_Timer0_Isr:	; 1 bytes @ 0x2
+	ds	2
+??_gpio_init:	; 1 bytes @ 0x4
+??_main:	; 1 bytes @ 0x4
 ;!
 ;!Data Sizes:
 ;!    Strings     0
 ;!    Constant    0
 ;!    Data        0
-;!    BSS         2
+;!    BSS         4
 ;!    Persistent  0
 ;!    Stack       0
 ;!
 ;!Auto Spaces:
 ;!    Space          Size  Autos    Used
-;!    COMMON           14      2       4
+;!    COMMON           14      4       8
 ;!    BANK0            80      0       0
 ;!    BANK1            80      0       0
 ;!    BANK3            80      0       0
@@ -357,7 +375,7 @@ __pcstackCOMMON:
 ;!
 ;!Critical Paths under _Timer0_Isr in COMMON
 ;!
-;!    None.
+;!    _Timer0_Isr->_control_test_io
 ;!
 ;!Critical Paths under _main in BANK0
 ;!
@@ -410,10 +428,20 @@ __pcstackCOMMON:
 ;! ---------------------------------------------------------------------------------
 ;! (Depth) Function   	        Calls       Base Space   Used Autos Params    Refs
 ;! ---------------------------------------------------------------------------------
-;! (2) _Timer0_Isr                                           2     2      0       0
-;!                                              0 COMMON     2     2      0
+;! (2) _Timer0_Isr                                           2     2      0      87
+;!                                              2 COMMON     2     2      0
+;!                    _control_test_io
 ;! ---------------------------------------------------------------------------------
-;! Estimated maximum stack depth 2
+;! (3) _control_test_io                                      2     0      2      87
+;!                                              0 COMMON     2     0      2
+;!                       _test_io_high
+;!                        _test_io_low
+;! ---------------------------------------------------------------------------------
+;! (4) _test_io_low                                          0     0      0       0
+;! ---------------------------------------------------------------------------------
+;! (4) _test_io_high                                         0     0      0       0
+;! ---------------------------------------------------------------------------------
+;! Estimated maximum stack depth 4
 ;! ---------------------------------------------------------------------------------
 ;!
 ;! Call Graph Graphs:
@@ -422,6 +450,9 @@ __pcstackCOMMON:
 ;!   _gpio_init
 ;!
 ;! _Timer0_Isr (ROOT)
+;!   _control_test_io
+;!     _test_io_high
+;!     _test_io_low
 ;!
 
 ;! Address spaces:
@@ -430,7 +461,7 @@ __pcstackCOMMON:
 ;!BITCOMMON            E      0       0       0        0.0%
 ;!NULL                 0      0       0       0        0.0%
 ;!CODE                 0      0       0       0        0.0%
-;!COMMON               E      2       4       1       28.6%
+;!COMMON               E      4       8       1       57.1%
 ;!BITSFR0              0      0       0       1        0.0%
 ;!SFR0                 0      0       0       1        0.0%
 ;!BITSFR1              0      0       0       2        0.0%
@@ -448,14 +479,14 @@ __pcstackCOMMON:
 ;!BANK3               50      0       0       8        0.0%
 ;!BITBANK2            50      0       0       9        0.0%
 ;!BANK2               50      0       0      10        0.0%
-;!ABS                  0      0       4      11        0.0%
-;!DATA                 0      0       4      12        0.0%
+;!ABS                  0      0       8      11        0.0%
+;!DATA                 0      0       8      12        0.0%
 
 	global	_main
 
 ;; *************** function _main *****************
 ;; Defined at:
-;;		line 42 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+;;		line 43 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
 ;; Parameters:    Size  Location     Type
 ;;		None
 ;; Auto vars:     Size  Location     Type
@@ -474,7 +505,7 @@ __pcstackCOMMON:
 ;;      Temps:          0       0       0       0       0
 ;;      Totals:         0       0       0       0       0
 ;;Total ram usage:        0 bytes
-;; Hardware stack levels required when called:    2
+;; Hardware stack levels required when called:    4
 ;; This function calls:
 ;;		_gpio_init
 ;; This function is called by:
@@ -483,128 +514,128 @@ __pcstackCOMMON:
 ;;
 psect	maintext,global,class=CODE,delta=2,split=1,group=0
 	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-	line	42
+	line	43
 global __pmaintext
 __pmaintext:	;psect for function _main
 psect	maintext
 	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-	line	42
+	line	43
 	global	__size_of_main
 	__size_of_main	equ	__end_of_main-_main
 	
 _main:	
 ;incstack = 0
-	opt	stack 6
+	opt	stack 4
 ; Regs used in _main: [wreg+status,2+status,0+pclath+cstack]
-	line	44
-	
-l631:	
-# 44 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-nop ;# 
 	line	45
+	
+l643:	
 # 45 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+nop ;# 
+	line	46
+# 46 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
 clrwdt ;# 
 psect	maintext
-	line	46
+	line	47
 	
-l633:	
-;SC8P096_Timer0_C.c: 46: OSCCON = 0x72;
+l645:	
+;SC8P096_Timer0_C.c: 47: OSCCON = 0x72;
 	movlw	low(072h)
 	bcf	status, 5	;RP0=0, select bank0
 	bcf	status, 6	;RP1=0, select bank0
 	movwf	(20)	;volatile
-	line	47
-	
-l635:	
-;SC8P096_Timer0_C.c: 47: OPTION_REG = 0x00;
-	clrf	(1)	;volatile
 	line	48
-# 48 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+	
+l647:	
+;SC8P096_Timer0_C.c: 48: OPTION_REG = 0x00;
+	clrf	(1)	;volatile
+	line	49
+# 49 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
 clrwdt ;# 
 psect	maintext
-	line	77
+	line	78
 	
-l637:	
-;SC8P096_Timer0_C.c: 77: WPUA = 0B00000000;
+l649:	
+;SC8P096_Timer0_C.c: 78: WPUA = 0B00000000;
 	bsf	status, 5	;RP0=1, select bank1
 	bcf	status, 6	;RP1=0, select bank1
 	clrf	(136)^080h	;volatile
-	line	78
-	
-l639:	
-;SC8P096_Timer0_C.c: 78: WPDA = 0B00000000;
-	clrf	(135)^080h	;volatile
-	line	80
-	
-l641:	
-;SC8P096_Timer0_C.c: 80: IOCA = 0B00000000;
-	clrf	(137)^080h	;volatile
-	line	81
-	
-l643:	
-;SC8P096_Timer0_C.c: 81: TRISA = 0B00000000;
-	clrf	(133)^080h	;volatile
-	line	83
-	
-l645:	
-;SC8P096_Timer0_C.c: 83: WPUB = 0B00000000;
-	bcf	status, 5	;RP0=0, select bank0
-	clrf	(8)	;volatile
-	line	84
-	
-l647:	
-;SC8P096_Timer0_C.c: 84: WPDB = 0B00000000;
-	clrf	(7)	;volatile
-	line	86
-	
-l649:	
-;SC8P096_Timer0_C.c: 86: IOCB = 0B00000000;
-	clrf	(9)	;volatile
-	line	87
+	line	79
 	
 l651:	
-;SC8P096_Timer0_C.c: 87: TRISB = 0B00000000;
-	clrf	(5)	;volatile
-	line	90
+;SC8P096_Timer0_C.c: 79: WPDA = 0B00000000;
+	clrf	(135)^080h	;volatile
+	line	81
 	
 l653:	
-;SC8P096_Timer0_C.c: 90: TMR0 = 6;
+;SC8P096_Timer0_C.c: 81: IOCA = 0B00000000;
+	clrf	(137)^080h	;volatile
+	line	82
+	
+l655:	
+;SC8P096_Timer0_C.c: 82: TRISA = 0B00000000;
+	clrf	(133)^080h	;volatile
+	line	84
+	
+l657:	
+;SC8P096_Timer0_C.c: 84: WPUB = 0B00000000;
+	bcf	status, 5	;RP0=0, select bank0
+	clrf	(8)	;volatile
+	line	85
+	
+l659:	
+;SC8P096_Timer0_C.c: 85: WPDB = 0B00000000;
+	clrf	(7)	;volatile
+	line	87
+	
+l661:	
+;SC8P096_Timer0_C.c: 87: IOCB = 0B00000000;
+	clrf	(9)	;volatile
+	line	88
+	
+l663:	
+;SC8P096_Timer0_C.c: 88: TRISB = 0B00000000;
+	clrf	(5)	;volatile
+	line	91
+	
+l665:	
+;SC8P096_Timer0_C.c: 91: TMR0 = 6;
 	movlw	low(06h)
 	bsf	status, 5	;RP0=1, select bank1
 	movwf	(129)^080h	;volatile
-	line	91
-	
-l655:	
-;SC8P096_Timer0_C.c: 91: T0IF = 0;
-	bcf	(90/8),(90)&7	;volatile
 	line	92
 	
-l657:	
-;SC8P096_Timer0_C.c: 92: T0IE = 1;
-	bsf	(93/8),(93)&7	;volatile
-	line	94
+l667:	
+;SC8P096_Timer0_C.c: 92: T0IF = 0;
+	bcf	(90/8),(90)&7	;volatile
+	line	93
 	
-l659:	
-;SC8P096_Timer0_C.c: 94: GIE = 1;
-	bsf	(95/8),(95)&7	;volatile
+l669:	
+;SC8P096_Timer0_C.c: 93: T0IE = 1;
+	bsf	(93/8),(93)&7	;volatile
 	line	95
 	
-l661:	
-;SC8P096_Timer0_C.c: 95: gpio_init();
-	fcall	_gpio_init
+l671:	
+;SC8P096_Timer0_C.c: 95: GIE = 1;
+	bsf	(95/8),(95)&7	;volatile
 	line	96
-;SC8P096_Timer0_C.c: 96: while(1)
 	
-l243:	
-	line	98
-# 98 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+l673:	
+;SC8P096_Timer0_C.c: 96: gpio_init();
+	fcall	_gpio_init
+	line	97
+;SC8P096_Timer0_C.c: 97: while(1)
+	
+l245:	
+	line	99
+# 99 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
 clrwdt ;# 
 psect	maintext
-	goto	l243
+	goto	l245
 	global	start
 	ljmp	start
 	opt stack 0
-	line	100
+	line	101
 GLOBAL	__end_of_main
 	__end_of_main:
 	signat	_main,89
@@ -612,7 +643,7 @@ GLOBAL	__end_of_main
 
 ;; *************** function _gpio_init *****************
 ;; Defined at:
-;;		line 13 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+;;		line 14 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
 ;; Parameters:    Size  Location     Type
 ;;		None
 ;; Auto vars:     Size  Location     Type
@@ -632,7 +663,7 @@ GLOBAL	__end_of_main
 ;;      Totals:         0       0       0       0       0
 ;;Total ram usage:        0 bytes
 ;; Hardware stack levels used:    1
-;; Hardware stack levels required when called:    1
+;; Hardware stack levels required when called:    3
 ;; This function calls:
 ;;		Nothing
 ;; This function is called by:
@@ -640,32 +671,32 @@ GLOBAL	__end_of_main
 ;; This function uses a non-reentrant model
 ;;
 psect	text1,local,class=CODE,delta=2,merge=1,group=0
-	line	13
+	line	14
 global __ptext1
 __ptext1:	;psect for function _gpio_init
 psect	text1
 	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-	line	13
+	line	14
 	global	__size_of_gpio_init
 	__size_of_gpio_init	equ	__end_of_gpio_init-_gpio_init
 	
 _gpio_init:	
 ;incstack = 0
-	opt	stack 6
+	opt	stack 4
 ; Regs used in _gpio_init: [wreg]
-	line	16
+	line	17
 	
-l629:	
-;SC8P096_Timer0_C.c: 16: TRISA = 0B11111110;
+l635:	
+;SC8P096_Timer0_C.c: 17: TRISA = 0B11111110;
 	movlw	low(0FEh)
 	movwf	(133)^080h	;volatile
-	line	17
-;SC8P096_Timer0_C.c: 17: PORTA = 0B00000001;
+	line	18
+;SC8P096_Timer0_C.c: 18: PORTA = 0B0000001;
 	movlw	low(01h)
 	movwf	(134)^080h	;volatile
-	line	18
+	line	19
 	
-l227:	
+l229:	
 	return
 	opt stack 0
 GLOBAL	__end_of_gpio_init
@@ -675,7 +706,7 @@ GLOBAL	__end_of_gpio_init
 
 ;; *************** function _Timer0_Isr *****************
 ;; Defined at:
-;;		line 108 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+;;		line 109 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
 ;; Parameters:    Size  Location     Type
 ;;		None
 ;; Auto vars:     Size  Location     Type
@@ -683,7 +714,7 @@ GLOBAL	__end_of_gpio_init
 ;; Return value:  Size  Location     Type
 ;;                  1    wreg      void 
 ;; Registers used:
-;;		wreg, status,2, status,0
+;;		wreg, status,2, status,0, pclath, cstack
 ;; Tracked objects:
 ;;		On entry : 0/0
 ;;		On exit  : 0/0
@@ -695,26 +726,27 @@ GLOBAL	__end_of_gpio_init
 ;;      Totals:         2       0       0       0       0
 ;;Total ram usage:        2 bytes
 ;; Hardware stack levels used:    1
+;; Hardware stack levels required when called:    2
 ;; This function calls:
-;;		Nothing
+;;		_control_test_io
 ;; This function is called by:
 ;;		Interrupt level 1
 ;; This function uses a non-reentrant model
 ;;
 psect	text2,local,class=CODE,delta=2,merge=1,group=0
-	line	108
+	line	109
 global __ptext2
 __ptext2:	;psect for function _Timer0_Isr
 psect	text2
 	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-	line	108
+	line	109
 	global	__size_of_Timer0_Isr
 	__size_of_Timer0_Isr	equ	__end_of_Timer0_Isr-_Timer0_Isr
 	
 _Timer0_Isr:	
 ;incstack = 0
-	opt	stack 6
-; Regs used in _Timer0_Isr: [wreg+status,2+status,0]
+	opt	stack 4
+; Regs used in _Timer0_Isr: [wreg+status,2+status,0+pclath+cstack]
 psect	intentry,class=CODE,delta=2
 global __pintentry
 __pintentry:
@@ -729,69 +761,86 @@ interrupt_function:
 	movwf	(??_Timer0_Isr+1)
 	ljmp	_Timer0_Isr
 psect	text2
-	line	110
+	line	111
 	
-i1l663:	
-;SC8P096_Timer0_C.c: 110: if(T0IF)
+i1l695:	
+;SC8P096_Timer0_C.c: 111: if(T0IF)
 	btfss	(90/8),(90)&7	;volatile
-	goto	u1_21
-	goto	u1_20
-u1_21:
-	goto	i1l251
-u1_20:
-	line	112
+	goto	u5_21
+	goto	u5_20
+u5_21:
+	goto	i1l253
+u5_20:
+	line	113
 	
-i1l665:	
-;SC8P096_Timer0_C.c: 111: {
-;SC8P096_Timer0_C.c: 112: TMR0 += 6;
+i1l697:	
+;SC8P096_Timer0_C.c: 112: {
+;SC8P096_Timer0_C.c: 113: TMR0 += 6;
 	movlw	low(06h)
 	bsf	status, 5	;RP0=1, select bank1
 	bcf	status, 6	;RP1=0, select bank1
 	addwf	(129)^080h,f	;volatile
-	line	113
+	line	114
 	
-i1l667:	
-;SC8P096_Timer0_C.c: 113: T0IF = 0;
+i1l699:	
+;SC8P096_Timer0_C.c: 114: T0IF = 0;
 	bcf	(90/8),(90)&7	;volatile
-	line	115
-;SC8P096_Timer0_C.c: 115: PORTB ^= 0XFF;
+	line	116
+;SC8P096_Timer0_C.c: 116: PORTB ^= 0XFF;
 	movlw	low(0FFh)
 	bcf	status, 5	;RP0=0, select bank0
 	xorwf	(6),f	;volatile
-	line	116
+	line	117
 	
-i1l669:	
-;SC8P096_Timer0_C.c: 116: timer_cnt ++;
+i1l701:	
+;SC8P096_Timer0_C.c: 117: timer_cnt ++;
 	incf	(_timer_cnt),f
 	skipnz
 	incf	(_timer_cnt+1),f
-	line	117
-	
-i1l251:	
 	line	118
-;SC8P096_Timer0_C.c: 117: }
-;SC8P096_Timer0_C.c: 118: if(timer_cnt > 8000)
+	
+i1l253:	
+	line	119
+;SC8P096_Timer0_C.c: 118: }
+;SC8P096_Timer0_C.c: 119: if(timer_cnt > 8000)
 	movlw	01Fh
 	subwf	(_timer_cnt+1),w
 	movlw	041h
 	skipnz
 	subwf	(_timer_cnt),w
 	skipc
-	goto	u2_21
-	goto	u2_20
-u2_21:
-	goto	i1l253
-u2_20:
-	line	120
+	goto	u6_21
+	goto	u6_20
+u6_21:
+	goto	i1l255
+u6_20:
+	line	121
 	
-i1l671:	
-;SC8P096_Timer0_C.c: 119: {
-;SC8P096_Timer0_C.c: 120: timer_cnt = 0;
+i1l703:	
+;SC8P096_Timer0_C.c: 120: {
+;SC8P096_Timer0_C.c: 121: timer_cnt = 0;
 	clrf	(_timer_cnt)
 	clrf	(_timer_cnt+1)
 	line	122
 	
-i1l253:	
+i1l705:	
+;SC8P096_Timer0_C.c: 122: control_test_io((level++)%2);
+	movf	(_level+1),w
+	movwf	(control_test_io@flag+1)
+	movf	(_level),w
+	movwf	(control_test_io@flag)
+	movlw	01h
+	andwf	(control_test_io@flag),f
+	clrf	(control_test_io@flag+1)
+	fcall	_control_test_io
+	
+i1l707:	
+	incf	(_level),f
+	skipnz
+	incf	(_level+1),f
+	line	124
+	
+i1l255:	
 	movf	(??_Timer0_Isr+1),w
 	movwf	pclath
 	swapf	(??_Timer0_Isr+0)^0FFFFFF80h,w
@@ -803,6 +852,206 @@ i1l253:
 GLOBAL	__end_of_Timer0_Isr
 	__end_of_Timer0_Isr:
 	signat	_Timer0_Isr,89
+	global	_control_test_io
+
+;; *************** function _control_test_io *****************
+;; Defined at:
+;;		line 31 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+;; Parameters:    Size  Location     Type
+;;  flag            2    0[COMMON] unsigned int 
+;; Auto vars:     Size  Location     Type
+;;		None
+;; Return value:  Size  Location     Type
+;;                  1    wreg      void 
+;; Registers used:
+;;		wreg, status,2, status,0, pclath, cstack
+;; Tracked objects:
+;;		On entry : 0/0
+;;		On exit  : 300/100
+;;		Unchanged: 0/0
+;; Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+;;      Params:         2       0       0       0       0
+;;      Locals:         0       0       0       0       0
+;;      Temps:          0       0       0       0       0
+;;      Totals:         2       0       0       0       0
+;;Total ram usage:        2 bytes
+;; Hardware stack levels used:    1
+;; Hardware stack levels required when called:    1
+;; This function calls:
+;;		_test_io_high
+;;		_test_io_low
+;; This function is called by:
+;;		_Timer0_Isr
+;; This function uses a non-reentrant model
+;;
+psect	text3,local,class=CODE,delta=2,merge=1,group=0
+	line	31
+global __ptext3
+__ptext3:	;psect for function _control_test_io
+psect	text3
+	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+	line	31
+	global	__size_of_control_test_io
+	__size_of_control_test_io	equ	__end_of_control_test_io-_control_test_io
+	
+_control_test_io:	
+;incstack = 0
+	opt	stack 4
+; Regs used in _control_test_io: [wreg+status,2+status,0+pclath+cstack]
+	line	33
+	
+i1l689:	
+;SC8P096_Timer0_C.c: 33: if(flag)
+	movf	((control_test_io@flag)),w
+iorwf	((control_test_io@flag+1)),w
+	btfsc	status,2
+	goto	u4_21
+	goto	u4_20
+u4_21:
+	goto	i1l693
+u4_20:
+	line	35
+	
+i1l691:	
+;SC8P096_Timer0_C.c: 34: {
+;SC8P096_Timer0_C.c: 35: test_io_high();
+	fcall	_test_io_high
+	line	36
+;SC8P096_Timer0_C.c: 36: }
+	goto	i1l240
+	line	39
+	
+i1l693:	
+;SC8P096_Timer0_C.c: 37: else
+;SC8P096_Timer0_C.c: 38: {
+;SC8P096_Timer0_C.c: 39: test_io_low();
+	fcall	_test_io_low
+	line	41
+	
+i1l240:	
+	return
+	opt stack 0
+GLOBAL	__end_of_control_test_io
+	__end_of_control_test_io:
+	signat	_control_test_io,4217
+	global	_test_io_low
+
+;; *************** function _test_io_low *****************
+;; Defined at:
+;;		line 26 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+;; Parameters:    Size  Location     Type
+;;		None
+;; Auto vars:     Size  Location     Type
+;;		None
+;; Return value:  Size  Location     Type
+;;                  1    wreg      void 
+;; Registers used:
+;;		None
+;; Tracked objects:
+;;		On entry : 0/0
+;;		On exit  : 300/100
+;;		Unchanged: 0/0
+;; Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+;;      Params:         0       0       0       0       0
+;;      Locals:         0       0       0       0       0
+;;      Temps:          0       0       0       0       0
+;;      Totals:         0       0       0       0       0
+;;Total ram usage:        0 bytes
+;; Hardware stack levels used:    1
+;; This function calls:
+;;		Nothing
+;; This function is called by:
+;;		_control_test_io
+;; This function uses a non-reentrant model
+;;
+psect	text4,local,class=CODE,delta=2,merge=1,group=0
+	line	26
+global __ptext4
+__ptext4:	;psect for function _test_io_low
+psect	text4
+	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+	line	26
+	global	__size_of_test_io_low
+	__size_of_test_io_low	equ	__end_of_test_io_low-_test_io_low
+	
+_test_io_low:	
+;incstack = 0
+	opt	stack 4
+; Regs used in _test_io_low: []
+	line	28
+	
+i1l633:	
+;SC8P096_Timer0_C.c: 28: PORTA &= 0B11111110;
+	bsf	status, 5	;RP0=1, select bank1
+	bcf	status, 6	;RP1=0, select bank1
+	bcf	(134)^080h+(0/8),(0)&7	;volatile
+	line	29
+	
+i1l235:	
+	return
+	opt stack 0
+GLOBAL	__end_of_test_io_low
+	__end_of_test_io_low:
+	signat	_test_io_low,89
+	global	_test_io_high
+
+;; *************** function _test_io_high *****************
+;; Defined at:
+;;		line 21 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+;; Parameters:    Size  Location     Type
+;;		None
+;; Auto vars:     Size  Location     Type
+;;		None
+;; Return value:  Size  Location     Type
+;;                  1    wreg      void 
+;; Registers used:
+;;		None
+;; Tracked objects:
+;;		On entry : 0/0
+;;		On exit  : 300/100
+;;		Unchanged: 0/0
+;; Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+;;      Params:         0       0       0       0       0
+;;      Locals:         0       0       0       0       0
+;;      Temps:          0       0       0       0       0
+;;      Totals:         0       0       0       0       0
+;;Total ram usage:        0 bytes
+;; Hardware stack levels used:    1
+;; This function calls:
+;;		Nothing
+;; This function is called by:
+;;		_control_test_io
+;; This function uses a non-reentrant model
+;;
+psect	text5,local,class=CODE,delta=2,merge=1,group=0
+	line	21
+global __ptext5
+__ptext5:	;psect for function _test_io_high
+psect	text5
+	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+	line	21
+	global	__size_of_test_io_high
+	__size_of_test_io_high	equ	__end_of_test_io_high-_test_io_high
+	
+_test_io_high:	
+;incstack = 0
+	opt	stack 4
+; Regs used in _test_io_high: []
+	line	23
+	
+i1l631:	
+;SC8P096_Timer0_C.c: 23: PORTA |= 0B00000001;
+	bsf	status, 5	;RP0=1, select bank1
+	bcf	status, 6	;RP1=0, select bank1
+	bsf	(134)^080h+(0/8),(0)&7	;volatile
+	line	24
+	
+i1l232:	
+	return
+	opt stack 0
+GLOBAL	__end_of_test_io_high
+	__end_of_test_io_high:
+	signat	_test_io_high,89
 global	___latbits
 ___latbits	equ	2
 	global	btemp

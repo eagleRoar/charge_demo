@@ -1527,12 +1527,13 @@ extern __bit __timeout;
 
 # 11 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
 static unsigned int timer_cnt = 0;
+static unsigned int level = 0;
 
 void gpio_init(void)
 {
 
 TRISA = 0B11111110;
-PORTA = 0B00000001;
+PORTA = 0B0000001;
 }
 
 void test_io_high()
@@ -1565,7 +1566,7 @@ OSCCON = 0x72;
 OPTION_REG = 0x00;
 asm("clrwdt");
 
-# 77
+# 78
 WPUA = 0B00000000;
 WPDA = 0B00000000;
 
@@ -1591,7 +1592,7 @@ asm("clrwdt");
 }
 }
 
-# 108
+# 109
 void interrupt Timer0_Isr(void)
 {
 if(T0IF)
@@ -1605,6 +1606,7 @@ timer_cnt ++;
 if(timer_cnt > 8000)
 {
 timer_cnt = 0;
+control_test_io((level++)%2);
 }
 }
 

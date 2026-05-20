@@ -1,7 +1,7 @@
 
 
 Microchip Technology PIC Macro Assembler V1.45 build -152302408 
-                                                                                                           Tue May 19 19:33:19 2026
+                                                                                                           Wed May 20 08:46:08 2026
 
 
      1                           
@@ -86,9 +86,9 @@ Microchip Technology PIC Macro Assembler V1.45 build -152302408
 
 
 Microchip Technology PIC Macro Assembler V1.45 build -152302408 
-Symbol Table                                                                                               Tue May 19 19:33:19 2026
+Symbol Table                                                                                               Wed May 20 08:46:08 2026
 
-               ___sp 0000                 _main 0015                 start 000C               stackhi 0000  
+               ___sp 0000                 _main 004D                 start 000C               stackhi 0000  
              stacklo 0000  start_initialization 000F             ___int_sp 0000             intlevel0 0000  
            intlevel1 0000             intlevel2 0000             intlevel3 0000             intlevel4 0000  
            intlevel5 0000             reset_vec 0000  

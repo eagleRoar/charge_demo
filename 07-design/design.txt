@@ -1,0 +1,7 @@
+strut{
+
+	io_control/pwm;
+	ad;//反馈电压
+	是否过流；
+	是否充电超时；
+}

@@ -7,15 +7,17 @@
 [v ___ftpack __ftpack `(f  1 e 3 0 ]
 "86 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\ftadd.c
 [v ___ftadd __ftadd `(f  1 e 3 0 ]
-"13 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c
+"14 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c
 [v _gpio_init gpio_init `(v  1 e 1 0 ]
-"20
+"21
 [v _test_io_high test_io_high `(v  1 e 1 0 ]
-"25
+"26
 [v _test_io_low test_io_low `(v  1 e 1 0 ]
-"42
+"31
+[v _control_test_io control_test_io `(v  1 e 1 0 ]
+"43
 [v _main main `(v  1 e 1 0 ]
-"108
+"109
 [v _Timer0_Isr Timer0_Isr `II(v  1 e 1 0 ]
 "18 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h
 [v _OPTION_REG OPTION_REG `VEuc  1 e 1 @1 ]
@@ -51,18 +53,36 @@
 [v _T0IF T0IF `VEb  1 e 0 @90 ]
 "11 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c
 [v _timer_cnt timer_cnt `ui  1 s 2 timer_cnt ]
-"42
+"12
+[v _level level `ui  1 s 2 level ]
+"43
 [v _main main `(v  1 e 1 0 ]
 {
-"100
+"101
 } 0
-"13
+"14
 [v _gpio_init gpio_init `(v  1 e 1 0 ]
 {
-"18
+"19
 } 0
-"108
+"109
 [v _Timer0_Isr Timer0_Isr `II(v  1 e 1 0 ]
 {
-"122
+"124
+} 0
+"31
+[v _control_test_io control_test_io `(v  1 e 1 0 ]
+{
+[v control_test_io@flag flag `ui  1 p 2 0 ]
+"41
+} 0
+"26
+[v _test_io_low test_io_low `(v  1 e 1 0 ]
+{
+"29
+} 0
+"21
+[v _test_io_high test_io_high `(v  1 e 1 0 ]
+{
+"24
 } 0
