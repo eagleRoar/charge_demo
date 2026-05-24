@@ -1,0 +1,50 @@
+[p PRO_MODE GLOBOPT AUTOSTATIC PIC14 PICREGULAR PICMID SPACEOPT ]
+[d version 1.1 ]
+[d edition pro ]
+[d chip SC8F096 ]
+[d frameptr 6 ]
+"62 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\float.c
+[v ___ftpack __ftpack `(f  1 e 3 0 ]
+"86 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\ftadd.c
+[v ___ftadd __ftadd `(f  1 e 3 0 ]
+"30 E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c
+[v _gpio_init gpio_init `(v  1 e 1 0 ]
+"37
+[v _test_io_high test_io_high `(v  1 e 1 0 ]
+"42
+[v _test_io_low test_io_low `(v  1 e 1 0 ]
+"62
+[v _main main `(v  1 e 1 0 ]
+"202
+[v _UART_Isr UART_Isr `II(v  1 e 1 0 ]
+"242 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h
+[v _TRISA TRISA `VEuc  1 e 1 @133 ]
+"249
+[v _PORTA PORTA `VEuc  1 e 1 @134 ]
+"550
+[v _TXREG0 TXREG0 `VEuc  1 e 1 @283 ]
+"557
+[v _RCREG0 RCREG0 `VEuc  1 e 1 @284 ]
+"854
+[v _RC0IF RC0IF `VEb  1 e 0 @111 ]
+"10 E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c
+[v _RxTable RxTable `[10]uc  1 e 10 0 ]
+"11
+[v _RXOK_f RXOK_f `b  1 e 0 0 ]
+"62
+[v _main main `(v  1 e 1 0 ]
+{
+"94
+} 0
+"30
+[v _gpio_init gpio_init `(v  1 e 1 0 ]
+{
+"35
+} 0
+"202
+[v _UART_Isr UART_Isr `II(v  1 e 1 0 ]
+{
+"204
+[v UART_Isr@RxNum RxNum `uc  1 s 1 RxNum ]
+"224
+} 0

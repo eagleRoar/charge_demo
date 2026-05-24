@@ -7,18 +7,18 @@
 [v ___ftpack __ftpack `(f  1 e 3 0 ]
 "86 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\ftadd.c
 [v ___ftadd __ftadd `(f  1 e 3 0 ]
-"14 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c
+"17 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c
 [v _gpio_init gpio_init `(v  1 e 1 0 ]
-"21
+"24
 [v _test_io_high test_io_high `(v  1 e 1 0 ]
-"26
+"29
 [v _test_io_low test_io_low `(v  1 e 1 0 ]
-"31
+"34
 [v _control_test_io control_test_io `(v  1 e 1 0 ]
-"43
+"46
 [v _main main `(v  1 e 1 0 ]
-"109
-[v _Timer0_Isr Timer0_Isr `II(v  1 e 1 0 ]
+"144
+[v _Interrupt_Isr Interrupt_Isr `II(v  1 e 1 0 ]
 "18 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h
 [v _OPTION_REG OPTION_REG `VEuc  1 e 1 @1 ]
 "46
@@ -45,44 +45,70 @@
 [v _WPUA WPUA `VEuc  1 e 1 @136 ]
 "270
 [v _IOCA IOCA `VEuc  1 e 1 @137 ]
+"592
+[v _TXSTA1 TXSTA1 `VEuc  1 e 1 @389 ]
+"599
+[v _RCSTA1 RCSTA1 `VEuc  1 e 1 @390 ]
+"606
+[v _TXREG1 TXREG1 `VEuc  1 e 1 @391 ]
+"613
+[v _RCREG1 RCREG1 `VEuc  1 e 1 @392 ]
+"620
+[v _SPBRG1 SPBRG1 `VEuc  1 e 1 @393 ]
 "836
 [v _GIE GIE `VEb  1 e 0 @95 ]
+"837
+[v _PEIE PEIE `VEb  1 e 0 @94 ]
 "838
 [v _T0IE T0IE `VEb  1 e 0 @93 ]
 "841
 [v _T0IF T0IF `VEb  1 e 0 @90 ]
+"1191
+[v _RC1IF RC1IF `VEb  1 e 0 @2168 ]
+"1201
+[v _RC1IE RC1IE `VEb  1 e 0 @2176 ]
+"1310
+[v _TRMT1 TRMT1 `VEb  1 e 0 @3113 ]
 "11 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c
 [v _timer_cnt timer_cnt `ui  1 s 2 timer_cnt ]
 "12
 [v _level level `ui  1 s 2 level ]
-"43
+"14
+[v _RxTable RxTable `[10]uc  1 e 10 0 ]
+"15
+[v _RXOK_f RXOK_f `b  1 e 0 0 ]
+"46
 [v _main main `(v  1 e 1 0 ]
 {
-"101
+"48
+[v main@i i `uc  1 a 1 0 ]
+"136
 } 0
-"14
+"17
 [v _gpio_init gpio_init `(v  1 e 1 0 ]
 {
-"19
+"22
 } 0
-"109
-[v _Timer0_Isr Timer0_Isr `II(v  1 e 1 0 ]
+"144
+[v _Interrupt_Isr Interrupt_Isr `II(v  1 e 1 0 ]
 {
-"124
+"159
+[v Interrupt_Isr@RxNum RxNum `uc  1 s 1 RxNum ]
+"188
 } 0
-"31
+"34
 [v _control_test_io control_test_io `(v  1 e 1 0 ]
 {
 [v control_test_io@flag flag `ui  1 p 2 0 ]
-"41
+"44
 } 0
-"26
+"29
 [v _test_io_low test_io_low `(v  1 e 1 0 ]
 {
-"29
+"32
 } 0
-"21
+"24
 [v _test_io_high test_io_high `(v  1 e 1 0 ]
 {
-"24
+"27
 } 0

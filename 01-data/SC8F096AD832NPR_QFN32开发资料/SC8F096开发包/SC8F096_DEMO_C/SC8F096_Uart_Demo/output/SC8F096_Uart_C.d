@@ -1,1 +1,1 @@
- SC8F096_Uart_C.d  SC8F096_Uart_C.p1:  H:/MyDownloads/说明书&测试报告/开发包/SC8F096AD开发包/SC8F096_DEMO_C/SC8F096_Uart_Demo/SC8F096_Uart_C.c
+ SC8F096_Uart_C.d  SC8F096_Uart_C.p1:  E:/1.workspace/7.other/17.charge_demo/charge_demo/01-data/SC8F096AD832NPR_QFN32开发资料/SC8F096开发包/SC8F096_DEMO_C/SC8F096_Uart_Demo/SC8F096_Uart_C.c

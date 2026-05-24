@@ -1,19 +1,13 @@
 Version 3.2 HI-TECH Software Intermediate Code
 [p mainexit ]
-"841 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h
-[v _T0IF `Vb ~T0 @X0 0 e@90 ]
-"838
-[v _T0IE `Vb ~T0 @X0 0 e@93 ]
-"837
+"837 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h
 [v _PEIE `Vb ~T0 @X0 0 e@94 ]
-"1201
-[v _RC1IE `Vb ~T0 @X0 0 e@2176 ]
+"864
+[v _RC0IE `Vb ~T0 @X0 0 e@119 ]
 "836
 [v _GIE `Vb ~T0 @X0 0 e@95 ]
-"1310
-[v _TRMT1 `Vb ~T0 @X0 0 e@3113 ]
-"1191
-[v _RC1IF `Vb ~T0 @X0 0 e@2168 ]
+"854
+[v _RC0IF `Vb ~T0 @X0 0 e@111 ]
 [; ;htc.h: 26: extern const char __xc8_OPTIM_SPEED;
 [; ;htc.h: 28: extern double __fpnormalize(double);
 [; ;xc8debug.h: 14: extern void __builtin_software_breakpoint(void);
@@ -1252,404 +1246,321 @@ Version 3.2 HI-TECH Software Intermediate Code
 [; ;sc.h: 184: extern unsigned char __resetbits;
 [; ;sc.h: 185: extern __bit __powerdown;
 [; ;sc.h: 186: extern __bit __timeout;
-"11 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c
-[v _timer_cnt `ui ~T0 @X0 1 s ]
-[i _timer_cnt
--> -> 0 `i `ui
-]
-[; ;SC8P096_Timer0_C.c: 11: static unsigned int timer_cnt = 0;
-"12
-[v _level `ui ~T0 @X0 1 s ]
-[i _level
--> -> 0 `i `ui
-]
-[; ;SC8P096_Timer0_C.c: 12: static unsigned int level = 0;
-"14
+"10 E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c
 [v _RxTable `uc ~T0 @X0 -> 10 `i e ]
-[; ;SC8P096_Timer0_C.c: 14: unsigned char RxTable[10];
-"15
+[; ;SC8F096_Uart_C.c: 10: unsigned char RxTable[10];
+"11
 [v _RXOK_f `b ~T0 @X0 1 e ]
-[; ;SC8P096_Timer0_C.c: 15: bit RXOK_f;
-"17
-[v _gpio_init `(v ~T0 @X0 1 ef ]
-"18
+[; ;SC8F096_Uart_C.c: 11: bit RXOK_f;
+[; ;SC8F096_Uart_C.c: 13: void DelayXms(unsigned char x);
+[; ;SC8F096_Uart_C.c: 14: void Init_System();
+"23
+[v _DelayXms `(v ~T0 @X0 1 ef1`uc ]
+"24
 {
-[; ;SC8P096_Timer0_C.c: 17: void gpio_init(void)
-[; ;SC8P096_Timer0_C.c: 18: {
-[e :U _gpio_init ]
+[; ;SC8F096_Uart_C.c: 23: void DelayXms(unsigned char x)
+[; ;SC8F096_Uart_C.c: 24: {
+[e :U _DelayXms ]
+"23
+[v _x `uc ~T0 @X0 1 r1 ]
+"24
 [f ]
-[; ;SC8P096_Timer0_C.c: 20: TRISA = 0B11111110;
-"20
-[e = _TRISA -> -> 254 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 21: PORTA = 0B0000001;
-"21
-[e = _PORTA -> -> 1 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 22: }
-"22
+"25
+[v _i `uc ~T0 @X0 1 a ]
+[v _j `uc ~T0 @X0 1 a ]
+[; ;SC8F096_Uart_C.c: 25: unsigned char i,j;
+[; ;SC8F096_Uart_C.c: 26: for(i=x;i>0;i--)
+"26
+{
+[e = _i _x ]
+[e $ > -> _i `i -> 0 `i 2  ]
+[e $U 3  ]
+"27
+[e :U 2 ]
+[; ;SC8F096_Uart_C.c: 27: for(j=153;j>0;j--);
+{
+[e = _j -> -> 153 `i `uc ]
+[e $ > -> _j `i -> 0 `i 5  ]
+[e $U 6  ]
+[e :U 5 ]
+[e -- _j -> -> 1 `i `uc ]
+[e $ > -> _j `i -> 0 `i 5  ]
+[e :U 6 ]
+}
+"26
+[e -- _i -> -> 1 `i `uc ]
+[e $ > -> _i `i -> 0 `i 2  ]
+[e :U 3 ]
+"27
+}
+[; ;SC8F096_Uart_C.c: 28: }
+"28
 [e :UE 1 ]
 }
-"24
-[v _test_io_high `(v ~T0 @X0 1 ef ]
-"25
+"30
+[v _gpio_init `(v ~T0 @X0 1 ef ]
+"31
 {
-[; ;SC8P096_Timer0_C.c: 24: void test_io_high()
-[; ;SC8P096_Timer0_C.c: 25: {
+[; ;SC8F096_Uart_C.c: 30: void gpio_init(void)
+[; ;SC8F096_Uart_C.c: 31: {
+[e :U _gpio_init ]
+[f ]
+[; ;SC8F096_Uart_C.c: 33: TRISA = 0B11111110;
+"33
+[e = _TRISA -> -> 254 `i `uc ]
+[; ;SC8F096_Uart_C.c: 34: PORTA = 0B0000001;
+"34
+[e = _PORTA -> -> 1 `i `uc ]
+[; ;SC8F096_Uart_C.c: 35: }
+"35
+[e :UE 8 ]
+}
+"37
+[v _test_io_high `(v ~T0 @X0 1 ef ]
+"38
+{
+[; ;SC8F096_Uart_C.c: 37: void test_io_high()
+[; ;SC8F096_Uart_C.c: 38: {
 [e :U _test_io_high ]
 [f ]
-[; ;SC8P096_Timer0_C.c: 26: PORTA |= 0B00000001;
-"26
+[; ;SC8F096_Uart_C.c: 39: PORTA |= 0B00000001;
+"39
 [e =| _PORTA -> -> 1 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 27: }
-"27
-[e :UE 2 ]
+[; ;SC8F096_Uart_C.c: 40: }
+"40
+[e :UE 9 ]
 }
-"29
+"42
 [v _test_io_low `(v ~T0 @X0 1 ef ]
-"30
+"43
 {
-[; ;SC8P096_Timer0_C.c: 29: void test_io_low()
-[; ;SC8P096_Timer0_C.c: 30: {
+[; ;SC8F096_Uart_C.c: 42: void test_io_low()
+[; ;SC8F096_Uart_C.c: 43: {
 [e :U _test_io_low ]
 [f ]
-[; ;SC8P096_Timer0_C.c: 31: PORTA &= 0B11111110;
-"31
-[e =& _PORTA -> -> 254 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 32: }
-"32
-[e :UE 3 ]
-}
-"34
-[v _control_test_io `(v ~T0 @X0 1 ef1`ui ]
-"35
-{
-[; ;SC8P096_Timer0_C.c: 34: void control_test_io(unsigned int flag)
-[; ;SC8P096_Timer0_C.c: 35: {
-[e :U _control_test_io ]
-"34
-[v _flag `ui ~T0 @X0 1 r1 ]
-"35
-[f ]
-[; ;SC8P096_Timer0_C.c: 36: if(flag)
-"36
-[e $ ! != _flag -> -> 0 `i `ui 5  ]
-[; ;SC8P096_Timer0_C.c: 37: {
-"37
-{
-[; ;SC8P096_Timer0_C.c: 38: test_io_high();
-"38
-[e ( _test_io_high ..  ]
-"39
-}
-[; ;SC8P096_Timer0_C.c: 39: }
-[e $U 6  ]
-"40
-[e :U 5 ]
-[; ;SC8P096_Timer0_C.c: 40: else
-[; ;SC8P096_Timer0_C.c: 41: {
-"41
-{
-[; ;SC8P096_Timer0_C.c: 42: test_io_low();
-"42
-[e ( _test_io_low ..  ]
-"43
-}
-[e :U 6 ]
-[; ;SC8P096_Timer0_C.c: 43: }
-[; ;SC8P096_Timer0_C.c: 44: }
+[; ;SC8F096_Uart_C.c: 44: PORTA &= 0B11111110;
 "44
-[e :UE 4 ]
+[e =& _PORTA -> -> 254 `i `uc ]
+[; ;SC8F096_Uart_C.c: 45: }
+"45
+[e :UE 10 ]
+}
+"47
+[v _control_test_io `(v ~T0 @X0 1 ef1`ui ]
+"48
+{
+[; ;SC8F096_Uart_C.c: 47: void control_test_io(unsigned int flag)
+[; ;SC8F096_Uart_C.c: 48: {
+[e :U _control_test_io ]
+"47
+[v _flag `ui ~T0 @X0 1 r1 ]
+"48
+[f ]
+[; ;SC8F096_Uart_C.c: 49: if(flag)
+"49
+[e $ ! != _flag -> -> 0 `i `ui 12  ]
+[; ;SC8F096_Uart_C.c: 50: {
+"50
+{
+[; ;SC8F096_Uart_C.c: 51: test_io_high();
+"51
+[e ( _test_io_high ..  ]
+"52
+}
+[; ;SC8F096_Uart_C.c: 52: }
+[e $U 13  ]
+"53
+[e :U 12 ]
+[; ;SC8F096_Uart_C.c: 53: else
+[; ;SC8F096_Uart_C.c: 54: {
+"54
+{
+[; ;SC8F096_Uart_C.c: 55: test_io_low();
+"55
+[e ( _test_io_low ..  ]
+"56
+}
+[e :U 13 ]
+[; ;SC8F096_Uart_C.c: 56: }
+[; ;SC8F096_Uart_C.c: 57: }
+"57
+[e :UE 11 ]
 }
 [v $root$_main `(v ~T0 @X0 0 e ]
-"46
+"62
 [v _main `(v ~T0 @X0 1 ef ]
-"47
+"63
 {
-[; ;SC8P096_Timer0_C.c: 46: void main(void)
-[; ;SC8P096_Timer0_C.c: 47: {
+[; ;SC8F096_Uart_C.c: 62: void main()
+[; ;SC8F096_Uart_C.c: 63: {
 [e :U _main ]
 [f ]
-"48
+"64
 [v _i `uc ~T0 @X0 1 a ]
-[; ;SC8P096_Timer0_C.c: 48: unsigned char i =0 ;
+[; ;SC8F096_Uart_C.c: 64: unsigned char i =0 ;
 [e = _i -> -> 0 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 50: asm("nop");
-"50
-[; <" nop ;# ">
-[; ;SC8P096_Timer0_C.c: 51: asm("clrwdt");
-"51
-[; <" clrwdt ;# ">
-[; ;SC8P096_Timer0_C.c: 52: OSCCON = 0x72;
-"52
-[e = _OSCCON -> -> 114 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 53: OPTION_REG = 0x00;
-"53
-[e = _OPTION_REG -> -> 0 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 54: asm("clrwdt");
-"54
-[; <" clrwdt ;# ">
-[; ;SC8P096_Timer0_C.c: 83: WPUA = 0B00000000;
-"83
-[e = _WPUA -> -> 0 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 84: WPDA = 0B00000000;
-"84
-[e = _WPDA -> -> 0 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 86: IOCA = 0B00000000;
-"86
-[e = _IOCA -> -> 0 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 87: TRISA = 0B00000000;
-"87
-[e = _TRISA -> -> 0 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 89: WPUB = 0B00001000;
-"89
-[e = _WPUB -> -> 8 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 90: WPDB = 0B00000000;
-"90
-[e = _WPDB -> -> 0 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 92: IOCB = 0B00000000;
-"92
-[e = _IOCB -> -> 0 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 95: TRISB = 0B00011000;
-"95
-[e = _TRISB -> -> 24 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 97: TXSTA1 = 0B10100000;
-"97
-[e = _TXSTA1 -> -> 160 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 99: TMR0 = 6;
-"99
-[e = _TMR0 -> -> 6 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 100: T0IF = 0;
-"100
-[e = _T0IF -> -> 0 `i `b ]
-[; ;SC8P096_Timer0_C.c: 101: T0IE = 1;
-"101
-[e = _T0IE -> -> 1 `i `b ]
-[; ;SC8P096_Timer0_C.c: 103: RCSTA1 = 0B10010000;
-"103
-[e = _RCSTA1 -> -> 144 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 104: SPBRG1 = 103;
-"104
-[e = _SPBRG1 -> -> 103 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 106: PEIE =1;
-"106
-[e = _PEIE -> -> 1 `i `b ]
-[; ;SC8P096_Timer0_C.c: 107: RC1IE =1;
-"107
-[e = _RC1IE -> -> 1 `i `b ]
-[; ;SC8P096_Timer0_C.c: 108: GIE =1;
-"108
-[e = _GIE -> -> 1 `i `b ]
-[; ;SC8P096_Timer0_C.c: 110: GIE = 1;
-"110
-[e = _GIE -> -> 1 `i `b ]
-[; ;SC8P096_Timer0_C.c: 111: gpio_init();
-"111
-[e ( _gpio_init ..  ]
-[; ;SC8P096_Timer0_C.c: 114: TXREG1 = 0x55;
-"114
-[e = _TXREG1 -> -> 85 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 116: while(TRMT1==0);
-"116
-[e $U 8  ]
-[e :U 9 ]
-[e :U 8 ]
-[e $ == -> _TRMT1 `i -> 0 `i 9  ]
-[e :U 10 ]
-[; ;SC8P096_Timer0_C.c: 117: TXREG1 =0xaa;
-"117
-[e = _TXREG1 -> -> 170 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 119: while(TRMT1 == 0);
-"119
-[e $U 11  ]
-[e :U 12 ]
-[e :U 11 ]
-[e $ == -> _TRMT1 `i -> 0 `i 12  ]
-[e :U 13 ]
-[; ;SC8P096_Timer0_C.c: 121: while(1)
-"121
-[e :U 15 ]
-[; ;SC8P096_Timer0_C.c: 122: {
-"122
-{
-[; ;SC8P096_Timer0_C.c: 123: asm("clrwdt");
-"123
-[; <" clrwdt ;# ">
-[; ;SC8P096_Timer0_C.c: 125: if(RXOK_f==1)
-"125
-[e $ ! == -> _RXOK_f `i -> 1 `i 17  ]
-[; ;SC8P096_Timer0_C.c: 126: {
-"126
-{
-[; ;SC8P096_Timer0_C.c: 128: for(i=0;i<10;i++)
-"128
-{
-[e = _i -> -> 0 `i `uc ]
-[e $ < -> _i `i -> 10 `i 18  ]
-[e $U 19  ]
-"129
-[e :U 18 ]
-[; ;SC8P096_Timer0_C.c: 129: {
-{
-[; ;SC8P096_Timer0_C.c: 130: while(TRMT1 == 0);
-"130
-[e $U 21  ]
-[e :U 22 ]
-[e :U 21 ]
-[e $ == -> _TRMT1 `i -> 0 `i 22  ]
-[e :U 23 ]
-[; ;SC8P096_Timer0_C.c: 131: TXREG1 = RxTable[i];
-"131
-[e = _TXREG1 *U + &U _RxTable * -> _i `ux -> -> # *U &U _RxTable `ui `ux ]
-"132
-}
-"128
-[e ++ _i -> -> 1 `i `uc ]
-[e $ < -> _i `i -> 10 `i 18  ]
-[e :U 19 ]
-"132
-}
-[; ;SC8P096_Timer0_C.c: 132: }
-[; ;SC8P096_Timer0_C.c: 133: RXOK_f = 0;
-"133
-[e = _RXOK_f -> -> 0 `i `b ]
-"134
-}
-[e :U 17 ]
-"135
-}
-[e :U 14 ]
-"121
-[e $U 15  ]
-[e :U 16 ]
-[; ;SC8P096_Timer0_C.c: 134: }
-[; ;SC8P096_Timer0_C.c: 135: }
-[; ;SC8P096_Timer0_C.c: 136: }
-"136
-[e :UE 7 ]
-}
-[v $root$_Interrupt_Isr `(v ~T0 @X0 0 e ]
-[v F1301 `(v ~T0 @X0 1 tf ]
-"144
-[v _Interrupt_Isr `IF1301 ~T0 @X0 1 e ]
-"145
-{
-[; ;SC8P096_Timer0_C.c: 144: void interrupt Interrupt_Isr(void)
-[; ;SC8P096_Timer0_C.c: 145: {
-[e :U _Interrupt_Isr ]
-[f ]
-[; ;SC8P096_Timer0_C.c: 147: if(T0IF)
-"147
-[e $ ! _T0IF 25  ]
-[; ;SC8P096_Timer0_C.c: 148: {
-"148
-{
-[; ;SC8P096_Timer0_C.c: 149: TMR0 += 6;
-"149
-[e =+ _TMR0 -> -> 6 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 150: T0IF = 0;
-"150
-[e = _T0IF -> -> 0 `i `b ]
-[; ;SC8P096_Timer0_C.c: 152: PORTB ^= 0XFF;
-"152
-[e =^ _PORTB -> -> 255 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 153: timer_cnt ++;
-"153
-[e ++ _timer_cnt -> -> 1 `i `ui ]
-"154
-}
-[e :U 25 ]
-[; ;SC8P096_Timer0_C.c: 154: }
-[; ;SC8P096_Timer0_C.c: 157: if(RC1IF==1)
-"157
-[e $ ! == -> _RC1IF `i -> 1 `i 26  ]
-[; ;SC8P096_Timer0_C.c: 158: {
-"158
-{
-"159
-[v F1302 `uc ~T0 @X0 1 s RxNum ]
+"65
+[v F1302 `ui ~T0 @X0 1 s j ]
 [i F1302
+-> -> 0 `i `ui
+]
+[; ;SC8F096_Uart_C.c: 65: static unsigned int j = 0;
+[; ;SC8F096_Uart_C.c: 67: gpio_init();
+"67
+[e ( _gpio_init ..  ]
+[; ;SC8F096_Uart_C.c: 75: while(1)
+"75
+[e :U 16 ]
+[; ;SC8F096_Uart_C.c: 76: {
+"76
+{
+[; ;SC8F096_Uart_C.c: 91: TXREG0 ='a';
+"91
+[e = _TXREG0 -> -> 97 `ui `uc ]
+"93
+}
+[e :U 15 ]
+"75
+[e $U 16  ]
+[e :U 17 ]
+[; ;SC8F096_Uart_C.c: 93: }
+[; ;SC8F096_Uart_C.c: 94: }
+"94
+[e :UE 14 ]
+}
+"104
+[v _Init_System `(v ~T0 @X0 1 ef ]
+"105
+{
+[; ;SC8F096_Uart_C.c: 104: void Init_System()
+[; ;SC8F096_Uart_C.c: 105: {
+[e :U _Init_System ]
+[f ]
+[; ;SC8F096_Uart_C.c: 106: asm("nop");
+"106
+[; <" nop ;# ">
+[; ;SC8F096_Uart_C.c: 107: asm("clrwdt");
+"107
+[; <" clrwdt ;# ">
+[; ;SC8F096_Uart_C.c: 108: INTCON = 0;
+"108
+[e = _INTCON -> -> 0 `i `uc ]
+[; ;SC8F096_Uart_C.c: 109: OSCCON = 0X70;
+"109
+[e = _OSCCON -> -> 112 `i `uc ]
+[; ;SC8F096_Uart_C.c: 110: OPTION_REG = 0;
+"110
+[e = _OPTION_REG -> -> 0 `i `uc ]
+[; ;SC8F096_Uart_C.c: 112: WPUA = 0B00000000;
+"112
+[e = _WPUA -> -> 0 `i `uc ]
+[; ;SC8F096_Uart_C.c: 113: WPUB = 0B00001000;
+"113
+[e = _WPUB -> -> 8 `i `uc ]
+[; ;SC8F096_Uart_C.c: 116: TRISA = 0B00000000;
+"116
+[e = _TRISA -> -> 0 `i `uc ]
+[; ;SC8F096_Uart_C.c: 117: TRISB = 0B00011000;
+"117
+[e = _TRISB -> -> 24 `i `uc ]
+[; ;SC8F096_Uart_C.c: 119: PORTA = 0B00000000;
+"119
+[e = _PORTA -> -> 0 `i `uc ]
+[; ;SC8F096_Uart_C.c: 120: PORTB = 0B00000000;
+"120
+[e = _PORTB -> -> 0 `i `uc ]
+[; ;SC8F096_Uart_C.c: 150: TXSTA0 = 0B10100000;
+"150
+[e = _TXSTA0 -> -> 160 `i `uc ]
+[; ;SC8F096_Uart_C.c: 186: RCSTA0 = 0B10010000;
+"186
+[e = _RCSTA0 -> -> 144 `i `uc ]
+[; ;SC8F096_Uart_C.c: 187: SPBRG0 = 51;
+"187
+[e = _SPBRG0 -> -> 51 `i `uc ]
+[; ;SC8F096_Uart_C.c: 189: PEIE =1;
+"189
+[e = _PEIE -> -> 1 `i `b ]
+[; ;SC8F096_Uart_C.c: 190: RC0IE =1;
+"190
+[e = _RC0IE -> -> 1 `i `b ]
+[; ;SC8F096_Uart_C.c: 191: GIE =1;
+"191
+[e = _GIE -> -> 1 `i `b ]
+[; ;SC8F096_Uart_C.c: 193: }
+"193
+[e :UE 18 ]
+}
+[v $root$_UART_Isr `(v ~T0 @X0 0 e ]
+[v F1304 `(v ~T0 @X0 1 tf ]
+"202
+[v _UART_Isr `IF1304 ~T0 @X0 1 e ]
+"203
+{
+[; ;SC8F096_Uart_C.c: 202: void interrupt UART_Isr()
+[; ;SC8F096_Uart_C.c: 203: {
+[e :U _UART_Isr ]
+[f ]
+"204
+[v F1305 `uc ~T0 @X0 1 s RxNum ]
+[i F1305
 -> -> 0 `i `uc
 ]
-[v F1303 `uc ~T0 @X0 1 s TEMP ]
-[; ;SC8P096_Timer0_C.c: 159: static unsigned char RxNum=0,TEMP;
-[; ;SC8P096_Timer0_C.c: 161: RC1IF = 0;
-"161
-[e = _RC1IF -> -> 0 `i `b ]
-[; ;SC8P096_Timer0_C.c: 163: if(RXOK_f==0)
-"163
-[e $ ! == -> _RXOK_f `i -> 0 `i 27  ]
-[; ;SC8P096_Timer0_C.c: 164: {
-"164
+[v F1306 `uc ~T0 @X0 1 s TEMP ]
+[; ;SC8F096_Uart_C.c: 204: static unsigned char RxNum=0,TEMP;
+[; ;SC8F096_Uart_C.c: 206: if(RC0IF==1)
+"206
+[e $ ! == -> _RC0IF `i -> 1 `i 20  ]
+[; ;SC8F096_Uart_C.c: 207: {
+"207
 {
-[; ;SC8P096_Timer0_C.c: 165: RxTable[RxNum] = RCREG1;
-"165
-[e = *U + &U _RxTable * -> F1302 `ux -> -> # *U &U _RxTable `ui `ux _RCREG1 ]
-[; ;SC8P096_Timer0_C.c: 166: RxNum++;
-"166
-[e ++ F1302 -> -> 1 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 167: if(RxNum > 9)
-"167
-[e $ ! > -> F1302 `i -> 9 `i 28  ]
-[; ;SC8P096_Timer0_C.c: 168: {
-"168
+[; ;SC8F096_Uart_C.c: 208: RC0IF = 0;
+"208
+[e = _RC0IF -> -> 0 `i `b ]
+[; ;SC8F096_Uart_C.c: 210: if(RXOK_f==0)
+"210
+[e $ ! == -> _RXOK_f `i -> 0 `i 21  ]
+[; ;SC8F096_Uart_C.c: 211: {
+"211
 {
-[; ;SC8P096_Timer0_C.c: 169: RxNum =0;
-"169
-[e = F1302 -> -> 0 `i `uc ]
-[; ;SC8P096_Timer0_C.c: 170: RXOK_f =1;
-"170
+[; ;SC8F096_Uart_C.c: 212: RxTable[RxNum] = RCREG0;
+"212
+[e = *U + &U _RxTable * -> F1305 `ux -> -> # *U &U _RxTable `ui `ux _RCREG0 ]
+[; ;SC8F096_Uart_C.c: 213: RxNum++;
+"213
+[e ++ F1305 -> -> 1 `i `uc ]
+[; ;SC8F096_Uart_C.c: 214: if(RxNum > 9)
+"214
+[e $ ! > -> F1305 `i -> 9 `i 22  ]
+[; ;SC8F096_Uart_C.c: 215: {
+"215
+{
+[; ;SC8F096_Uart_C.c: 216: RxNum =0;
+"216
+[e = F1305 -> -> 0 `i `uc ]
+[; ;SC8F096_Uart_C.c: 217: RXOK_f =1;
+"217
 [e = _RXOK_f -> -> 1 `i `b ]
-"171
+"218
 }
-[e :U 28 ]
-"172
+[e :U 22 ]
+"219
 }
-[; ;SC8P096_Timer0_C.c: 171: }
-[; ;SC8P096_Timer0_C.c: 172: }
-[e $U 29  ]
-"173
-[e :U 27 ]
-[; ;SC8P096_Timer0_C.c: 173: else
-[; ;SC8P096_Timer0_C.c: 174: {
-"174
-{
-[; ;SC8P096_Timer0_C.c: 175: TEMP = RCREG1;
-"175
-[e = F1303 _RCREG1 ]
-"176
+[; ;SC8F096_Uart_C.c: 218: }
+[; ;SC8F096_Uart_C.c: 219: }
+[e $U 23  ]
+"220
+[e :U 21 ]
+[; ;SC8F096_Uart_C.c: 220: else
+[; ;SC8F096_Uart_C.c: 221: TEMP = RCREG0;
+"221
+[e = F1306 _RCREG0 ]
+[e :U 23 ]
+"223
 }
-[e :U 29 ]
-"177
-}
-[e :U 26 ]
-[; ;SC8P096_Timer0_C.c: 176: }
-[; ;SC8P096_Timer0_C.c: 177: }
-[; ;SC8P096_Timer0_C.c: 180: if(timer_cnt > 8000)
-"180
-[e $ ! > _timer_cnt -> -> 8000 `i `ui 30  ]
-[; ;SC8P096_Timer0_C.c: 181: {
-"181
-{
-[; ;SC8P096_Timer0_C.c: 182: timer_cnt = 0;
-"182
-[e = _timer_cnt -> -> 0 `i `ui ]
-[; ;SC8P096_Timer0_C.c: 183: control_test_io((level++)%2);
-"183
-[e ( _control_test_io (1 % ++ _level -> -> 1 `i `ui -> -> 2 `i `ui ]
-[; ;SC8P096_Timer0_C.c: 185: TXREG1 = 'A';
-"185
-[e = _TXREG1 -> -> 65 `ui `uc ]
-[; ;SC8P096_Timer0_C.c: 186: while(TRMT1 == 0);
-"186
-[e $U 31  ]
-[e :U 32 ]
-[e :U 31 ]
-[e $ == -> _TRMT1 `i -> 0 `i 32  ]
-[e :U 33 ]
-"187
-}
-[e :U 30 ]
-[; ;SC8P096_Timer0_C.c: 187: }
-[; ;SC8P096_Timer0_C.c: 188: }
-"188
-[e :UE 24 ]
+[e :U 20 ]
+[; ;SC8F096_Uart_C.c: 223: }
+[; ;SC8F096_Uart_C.c: 224: }
+"224
+[e :UE 19 ]
 }

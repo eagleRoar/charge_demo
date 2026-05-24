@@ -1,5 +1,5 @@
 
-# 1 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+# 1 "E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c"
 
 # 26 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\htc.h"
 extern const char __xc8_OPTIM_SPEED;
@@ -1525,12 +1525,20 @@ extern unsigned char __resetbits;
 extern __bit __powerdown;
 extern __bit __timeout;
 
-# 11 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-static unsigned int timer_cnt = 0;
-static unsigned int level = 0;
-
+# 10 "E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c"
 unsigned char RxTable[10];
 bit RXOK_f;
+
+void DelayXms(unsigned char x);
+void Init_System();
+
+# 23
+void DelayXms(unsigned char x)
+{
+unsigned char i,j;
+for(i=x;i>0;i--)
+for(j=153;j>0;j--);
+}
 
 void gpio_init(void)
 {
@@ -1561,95 +1569,68 @@ test_io_low();
 }
 }
 
-void main(void)
+# 62
+void main()
 {
 unsigned char i =0 ;
+static unsigned int j = 0;
 
-asm("nop");
-asm("clrwdt");
-OSCCON = 0x72;
-OPTION_REG = 0x00;
-asm("clrwdt");
-
-# 83
-WPUA = 0B00000000;
-WPDA = 0B00000000;
-
-IOCA = 0B00000000;
-TRISA = 0B00000000;
-
-WPUB = 0B00001000;
-WPDB = 0B00000000;
-
-IOCB = 0B00000000;
-
-
-TRISB = 0B00011000;
-
-TXSTA1 = 0B10100000;
-
-TMR0 = 6;
-T0IF = 0;
-T0IE = 1;
-
-RCSTA1 = 0B10010000;
-SPBRG1 = 103;
-
-PEIE =1;
-RC1IE =1;
-GIE =1;
-
-GIE = 1;
 gpio_init();
 
-
-TXREG1 = 0x55;
-
-while(TRMT1==0);
-TXREG1 =0xaa;
-
-while(TRMT1 == 0);
-
+# 75
 while(1)
 {
+
+# 91
+TXREG0 ='a';
+
+}
+}
+
+# 104
+void Init_System()
+{
+asm("nop");
 asm("clrwdt");
+INTCON = 0;
+OSCCON = 0X70;
+OPTION_REG = 0;
 
-if(RXOK_f==1)
-{
+WPUA = 0B00000000;
+WPUB = 0B00001000;
 
-for(i=0;i<10;i++)
-{
-while(TRMT1 == 0);
-TXREG1 = RxTable[i];
+
+TRISA = 0B00000000;
+TRISB = 0B00011000;
+
+PORTA = 0B00000000;
+PORTB = 0B00000000;
+
+# 150
+TXSTA0 = 0B10100000;
+
+# 186
+RCSTA0 = 0B10010000;
+SPBRG0 = 51;
+
+PEIE =1;
+RC0IE =1;
+GIE =1;
+
 }
-RXOK_f = 0;
-}
-}
-}
 
-# 144
-void interrupt Interrupt_Isr(void)
-{
-
-if(T0IF)
-{
-TMR0 += 6;
-T0IF = 0;
-
-PORTB ^= 0XFF;
-timer_cnt ++;
-}
-
-
-if(RC1IF==1)
+# 202
+void interrupt UART_Isr()
 {
 static unsigned char RxNum=0,TEMP;
 
-RC1IF = 0;
+if(RC0IF==1)
+{
+RC0IF = 0;
 
 if(RXOK_f==0)
 {
-RxTable[RxNum] = RCREG1;
+RxTable[RxNum] = RCREG0;
 RxNum++;
 if(RxNum > 9)
 {
@@ -1658,18 +1639,7 @@ RXOK_f =1;
 }
 }
 else
-{
-TEMP = RCREG1;
-}
-}
+TEMP = RCREG0;
 
-
-if(timer_cnt > 8000)
-{
-timer_cnt = 0;
-control_test_io((level++)%2);
-
-TXREG1 = 'A';
-while(TRMT1 == 0);
 }
 }

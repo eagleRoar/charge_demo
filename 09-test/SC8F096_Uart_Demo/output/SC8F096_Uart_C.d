@@ -1,0 +1,1 @@
+ SC8F096_Uart_C.d  SC8F096_Uart_C.p1:  E:/1.workspace/7.other/17.charge_demo/charge_demo/09-test/SC8F096_Uart_Demo/SC8F096_Uart_C.c

@@ -1,19 +1,19 @@
 [p PRO_MODE GLOBOPT AUTOSTATIC PIC14 PICREGULAR PICMID SPACEOPT ]
 [d version 1.1 ]
 [d edition pro ]
-[d chip SC8F096AD ]
+[d chip SC8F096 ]
 [d frameptr 6 ]
-"62 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\sources\common\float.c
+"62 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\float.c
 [v ___ftpack __ftpack `(f  1 e 3 0 ]
-"86 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\sources\common\ftadd.c
+"86 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\ftadd.c
 [v ___ftadd __ftadd `(f  1 e 3 0 ]
-"33 H:\MyDownloads\说明书&测试报告\开发包\SC8F096AD开发包\SC8F096_DEMO_C\SC8F096_Uart_Demo\SC8F096_Uart_C.c
+"33 E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Uart_Demo\SC8F096_Uart_C.c
 [v _main main `(v  1 e 1 0 ]
 "73
 [v _Init_System Init_System `(v  1 e 1 0 ]
 "171
 [v _UART_Isr UART_Isr `II(v  1 e 1 0 ]
-"18 H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\include\SC8F096AD.h
+"18 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h
 [v _OPTION_REG OPTION_REG `VEuc  1 e 1 @1 ]
 "46
 [v _TRISB TRISB `VEuc  1 e 1 @5 ]
@@ -51,7 +51,7 @@
 [v _RC0IE RC0IE `VEb  1 e 0 @119 ]
 "1254
 [v _TRMT0 TRMT0 `VEb  1 e 0 @2241 ]
-"10 H:\MyDownloads\说明书&测试报告\开发包\SC8F096AD开发包\SC8F096_DEMO_C\SC8F096_Uart_Demo\SC8F096_Uart_C.c
+"10 E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Uart_Demo\SC8F096_Uart_C.c
 [v _RxTable RxTable `[10]uc  1 e 10 0 ]
 "11
 [v _RXOK_f RXOK_f `b  1 e 0 0 ]

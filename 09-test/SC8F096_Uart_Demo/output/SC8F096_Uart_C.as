@@ -248,72 +248,27 @@ COMEN EQU 19EH ;#
 SEGEN3 EQU 19FH ;# 
 	FNCALL	_main,_gpio_init
 	FNROOT	_main
-	FNCALL	_Interrupt_Isr,_control_test_io
-	FNCALL	_control_test_io,_test_io_high
-	FNCALL	_control_test_io,_test_io_low
-	FNCALL	intlevel1,_Interrupt_Isr
+	FNCALL	intlevel1,_UART_Isr
 	global	intlevel1
 	FNROOT	intlevel1
-	global	_level
-	global	_timer_cnt
-	global	Interrupt_Isr@RxNum
+	global	UART_Isr@RxNum
 	global	_RXOK_f
 	global	_RxTable
-	global	_OSCCON
+	global	_RC0IF
+_RC0IF	set	0x6F
+	global	_PORTA
 psect	text0,local,class=CODE,delta=2,merge=1
 global __ptext0
 __ptext0:
-_OSCCON	set	20
-	global	_IOCB
-_IOCB	set	9
-	global	_WPUB
-_WPUB	set	8
-	global	_WPDB
-_WPDB	set	7
-	global	_PORTB
-_PORTB	set	6
-	global	_TRISB
-_TRISB	set	5
-	global	_OPTION_REG
-_OPTION_REG	set	1
-	global	_GIE
-_GIE	set	0x5F
-	global	_PEIE
-_PEIE	set	0x5E
-	global	_T0IE
-_T0IE	set	0x5D
-	global	_T0IF
-_T0IF	set	0x5A
-	global	_IOCA
-_IOCA	set	137
-	global	_WPUA
-_WPUA	set	136
-	global	_WPDA
-_WPDA	set	135
-	global	_PORTA
 _PORTA	set	134
 	global	_TRISA
 _TRISA	set	133
-	global	_TMR0
-_TMR0	set	129
-	global	_RC1IF
-_RC1IF	set	0x878
-	global	_RC1IE
-_RC1IE	set	0x880
-	global	_SPBRG1
-_SPBRG1	set	393
-	global	_RCREG1
-_RCREG1	set	392
-	global	_TXREG1
-_TXREG1	set	391
-	global	_RCSTA1
-_RCSTA1	set	390
-	global	_TXSTA1
-_TXSTA1	set	389
-	global	_TRMT1
-_TRMT1	set	0xC29
+	global	_RCREG0
+_RCREG0	set	284
+	global	_TXREG0
+_TXREG0	set	283
 ; #config settings
-	file	"SC8P096_timer_C.as"
+	file	"SC8F096_Uart_C.as"
 	line	#
 psect cinit,class=CODE,delta=2
 global start_initialization
@@ -330,13 +285,7 @@ _RXOK_f:
 psect	bssCOMMON,class=COMMON,space=1,noexec
 global __pbssCOMMON
 __pbssCOMMON:
-_level:
-       ds      2
-
-_timer_cnt:
-       ds      2
-
-Interrupt_Isr@RxNum:
+UART_Isr@RxNum:
        ds      1
 
 psect	bssBANK0,class=BANK0,space=1,noexec
@@ -345,7 +294,7 @@ __pbssBANK0:
 _RxTable:
        ds      10
 
-	file	"SC8P096_timer_C.as"
+	file	"SC8F096_Uart_C.as"
 	line	#
 ; Clear objects allocated to BITCOMMON
 psect cinit,class=CODE,delta=2,merge=1
@@ -353,10 +302,6 @@ psect cinit,class=CODE,delta=2,merge=1
 ; Clear objects allocated to COMMON
 psect cinit,class=CODE,delta=2,merge=1
 	clrf	((__pbssCOMMON)+0)&07Fh
-	clrf	((__pbssCOMMON)+1)&07Fh
-	clrf	((__pbssCOMMON)+2)&07Fh
-	clrf	((__pbssCOMMON)+3)&07Fh
-	clrf	((__pbssCOMMON)+4)&07Fh
 ; Clear objects allocated to BANK0
 psect cinit,class=CODE,delta=2,merge=1
 	bcf	status, 5	;RP0=0, select bank0
@@ -384,40 +329,25 @@ psect	cstackCOMMON,class=COMMON,space=1,noexec
 global __pcstackCOMMON
 __pcstackCOMMON:
 ?_gpio_init:	; 1 bytes @ 0x0
-?_test_io_high:	; 1 bytes @ 0x0
-??_test_io_high:	; 1 bytes @ 0x0
-?_test_io_low:	; 1 bytes @ 0x0
-??_test_io_low:	; 1 bytes @ 0x0
-?_control_test_io:	; 1 bytes @ 0x0
 ?_main:	; 1 bytes @ 0x0
-?_Interrupt_Isr:	; 1 bytes @ 0x0
-	global	control_test_io@flag
-control_test_io@flag:	; 2 bytes @ 0x0
-	ds	2
-??_control_test_io:	; 1 bytes @ 0x2
-??_Interrupt_Isr:	; 1 bytes @ 0x2
+?_UART_Isr:	; 1 bytes @ 0x0
+??_UART_Isr:	; 1 bytes @ 0x0
 	ds	3
-psect	cstackBANK0,class=BANK0,space=1,noexec
-global __pcstackBANK0
-__pcstackBANK0:
-??_gpio_init:	; 1 bytes @ 0x0
-??_main:	; 1 bytes @ 0x0
-	global	main@i
-main@i:	; 1 bytes @ 0x0
-	ds	1
+??_gpio_init:	; 1 bytes @ 0x3
+??_main:	; 1 bytes @ 0x3
 ;!
 ;!Data Sizes:
 ;!    Strings     0
 ;!    Constant    0
 ;!    Data        0
-;!    BSS         15
+;!    BSS         11
 ;!    Persistent  0
 ;!    Stack       0
 ;!
 ;!Auto Spaces:
 ;!    Space          Size  Autos    Used
-;!    COMMON           14      5      11
-;!    BANK0            80      1      11
+;!    COMMON           14      3       5
+;!    BANK0            80      0      10
 ;!    BANK1            80      0       0
 ;!    BANK3            80      0       0
 ;!    BANK2            80      0       0
@@ -433,15 +363,15 @@ main@i:	; 1 bytes @ 0x0
 ;!
 ;!    None.
 ;!
-;!Critical Paths under _Interrupt_Isr in COMMON
+;!Critical Paths under _UART_Isr in COMMON
 ;!
-;!    _Interrupt_Isr->_control_test_io
+;!    None.
 ;!
 ;!Critical Paths under _main in BANK0
 ;!
 ;!    None.
 ;!
-;!Critical Paths under _Interrupt_Isr in BANK0
+;!Critical Paths under _UART_Isr in BANK0
 ;!
 ;!    None.
 ;!
@@ -449,7 +379,7 @@ main@i:	; 1 bytes @ 0x0
 ;!
 ;!    None.
 ;!
-;!Critical Paths under _Interrupt_Isr in BANK1
+;!Critical Paths under _UART_Isr in BANK1
 ;!
 ;!    None.
 ;!
@@ -457,7 +387,7 @@ main@i:	; 1 bytes @ 0x0
 ;!
 ;!    None.
 ;!
-;!Critical Paths under _Interrupt_Isr in BANK3
+;!Critical Paths under _UART_Isr in BANK3
 ;!
 ;!    None.
 ;!
@@ -465,7 +395,7 @@ main@i:	; 1 bytes @ 0x0
 ;!
 ;!    None.
 ;!
-;!Critical Paths under _Interrupt_Isr in BANK2
+;!Critical Paths under _UART_Isr in BANK2
 ;!
 ;!    None.
 
@@ -479,8 +409,7 @@ main@i:	; 1 bytes @ 0x0
 ;! ---------------------------------------------------------------------------------
 ;! (Depth) Function   	        Calls       Base Space   Used Autos Params    Refs
 ;! ---------------------------------------------------------------------------------
-;! (0) _main                                                 1     1      0     102
-;!                                              0 BANK0      1     1      0
+;! (0) _main                                                 1     1      0       0
 ;!                          _gpio_init
 ;! ---------------------------------------------------------------------------------
 ;! (1) _gpio_init                                            0     0      0       0
@@ -489,20 +418,10 @@ main@i:	; 1 bytes @ 0x0
 ;! ---------------------------------------------------------------------------------
 ;! (Depth) Function   	        Calls       Base Space   Used Autos Params    Refs
 ;! ---------------------------------------------------------------------------------
-;! (2) _Interrupt_Isr                                        3     3      0      87
-;!                                              2 COMMON     3     3      0
-;!                    _control_test_io
+;! (2) _UART_Isr                                             3     3      0       0
+;!                                              0 COMMON     3     3      0
 ;! ---------------------------------------------------------------------------------
-;! (3) _control_test_io                                      2     0      2      87
-;!                                              0 COMMON     2     0      2
-;!                       _test_io_high
-;!                        _test_io_low
-;! ---------------------------------------------------------------------------------
-;! (4) _test_io_low                                          0     0      0       0
-;! ---------------------------------------------------------------------------------
-;! (4) _test_io_high                                         0     0      0       0
-;! ---------------------------------------------------------------------------------
-;! Estimated maximum stack depth 4
+;! Estimated maximum stack depth 2
 ;! ---------------------------------------------------------------------------------
 ;!
 ;! Call Graph Graphs:
@@ -510,10 +429,7 @@ main@i:	; 1 bytes @ 0x0
 ;! _main (ROOT)
 ;!   _gpio_init
 ;!
-;! _Interrupt_Isr (ROOT)
-;!   _control_test_io
-;!     _test_io_high
-;!     _test_io_low
+;! _UART_Isr (ROOT)
 ;!
 
 ;! Address spaces:
@@ -522,14 +438,14 @@ main@i:	; 1 bytes @ 0x0
 ;!BITCOMMON            E      0       1       0        7.1%
 ;!NULL                 0      0       0       0        0.0%
 ;!CODE                 0      0       0       0        0.0%
-;!COMMON               E      5       B       1       78.6%
+;!COMMON               E      3       5       1       35.7%
 ;!BITSFR0              0      0       0       1        0.0%
 ;!SFR0                 0      0       0       1        0.0%
 ;!BITSFR1              0      0       0       2        0.0%
 ;!SFR1                 0      0       0       2        0.0%
 ;!STACK                0      0       0       2        0.0%
 ;!BITBANK0            50      0       0       3        0.0%
-;!BANK0               50      1       B       4       13.8%
+;!BANK0               50      0       A       4       12.5%
 ;!BITSFR3              0      0       0       4        0.0%
 ;!SFR3                 0      0       0       4        0.0%
 ;!BITBANK1            50      0       0       5        0.0%
@@ -540,33 +456,33 @@ main@i:	; 1 bytes @ 0x0
 ;!BANK3               50      0       0       8        0.0%
 ;!BITBANK2            50      0       0       9        0.0%
 ;!BANK2               50      0       0      10        0.0%
-;!ABS                  0      0      16      11        0.0%
-;!DATA                 0      0      16      12        0.0%
+;!ABS                  0      0       F      11        0.0%
+;!DATA                 0      0       F      12        0.0%
 
 	global	_main
 
 ;; *************** function _main *****************
 ;; Defined at:
-;;		line 46 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+;;		line 62 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c"
 ;; Parameters:    Size  Location     Type
 ;;		None
 ;; Auto vars:     Size  Location     Type
-;;  i               1    0[BANK0 ] unsigned char 
+;;  i               1    0        unsigned char 
 ;; Return value:  Size  Location     Type
 ;;                  1    wreg      void 
 ;; Registers used:
-;;		wreg, fsr0l, fsr0h, status,2, status,0, pclath, cstack
+;;		wreg, status,2, status,0, pclath, cstack
 ;; Tracked objects:
 ;;		On entry : B00/0
-;;		On exit  : B00/0
-;;		Unchanged: 0/0
+;;		On exit  : B00/200
+;;		Unchanged: 800/0
 ;; Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
 ;;      Params:         0       0       0       0       0
-;;      Locals:         0       1       0       0       0
+;;      Locals:         0       0       0       0       0
 ;;      Temps:          0       0       0       0       0
-;;      Totals:         0       1       0       0       0
-;;Total ram usage:        1 bytes
-;; Hardware stack levels required when called:    4
+;;      Totals:         0       0       0       0       0
+;;Total ram usage:        0 bytes
+;; Hardware stack levels required when called:    2
 ;; This function calls:
 ;;		_gpio_init
 ;; This function is called by:
@@ -574,253 +490,40 @@ main@i:	; 1 bytes @ 0x0
 ;; This function uses a non-reentrant model
 ;;
 psect	maintext,global,class=CODE,delta=2,split=1,group=0
-	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-	line	46
+	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c"
+	line	62
 global __pmaintext
 __pmaintext:	;psect for function _main
 psect	maintext
-	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-	line	46
+	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c"
+	line	62
 	global	__size_of_main
 	__size_of_main	equ	__end_of_main-_main
 	
 _main:	
 ;incstack = 0
-	opt	stack 4
-; Regs used in _main: [wreg-fsr0h+status,2+status,0+pclath+cstack]
-	line	48
+	opt	stack 6
+; Regs used in _main: [wreg+status,2+status,0+pclath+cstack]
+	line	67
 	
-l852:	
-	line	50
-# 50 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-nop ;# 
-	line	51
-# 51 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-clrwdt ;# 
-psect	maintext
-	line	52
-	
-l854:	
-;SC8P096_Timer0_C.c: 52: OSCCON = 0x72;
-	movlw	low(072h)
-	bcf	status, 5	;RP0=0, select bank0
-	bcf	status, 6	;RP1=0, select bank0
-	movwf	(20)	;volatile
-	line	53
-	
-l856:	
-;SC8P096_Timer0_C.c: 53: OPTION_REG = 0x00;
-	clrf	(1)	;volatile
-	line	54
-# 54 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-clrwdt ;# 
-psect	maintext
-	line	83
-	
-l858:	
-;SC8P096_Timer0_C.c: 83: WPUA = 0B00000000;
-	bsf	status, 5	;RP0=1, select bank1
-	bcf	status, 6	;RP1=0, select bank1
-	clrf	(136)^080h	;volatile
-	line	84
-	
-l860:	
-;SC8P096_Timer0_C.c: 84: WPDA = 0B00000000;
-	clrf	(135)^080h	;volatile
-	line	86
-	
-l862:	
-;SC8P096_Timer0_C.c: 86: IOCA = 0B00000000;
-	clrf	(137)^080h	;volatile
-	line	87
-	
-l864:	
-;SC8P096_Timer0_C.c: 87: TRISA = 0B00000000;
-	clrf	(133)^080h	;volatile
-	line	89
-;SC8P096_Timer0_C.c: 89: WPUB = 0B00001000;
-	movlw	low(08h)
-	bcf	status, 5	;RP0=0, select bank0
-	movwf	(8)	;volatile
-	line	90
-	
-l866:	
-;SC8P096_Timer0_C.c: 90: WPDB = 0B00000000;
-	clrf	(7)	;volatile
-	line	92
-	
-l868:	
-;SC8P096_Timer0_C.c: 92: IOCB = 0B00000000;
-	clrf	(9)	;volatile
-	line	95
-;SC8P096_Timer0_C.c: 95: TRISB = 0B00011000;
-	movlw	low(018h)
-	movwf	(5)	;volatile
-	line	97
-;SC8P096_Timer0_C.c: 97: TXSTA1 = 0B10100000;
-	movlw	low(0A0h)
-	bsf	status, 5	;RP0=1, select bank3
-	bsf	status, 6	;RP1=1, select bank3
-	movwf	(389)^0180h	;volatile
-	line	99
-;SC8P096_Timer0_C.c: 99: TMR0 = 6;
-	movlw	low(06h)
-	bcf	status, 6	;RP1=0, select bank1
-	movwf	(129)^080h	;volatile
-	line	100
-	
-l870:	
-;SC8P096_Timer0_C.c: 100: T0IF = 0;
-	bcf	(90/8),(90)&7	;volatile
-	line	101
-	
-l872:	
-;SC8P096_Timer0_C.c: 101: T0IE = 1;
-	bsf	(93/8),(93)&7	;volatile
-	line	103
-;SC8P096_Timer0_C.c: 103: RCSTA1 = 0B10010000;
-	movlw	low(090h)
-	bsf	status, 6	;RP1=1, select bank3
-	movwf	(390)^0180h	;volatile
-	line	104
-;SC8P096_Timer0_C.c: 104: SPBRG1 = 103;
-	movlw	low(067h)
-	movwf	(393)^0180h	;volatile
-	line	106
-	
-l874:	
-;SC8P096_Timer0_C.c: 106: PEIE =1;
-	bsf	(94/8),(94)&7	;volatile
-	line	107
-	
-l876:	
-;SC8P096_Timer0_C.c: 107: RC1IE =1;
-	bcf	status, 5	;RP0=0, select bank2
-	bsf	(2176/8)^0100h,(2176)&7	;volatile
-	line	108
-	
-l878:	
-;SC8P096_Timer0_C.c: 108: GIE =1;
-	bsf	(95/8),(95)&7	;volatile
-	line	110
-	
-l880:	
-;SC8P096_Timer0_C.c: 110: GIE = 1;
-	bsf	(95/8),(95)&7	;volatile
-	line	111
-	
-l882:	
-;SC8P096_Timer0_C.c: 111: gpio_init();
+l653:	
+;SC8F096_Uart_C.c: 65: static unsigned int j = 0;
+;SC8F096_Uart_C.c: 67: gpio_init();
 	fcall	_gpio_init
-	line	114
+	line	91
 	
-l884:	
-;SC8P096_Timer0_C.c: 114: TXREG1 = 0x55;
-	movlw	low(055h)
-	bsf	status, 6	;RP1=1, select bank3
-	movwf	(391)^0180h	;volatile
-	line	116
-;SC8P096_Timer0_C.c: 116: while(TRMT1==0);
-	
-l257:	
-	btfss	(3113/8)^0180h,(3113)&7	;volatile
-	goto	u251
-	goto	u250
-u251:
-	goto	l257
-u250:
-	line	117
-	
-l886:	
-;SC8P096_Timer0_C.c: 117: TXREG1 =0xaa;
-	movlw	low(0AAh)
-	movwf	(391)^0180h	;volatile
-	line	119
-;SC8P096_Timer0_C.c: 119: while(TRMT1 == 0);
-	
-l260:	
-	btfss	(3113/8)^0180h,(3113)&7	;volatile
-	goto	u261
-	goto	u260
-u261:
-	goto	l260
-u260:
-	line	121
-;SC8P096_Timer0_C.c: 121: while(1)
-	
-l263:	
-	line	123
-# 123 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-clrwdt ;# 
-psect	maintext
-	line	125
-;SC8P096_Timer0_C.c: 125: if(RXOK_f==1)
-	btfss	(_RXOK_f/8),(_RXOK_f)&7
-	goto	u271
-	goto	u270
-u271:
-	goto	l263
-u270:
-	line	128
-	
-l888:	
-;SC8P096_Timer0_C.c: 126: {
-;SC8P096_Timer0_C.c: 128: for(i=0;i<10;i++)
-	bcf	status, 5	;RP0=0, select bank0
-	bcf	status, 6	;RP1=0, select bank0
-	clrf	(main@i)
-	line	130
-	
-l267:	
-	bsf	status, 5	;RP0=1, select bank3
-	bsf	status, 6	;RP1=1, select bank3
-	btfss	(3113/8)^0180h,(3113)&7	;volatile
-	goto	u281
-	goto	u280
-u281:
-	goto	l267
-u280:
-	line	131
-	
-l894:	
-;SC8P096_Timer0_C.c: 131: TXREG1 = RxTable[i];
-	bcf	status, 5	;RP0=0, select bank0
-	bcf	status, 6	;RP1=0, select bank0
-	movf	(main@i),w
-	addlw	low(_RxTable|((0x0)<<8))&0ffh
-	movwf	fsr0
-	bcf	status, 7	;select IRP bank0
-	movf	indf,w
-	bsf	status, 5	;RP0=1, select bank3
-	bsf	status, 6	;RP1=1, select bank3
-	movwf	(391)^0180h	;volatile
-	line	128
-	
-l896:	
-	bcf	status, 5	;RP0=0, select bank0
-	bcf	status, 6	;RP1=0, select bank0
-	incf	(main@i),f
-	
-l898:	
-	movlw	low(0Ah)
-	subwf	(main@i),w
-	skipc
-	goto	u291
-	goto	u290
-u291:
-	goto	l267
-u290:
-	
-l266:	
-	line	133
-;SC8P096_Timer0_C.c: 132: }
-;SC8P096_Timer0_C.c: 133: RXOK_f = 0;
-	bcf	(_RXOK_f/8),(_RXOK_f)&7
-	goto	l263
+l655:	
+;SC8F096_Uart_C.c: 76: {
+;SC8F096_Uart_C.c: 91: TXREG0 ='a';
+	movlw	low(061h)
+	bcf	status, 5	;RP0=0, select bank2
+	bsf	status, 6	;RP1=1, select bank2
+	movwf	(283)^0100h	;volatile
+	goto	l655
 	global	start
 	ljmp	start
 	opt stack 0
-	line	136
+	line	94
 GLOBAL	__end_of_main
 	__end_of_main:
 	signat	_main,89
@@ -828,7 +531,7 @@ GLOBAL	__end_of_main
 
 ;; *************** function _gpio_init *****************
 ;; Defined at:
-;;		line 17 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+;;		line 30 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c"
 ;; Parameters:    Size  Location     Type
 ;;		None
 ;; Auto vars:     Size  Location     Type
@@ -838,9 +541,9 @@ GLOBAL	__end_of_main
 ;; Registers used:
 ;;		wreg
 ;; Tracked objects:
-;;		On entry : 300/200
-;;		On exit  : 300/100
-;;		Unchanged: 0/0
+;;		On entry : B00/0
+;;		On exit  : B00/100
+;;		Unchanged: 800/0
 ;; Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
 ;;      Params:         0       0       0       0       0
 ;;      Locals:         0       0       0       0       0
@@ -848,7 +551,7 @@ GLOBAL	__end_of_main
 ;;      Totals:         0       0       0       0       0
 ;;Total ram usage:        0 bytes
 ;; Hardware stack levels used:    1
-;; Hardware stack levels required when called:    3
+;; Hardware stack levels required when called:    1
 ;; This function calls:
 ;;		Nothing
 ;; This function is called by:
@@ -856,44 +559,43 @@ GLOBAL	__end_of_main
 ;; This function uses a non-reentrant model
 ;;
 psect	text1,local,class=CODE,delta=2,merge=1,group=0
-	line	17
+	line	30
 global __ptext1
 __ptext1:	;psect for function _gpio_init
 psect	text1
-	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-	line	17
+	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c"
+	line	30
 	global	__size_of_gpio_init
 	__size_of_gpio_init	equ	__end_of_gpio_init-_gpio_init
 	
 _gpio_init:	
 ;incstack = 0
-	opt	stack 4
+	opt	stack 6
 ; Regs used in _gpio_init: [wreg]
-	line	20
+	line	33
 	
-l850:	
-;SC8P096_Timer0_C.c: 20: TRISA = 0B11111110;
+l651:	
+;SC8F096_Uart_C.c: 33: TRISA = 0B11111110;
 	movlw	low(0FEh)
 	bsf	status, 5	;RP0=1, select bank1
-	bcf	status, 6	;RP1=0, select bank1
 	movwf	(133)^080h	;volatile
-	line	21
-;SC8P096_Timer0_C.c: 21: PORTA = 0B0000001;
+	line	34
+;SC8F096_Uart_C.c: 34: PORTA = 0B0000001;
 	movlw	low(01h)
 	movwf	(134)^080h	;volatile
-	line	22
+	line	35
 	
-l241:	
+l238:	
 	return
 	opt stack 0
 GLOBAL	__end_of_gpio_init
 	__end_of_gpio_init:
 	signat	_gpio_init,89
-	global	_Interrupt_Isr
+	global	_UART_Isr
 
-;; *************** function _Interrupt_Isr *****************
+;; *************** function _UART_Isr *****************
 ;; Defined at:
-;;		line 144 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+;;		line 202 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c"
 ;; Parameters:    Size  Location     Type
 ;;		None
 ;; Auto vars:     Size  Location     Type
@@ -901,10 +603,10 @@ GLOBAL	__end_of_gpio_init
 ;; Return value:  Size  Location     Type
 ;;                  1    wreg      void 
 ;; Registers used:
-;;		wreg, fsr0l, fsr0h, status,2, status,0, pclath, cstack
+;;		wreg, fsr0l, fsr0h, status,2, status,0
 ;; Tracked objects:
 ;;		On entry : 0/0
-;;		On exit  : 200/200
+;;		On exit  : 100/0
 ;;		Unchanged: 0/0
 ;; Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
 ;;      Params:         0       0       0       0       0
@@ -913,27 +615,26 @@ GLOBAL	__end_of_gpio_init
 ;;      Totals:         3       0       0       0       0
 ;;Total ram usage:        3 bytes
 ;; Hardware stack levels used:    1
-;; Hardware stack levels required when called:    2
 ;; This function calls:
-;;		_control_test_io
+;;		Nothing
 ;; This function is called by:
 ;;		Interrupt level 1
 ;; This function uses a non-reentrant model
 ;;
 psect	text2,local,class=CODE,delta=2,merge=1,group=0
-	line	144
+	line	202
 global __ptext2
-__ptext2:	;psect for function _Interrupt_Isr
+__ptext2:	;psect for function _UART_Isr
 psect	text2
-	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-	line	144
-	global	__size_of_Interrupt_Isr
-	__size_of_Interrupt_Isr	equ	__end_of_Interrupt_Isr-_Interrupt_Isr
+	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c"
+	line	202
+	global	__size_of_UART_Isr
+	__size_of_UART_Isr	equ	__end_of_UART_Isr-_UART_Isr
 	
-_Interrupt_Isr:	
+_UART_Isr:	
 ;incstack = 0
-	opt	stack 4
-; Regs used in _Interrupt_Isr: [wreg-fsr0h+status,2+status,0+pclath+cstack]
+	opt	stack 6
+; Regs used in _UART_Isr: [wreg-fsr0h+status,2+status,0]
 psect	intentry,class=CODE,delta=2
 global __pintentry
 __pintentry:
@@ -943,401 +644,104 @@ interrupt_function:
 	saved_w	set	btemp+0
 	movwf	saved_w
 	swapf	status,w
-	movwf	(??_Interrupt_Isr+0)
+	movwf	(??_UART_Isr+0)
 	movf	fsr0,w
-	movwf	(??_Interrupt_Isr+1)
+	movwf	(??_UART_Isr+1)
 	movf	pclath,w
-	movwf	(??_Interrupt_Isr+2)
-	ljmp	_Interrupt_Isr
+	movwf	(??_UART_Isr+2)
+	ljmp	_UART_Isr
 psect	text2
-	line	147
+	line	206
 	
-i1l818:	
-;SC8P096_Timer0_C.c: 147: if(T0IF)
-	btfss	(90/8),(90)&7	;volatile
-	goto	u19_21
-	goto	u19_20
-u19_21:
-	goto	i1l826
-u19_20:
-	line	149
-	
-i1l820:	
-;SC8P096_Timer0_C.c: 148: {
-;SC8P096_Timer0_C.c: 149: TMR0 += 6;
-	movlw	low(06h)
-	bsf	status, 5	;RP0=1, select bank1
-	bcf	status, 6	;RP1=0, select bank1
-	addwf	(129)^080h,f	;volatile
-	line	150
-	
-i1l822:	
-;SC8P096_Timer0_C.c: 150: T0IF = 0;
-	bcf	(90/8),(90)&7	;volatile
-	line	152
-;SC8P096_Timer0_C.c: 152: PORTB ^= 0XFF;
-	movlw	low(0FFh)
+i1l673:	
+;SC8F096_Uart_C.c: 204: static unsigned char RxNum=0,TEMP;
+;SC8F096_Uart_C.c: 206: if(RC0IF==1)
 	bcf	status, 5	;RP0=0, select bank0
-	xorwf	(6),f	;volatile
-	line	153
+	bcf	status, 6	;RP1=0, select bank0
+	btfss	(111/8),(111)&7	;volatile
+	goto	u4_21
+	goto	u4_20
+u4_21:
+	goto	i1l275
+u4_20:
+	line	208
 	
-i1l824:	
-;SC8P096_Timer0_C.c: 153: timer_cnt ++;
-	incf	(_timer_cnt),f
-	skipnz
-	incf	(_timer_cnt+1),f
-	line	157
-	
-i1l826:	
-;SC8P096_Timer0_C.c: 154: }
-;SC8P096_Timer0_C.c: 157: if(RC1IF==1)
-	bcf	status, 5	;RP0=0, select bank2
-	bsf	status, 6	;RP1=1, select bank2
-	btfss	(2168/8)^0100h,(2168)&7	;volatile
-	goto	u20_21
-	goto	u20_20
-u20_21:
-	goto	i1l278
-u20_20:
-	line	161
-	
-i1l828:	
-;SC8P096_Timer0_C.c: 158: {
-;SC8P096_Timer0_C.c: 159: static unsigned char RxNum=0,TEMP;
-;SC8P096_Timer0_C.c: 161: RC1IF = 0;
-	bcf	(2168/8)^0100h,(2168)&7	;volatile
-	line	163
-;SC8P096_Timer0_C.c: 163: if(RXOK_f==0)
+i1l675:	
+;SC8F096_Uart_C.c: 207: {
+;SC8F096_Uart_C.c: 208: RC0IF = 0;
+	bcf	(111/8),(111)&7	;volatile
+	line	210
+;SC8F096_Uart_C.c: 210: if(RXOK_f==0)
 	btfsc	(_RXOK_f/8),(_RXOK_f)&7
-	goto	u21_21
-	goto	u21_20
-u21_21:
-	goto	i1l840
-u21_20:
-	line	165
+	goto	u5_21
+	goto	u5_20
+u5_21:
+	goto	i1l687
+u5_20:
+	line	212
 	
-i1l830:	
-;SC8P096_Timer0_C.c: 164: {
-;SC8P096_Timer0_C.c: 165: RxTable[RxNum] = RCREG1;
-	movf	(Interrupt_Isr@RxNum),w
+i1l677:	
+;SC8F096_Uart_C.c: 211: {
+;SC8F096_Uart_C.c: 212: RxTable[RxNum] = RCREG0;
+	movf	(UART_Isr@RxNum),w
 	addlw	low(_RxTable|((0x0)<<8))&0ffh
 	movwf	fsr0
-	bsf	status, 5	;RP0=1, select bank3
-	movf	(392)^0180h,w	;volatile
+	bsf	status, 6	;RP1=1, select bank2
+	movf	(284)^0100h,w	;volatile
 	bcf	status, 7	;select IRP bank0
 	movwf	indf
-	line	166
+	line	213
 	
-i1l832:	
-;SC8P096_Timer0_C.c: 166: RxNum++;
-	incf	(Interrupt_Isr@RxNum),f
-	line	167
+i1l679:	
+;SC8F096_Uart_C.c: 213: RxNum++;
+	incf	(UART_Isr@RxNum),f
+	line	214
 	
-i1l834:	
-;SC8P096_Timer0_C.c: 167: if(RxNum > 9)
+i1l681:	
+;SC8F096_Uart_C.c: 214: if(RxNum > 9)
 	movlw	low(0Ah)
-	subwf	(Interrupt_Isr@RxNum),w
+	subwf	(UART_Isr@RxNum),w
 	skipc
-	goto	u22_21
-	goto	u22_20
-u22_21:
-	goto	i1l278
-u22_20:
-	line	169
+	goto	u6_21
+	goto	u6_20
+u6_21:
+	goto	i1l275
+u6_20:
+	line	216
 	
-i1l836:	
-;SC8P096_Timer0_C.c: 168: {
-;SC8P096_Timer0_C.c: 169: RxNum =0;
-	clrf	(Interrupt_Isr@RxNum)
-	line	170
+i1l683:	
+;SC8F096_Uart_C.c: 215: {
+;SC8F096_Uart_C.c: 216: RxNum =0;
+	clrf	(UART_Isr@RxNum)
+	line	217
 	
-i1l838:	
-;SC8P096_Timer0_C.c: 170: RXOK_f =1;
+i1l685:	
+;SC8F096_Uart_C.c: 217: RXOK_f =1;
 	bsf	(_RXOK_f/8),(_RXOK_f)&7
-	goto	i1l278
-	line	175
+	goto	i1l275
+	line	221
 	
-i1l840:	
-;SC8P096_Timer0_C.c: 173: else
-;SC8P096_Timer0_C.c: 174: {
-;SC8P096_Timer0_C.c: 175: TEMP = RCREG1;
-	bsf	status, 5	;RP0=1, select bank3
-	movf	(392)^0180h,w	;volatile
-	line	177
+i1l687:	
+;SC8F096_Uart_C.c: 220: else
+;SC8F096_Uart_C.c: 221: TEMP = RCREG0;
+	bsf	status, 6	;RP1=1, select bank2
+	movf	(284)^0100h,w	;volatile
+	line	224
 	
-i1l278:	
-	line	180
-;SC8P096_Timer0_C.c: 176: }
-;SC8P096_Timer0_C.c: 177: }
-;SC8P096_Timer0_C.c: 180: if(timer_cnt > 8000)
-	movlw	01Fh
-	subwf	(_timer_cnt+1),w
-	movlw	041h
-	skipnz
-	subwf	(_timer_cnt),w
-	skipc
-	goto	u23_21
-	goto	u23_20
-u23_21:
-	goto	i1l290
-u23_20:
-	line	182
-	
-i1l842:	
-;SC8P096_Timer0_C.c: 181: {
-;SC8P096_Timer0_C.c: 182: timer_cnt = 0;
-	clrf	(_timer_cnt)
-	clrf	(_timer_cnt+1)
-	line	183
-	
-i1l844:	
-;SC8P096_Timer0_C.c: 183: control_test_io((level++)%2);
-	movf	(_level+1),w
-	movwf	(control_test_io@flag+1)
-	movf	(_level),w
-	movwf	(control_test_io@flag)
-	movlw	01h
-	andwf	(control_test_io@flag),f
-	clrf	(control_test_io@flag+1)
-	fcall	_control_test_io
-	
-i1l846:	
-	incf	(_level),f
-	skipnz
-	incf	(_level+1),f
-	line	185
-	
-i1l848:	
-;SC8P096_Timer0_C.c: 185: TXREG1 = 'A';
-	movlw	low(041h)
-	bsf	status, 6	;RP1=1, select bank3
-	movwf	(391)^0180h	;volatile
-	line	186
-;SC8P096_Timer0_C.c: 186: while(TRMT1 == 0);
-	
-i1l287:	
-	btfss	(3113/8)^0180h,(3113)&7	;volatile
-	goto	u24_21
-	goto	u24_20
-u24_21:
-	goto	i1l287
-u24_20:
-	line	188
-	
-i1l290:	
-	movf	(??_Interrupt_Isr+2),w
+i1l275:	
+	movf	(??_UART_Isr+2),w
 	movwf	pclath
-	movf	(??_Interrupt_Isr+1),w
+	movf	(??_UART_Isr+1),w
 	movwf	fsr0
-	swapf	(??_Interrupt_Isr+0)^0FFFFFF80h,w
+	swapf	(??_UART_Isr+0)^0FFFFFF80h,w
 	movwf	status
 	swapf	saved_w,f
 	swapf	saved_w,w
 	retfie
 	opt stack 0
-GLOBAL	__end_of_Interrupt_Isr
-	__end_of_Interrupt_Isr:
-	signat	_Interrupt_Isr,89
-	global	_control_test_io
-
-;; *************** function _control_test_io *****************
-;; Defined at:
-;;		line 34 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-;; Parameters:    Size  Location     Type
-;;  flag            2    0[COMMON] unsigned int 
-;; Auto vars:     Size  Location     Type
-;;		None
-;; Return value:  Size  Location     Type
-;;                  1    wreg      void 
-;; Registers used:
-;;		wreg, status,2, status,0, pclath, cstack
-;; Tracked objects:
-;;		On entry : 200/200
-;;		On exit  : 300/100
-;;		Unchanged: 0/0
-;; Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
-;;      Params:         2       0       0       0       0
-;;      Locals:         0       0       0       0       0
-;;      Temps:          0       0       0       0       0
-;;      Totals:         2       0       0       0       0
-;;Total ram usage:        2 bytes
-;; Hardware stack levels used:    1
-;; Hardware stack levels required when called:    1
-;; This function calls:
-;;		_test_io_high
-;;		_test_io_low
-;; This function is called by:
-;;		_Interrupt_Isr
-;; This function uses a non-reentrant model
-;;
-psect	text3,local,class=CODE,delta=2,merge=1,group=0
-	line	34
-global __ptext3
-__ptext3:	;psect for function _control_test_io
-psect	text3
-	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-	line	34
-	global	__size_of_control_test_io
-	__size_of_control_test_io	equ	__end_of_control_test_io-_control_test_io
-	
-_control_test_io:	
-;incstack = 0
-	opt	stack 4
-; Regs used in _control_test_io: [wreg+status,2+status,0+pclath+cstack]
-	line	36
-	
-i1l764:	
-;SC8P096_Timer0_C.c: 36: if(flag)
-	movf	((control_test_io@flag)),w
-iorwf	((control_test_io@flag+1)),w
-	btfsc	status,2
-	goto	u13_21
-	goto	u13_20
-u13_21:
-	goto	i1l768
-u13_20:
-	line	38
-	
-i1l766:	
-;SC8P096_Timer0_C.c: 37: {
-;SC8P096_Timer0_C.c: 38: test_io_high();
-	fcall	_test_io_high
-	line	39
-;SC8P096_Timer0_C.c: 39: }
-	goto	i1l252
-	line	42
-	
-i1l768:	
-;SC8P096_Timer0_C.c: 40: else
-;SC8P096_Timer0_C.c: 41: {
-;SC8P096_Timer0_C.c: 42: test_io_low();
-	fcall	_test_io_low
-	line	44
-	
-i1l252:	
-	return
-	opt stack 0
-GLOBAL	__end_of_control_test_io
-	__end_of_control_test_io:
-	signat	_control_test_io,4217
-	global	_test_io_low
-
-;; *************** function _test_io_low *****************
-;; Defined at:
-;;		line 29 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-;; Parameters:    Size  Location     Type
-;;		None
-;; Auto vars:     Size  Location     Type
-;;		None
-;; Return value:  Size  Location     Type
-;;                  1    wreg      void 
-;; Registers used:
-;;		None
-;; Tracked objects:
-;;		On entry : 200/200
-;;		On exit  : 300/100
-;;		Unchanged: 0/0
-;; Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
-;;      Params:         0       0       0       0       0
-;;      Locals:         0       0       0       0       0
-;;      Temps:          0       0       0       0       0
-;;      Totals:         0       0       0       0       0
-;;Total ram usage:        0 bytes
-;; Hardware stack levels used:    1
-;; This function calls:
-;;		Nothing
-;; This function is called by:
-;;		_control_test_io
-;; This function uses a non-reentrant model
-;;
-psect	text4,local,class=CODE,delta=2,merge=1,group=0
-	line	29
-global __ptext4
-__ptext4:	;psect for function _test_io_low
-psect	text4
-	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-	line	29
-	global	__size_of_test_io_low
-	__size_of_test_io_low	equ	__end_of_test_io_low-_test_io_low
-	
-_test_io_low:	
-;incstack = 0
-	opt	stack 4
-; Regs used in _test_io_low: []
-	line	31
-	
-i1l760:	
-;SC8P096_Timer0_C.c: 31: PORTA &= 0B11111110;
-	bsf	status, 5	;RP0=1, select bank1
-	bcf	status, 6	;RP1=0, select bank1
-	bcf	(134)^080h+(0/8),(0)&7	;volatile
-	line	32
-	
-i1l247:	
-	return
-	opt stack 0
-GLOBAL	__end_of_test_io_low
-	__end_of_test_io_low:
-	signat	_test_io_low,89
-	global	_test_io_high
-
-;; *************** function _test_io_high *****************
-;; Defined at:
-;;		line 24 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-;; Parameters:    Size  Location     Type
-;;		None
-;; Auto vars:     Size  Location     Type
-;;		None
-;; Return value:  Size  Location     Type
-;;                  1    wreg      void 
-;; Registers used:
-;;		None
-;; Tracked objects:
-;;		On entry : 200/200
-;;		On exit  : 300/100
-;;		Unchanged: 0/0
-;; Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
-;;      Params:         0       0       0       0       0
-;;      Locals:         0       0       0       0       0
-;;      Temps:          0       0       0       0       0
-;;      Totals:         0       0       0       0       0
-;;Total ram usage:        0 bytes
-;; Hardware stack levels used:    1
-;; This function calls:
-;;		Nothing
-;; This function is called by:
-;;		_control_test_io
-;; This function uses a non-reentrant model
-;;
-psect	text5,local,class=CODE,delta=2,merge=1,group=0
-	line	24
-global __ptext5
-__ptext5:	;psect for function _test_io_high
-psect	text5
-	file	"E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
-	line	24
-	global	__size_of_test_io_high
-	__size_of_test_io_high	equ	__end_of_test_io_high-_test_io_high
-	
-_test_io_high:	
-;incstack = 0
-	opt	stack 4
-; Regs used in _test_io_high: []
-	line	26
-	
-i1l758:	
-;SC8P096_Timer0_C.c: 26: PORTA |= 0B00000001;
-	bsf	status, 5	;RP0=1, select bank1
-	bcf	status, 6	;RP1=0, select bank1
-	bsf	(134)^080h+(0/8),(0)&7	;volatile
-	line	27
-	
-i1l244:	
-	return
-	opt stack 0
-GLOBAL	__end_of_test_io_high
-	__end_of_test_io_high:
-	signat	_test_io_high,89
+GLOBAL	__end_of_UART_Isr
+	__end_of_UART_Isr:
+	signat	_UART_Isr,89
 global	___latbits
 ___latbits	equ	2
 	global	btemp

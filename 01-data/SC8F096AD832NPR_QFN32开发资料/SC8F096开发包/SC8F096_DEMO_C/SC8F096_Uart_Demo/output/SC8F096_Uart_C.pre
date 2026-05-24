@@ -1,767 +1,767 @@
 
-# 1 "H:\MyDownloads\说明书&测试报告\开发包\SC8F096AD开发包\SC8F096_DEMO_C\SC8F096_Uart_Demo\SC8F096_Uart_C.c"
+# 1 "E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Uart_Demo\SC8F096_Uart_C.c"
 
-# 26 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\include\htc.h"
+# 26 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\htc.h"
 extern const char __xc8_OPTIM_SPEED;
 
 extern double __fpnormalize(double);
 
 
-# 13 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\include\xc8debug.h"
+# 13 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\xc8debug.h"
 #pragma intrinsic(__builtin_software_breakpoint)
 extern void __builtin_software_breakpoint(void);
 
-# 11 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\include\SC8F096AD.h"
-extern volatile unsigned char INDF @ 0x00;
+# 11 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h"
+volatile unsigned char INDF @ 0x00;
 
 asm("INDF EQU 00H");
 
 
 
 
-extern volatile unsigned char OPTION_REG @ 0x01;
+volatile unsigned char OPTION_REG @ 0x01;
 
 asm("OPTION_REG EQU 01H");
 
 
 
 
-extern volatile unsigned char PCL @ 0x02;
+volatile unsigned char PCL @ 0x02;
 
 asm("PCL EQU 02H");
 
 
 
 
-extern volatile unsigned char STATUS @ 0x03;
+volatile unsigned char STATUS @ 0x03;
 
 asm("STATUS EQU 03H");
 
 
 
 
-extern volatile unsigned char FSR @ 0x04;
+volatile unsigned char FSR @ 0x04;
 
 asm("FSR EQU 04H");
 
 
 
 
-extern volatile unsigned char TRISB @ 0x05;
+volatile unsigned char TRISB @ 0x05;
 
 asm("TRISB EQU 05H");
 
 
 
 
-extern volatile unsigned char PORTB @ 0x06;
+volatile unsigned char PORTB @ 0x06;
 
 asm("PORTB EQU 06H");
 
 
 
 
-extern volatile unsigned char WPDB @ 0x07;
+volatile unsigned char WPDB @ 0x07;
 
 asm("WPDB EQU 07H");
 
 
 
 
-extern volatile unsigned char WPUB @ 0x08;
+volatile unsigned char WPUB @ 0x08;
 
 asm("WPUB EQU 08H");
 
 
 
 
-extern volatile unsigned char IOCB @ 0x09;
+volatile unsigned char IOCB @ 0x09;
 
 asm("IOCB EQU 09H");
 
 
 
 
-extern volatile unsigned char PCLATH @ 0x0A;
+volatile unsigned char PCLATH @ 0x0A;
 
 asm("PCLATH EQU 0AH");
 
 
 
 
-extern volatile unsigned char INTCON @ 0x0B;
+volatile unsigned char INTCON @ 0x0B;
 
 asm("INTCON EQU 0BH");
 
 
 
 
-extern volatile unsigned char QCCON @ 0x0C;
+volatile unsigned char QCCON @ 0x0C;
 
 asm("QCCON EQU 0CH");
 
 
 
 
-extern volatile unsigned char PIR1 @ 0x0D;
+volatile unsigned char PIR1 @ 0x0D;
 
 asm("PIR1 EQU 0DH");
 
 
 
 
-extern volatile unsigned char PIE1 @ 0x0E;
+volatile unsigned char PIE1 @ 0x0E;
 
 asm("PIE1 EQU 0EH");
 
 
 
 
-extern volatile unsigned char CMP1CON0 @ 0x0F;
+volatile unsigned char CMP1CON0 @ 0x0F;
 
 asm("CMP1CON0 EQU 0FH");
 
 
 
 
-extern volatile unsigned char CMP1CON1 @ 0x10;
+volatile unsigned char CMP1CON1 @ 0x10;
 
 asm("CMP1CON1 EQU 10H");
 
 
 
 
-extern volatile unsigned char PR2 @ 0x11;
+volatile unsigned char PR2 @ 0x11;
 
 asm("PR2 EQU 11H");
 
 
 
 
-extern volatile unsigned char TMR2 @ 0x12;
+volatile unsigned char TMR2 @ 0x12;
 
 asm("TMR2 EQU 12H");
 
 
 
 
-extern volatile unsigned char T2CON @ 0x13;
+volatile unsigned char T2CON @ 0x13;
 
 asm("T2CON EQU 13H");
 
 
 
 
-extern volatile unsigned char OSCCON @ 0x14;
+volatile unsigned char OSCCON @ 0x14;
 
 asm("OSCCON EQU 14H");
 
 
 
 
-extern volatile unsigned char PWMCON0 @ 0x15;
+volatile unsigned char PWMCON0 @ 0x15;
 
 asm("PWMCON0 EQU 15H");
 
 
 
 
-extern volatile unsigned char PWMCON1 @ 0x16;
+volatile unsigned char PWMCON1 @ 0x16;
 
 asm("PWMCON1 EQU 16H");
 
 
 
 
-extern volatile unsigned char PWMTL @ 0x17;
+volatile unsigned char PWMTL @ 0x17;
 
 asm("PWMTL EQU 17H");
 
 
 
 
-extern volatile unsigned char PWMTH @ 0x18;
+volatile unsigned char PWMTH @ 0x18;
 
 asm("PWMTH EQU 18H");
 
 
 
 
-extern volatile unsigned char PWMD0L @ 0x19;
+volatile unsigned char PWMD0L @ 0x19;
 
 asm("PWMD0L EQU 19H");
 
 
 
 
-extern volatile unsigned char PWMD1L @ 0x1A;
+volatile unsigned char PWMD1L @ 0x1A;
 
 asm("PWMD1L EQU 1AH");
 
 
 
 
-extern volatile unsigned char PWMD4L @ 0x1B;
+volatile unsigned char PWMD4L @ 0x1B;
 
 asm("PWMD4L EQU 1BH");
 
 
 
 
-extern volatile unsigned char PWMT4L @ 0x1C;
+volatile unsigned char PWMT4L @ 0x1C;
 
 asm("PWMT4L EQU 1CH");
 
 
 
 
-extern volatile unsigned char PWMCON2 @ 0x1D;
+volatile unsigned char PWMCON2 @ 0x1D;
 
 asm("PWMCON2 EQU 1DH");
 
 
 
 
-extern volatile unsigned char PWMDH @ 0x1E;
+volatile unsigned char PWMDH @ 0x1E;
 
 asm("PWMDH EQU 1EH");
 
 
 
 
-extern volatile unsigned char PWM01DT @ 0x1F;
+volatile unsigned char PWM01DT @ 0x1F;
 
 asm("PWM01DT EQU 1FH");
 
 
 
 
-extern volatile unsigned char TMR0 @ 0x81;
+volatile unsigned char TMR0 @ 0x81;
 
 asm("TMR0 EQU 81H");
 
 
 
 
-extern volatile unsigned char TRISA @ 0x85;
+volatile unsigned char TRISA @ 0x85;
 
 asm("TRISA EQU 85H");
 
 
 
 
-extern volatile unsigned char PORTA @ 0x86;
+volatile unsigned char PORTA @ 0x86;
 
 asm("PORTA EQU 86H");
 
 
 
 
-extern volatile unsigned char WPDA @ 0x87;
+volatile unsigned char WPDA @ 0x87;
 
 asm("WPDA EQU 87H");
 
 
 
 
-extern volatile unsigned char WPUA @ 0x88;
+volatile unsigned char WPUA @ 0x88;
 
 asm("WPUA EQU 88H");
 
 
 
 
-extern volatile unsigned char IOCA @ 0x89;
+volatile unsigned char IOCA @ 0x89;
 
 asm("IOCA EQU 89H");
 
 
 
 
-extern volatile unsigned char ANSEL3 @ 0x8C;
+volatile unsigned char ANSEL3 @ 0x8C;
 
 asm("ANSEL3 EQU 8CH");
 
 
 
 
-extern volatile unsigned char EECON1 @ 0x8D;
+volatile unsigned char EECON1 @ 0x8D;
 
 asm("EECON1 EQU 8DH");
 
 
 
 
-extern volatile unsigned char EECON2 @ 0x8E;
+volatile unsigned char EECON2 @ 0x8E;
 
 asm("EECON2 EQU 8EH");
 
 
 
 
-extern volatile unsigned char EEDAT @ 0x8F;
+volatile unsigned char EEDAT @ 0x8F;
 
 asm("EEDAT EQU 8FH");
 
 
 
 
-extern volatile unsigned char EEDATH @ 0x90;
+volatile unsigned char EEDATH @ 0x90;
 
 asm("EEDATH EQU 90H");
 
 
 
 
-extern volatile unsigned char EEADR @ 0x91;
+volatile unsigned char EEADR @ 0x91;
 
 asm("EEADR EQU 91H");
 
 
 
 
-extern volatile unsigned char EEADRH @ 0x92;
+volatile unsigned char EEADRH @ 0x92;
 
 asm("EEADRH EQU 92H");
 
 
 
 
-extern volatile unsigned char ANSEL0 @ 0x93;
+volatile unsigned char ANSEL0 @ 0x93;
 
 asm("ANSEL0 EQU 93H");
 
 
 
 
-extern volatile unsigned char ANSEL1 @ 0x94;
+volatile unsigned char ANSEL1 @ 0x94;
 
 asm("ANSEL1 EQU 94H");
 
 
 
 
-extern volatile unsigned char ADCON0 @ 0x95;
+volatile unsigned char ADCON0 @ 0x95;
 
 asm("ADCON0 EQU 95H");
 
 
 
 
-extern volatile unsigned char ADCON1 @ 0x96;
+volatile unsigned char ADCON1 @ 0x96;
 
 asm("ADCON1 EQU 96H");
 
 
 
 
-extern volatile unsigned char ADRESL @ 0x98;
+volatile unsigned char ADRESL @ 0x98;
 
 asm("ADRESL EQU 98H");
 
 
 
 
-extern volatile unsigned char ADRESH @ 0x99;
+volatile unsigned char ADRESH @ 0x99;
 
 asm("ADRESH EQU 99H");
 
 
 
 
-extern volatile unsigned char CMP2CON0 @ 0x9A;
+volatile unsigned char CMP2CON0 @ 0x9A;
 
 asm("CMP2CON0 EQU 9AH");
 
 
 
 
-extern volatile unsigned char PWMD2L @ 0x9B;
+volatile unsigned char PWMD2L @ 0x9B;
 
 asm("PWMD2L EQU 9BH");
 
 
 
 
-extern volatile unsigned char PWMD3L @ 0x9C;
+volatile unsigned char PWMD3L @ 0x9C;
 
 asm("PWMD3L EQU 9CH");
 
 
 
 
-extern volatile unsigned char PWM23DT @ 0x9D;
+volatile unsigned char PWM23DT @ 0x9D;
 
 asm("PWM23DT EQU 9DH");
 
 
 
 
-extern volatile unsigned char SEGEN0 @ 0x9E;
+volatile unsigned char SEGEN0 @ 0x9E;
 
 asm("SEGEN0 EQU 9EH");
 
 
 
 
-extern volatile unsigned char CMP2CON1 @ 0x9F;
+volatile unsigned char CMP2CON1 @ 0x9F;
 
 asm("CMP2CON1 EQU 9FH");
 
 
 
 
-extern volatile unsigned char TRISC @ 0x105;
+volatile unsigned char TRISC @ 0x105;
 
 asm("TRISC EQU 105H");
 
 
 
 
-extern volatile unsigned char PORTC @ 0x106;
+volatile unsigned char PORTC @ 0x106;
 
 asm("PORTC EQU 106H");
 
 
 
 
-extern volatile unsigned char PORTD @ 0x107;
+volatile unsigned char PORTD @ 0x107;
 
 asm("PORTD EQU 107H");
 
 
 
 
-extern volatile unsigned char WPUC @ 0x108;
+volatile unsigned char WPUC @ 0x108;
 
 asm("WPUC EQU 108H");
 
 
 
 
-extern volatile unsigned char ANSEL2 @ 0x109;
+volatile unsigned char ANSEL2 @ 0x109;
 
 asm("ANSEL2 EQU 109H");
 
 
 
 
-extern volatile unsigned char TMR1L @ 0x10C;
+volatile unsigned char TMR1L @ 0x10C;
 
 asm("TMR1L EQU 10CH");
 
 
 
 
-extern volatile unsigned char TMR1H @ 0x10D;
+volatile unsigned char TMR1H @ 0x10D;
 
 asm("TMR1H EQU 10DH");
 
 
 
 
-extern volatile unsigned char T1CON @ 0x10E;
+volatile unsigned char T1CON @ 0x10E;
 
 asm("T1CON EQU 10EH");
 
 
 
 
-extern volatile unsigned char PIR2 @ 0x10F;
+volatile unsigned char PIR2 @ 0x10F;
 
 asm("PIR2 EQU 10FH");
 
 
 
 
-extern volatile unsigned char PIE2 @ 0x110;
+volatile unsigned char PIE2 @ 0x110;
 
 asm("PIE2 EQU 110H");
 
 
 
 
-extern volatile unsigned char KEYCON0 @ 0x111;
+volatile unsigned char KEYCON0 @ 0x111;
 
 asm("KEYCON0 EQU 111H");
 
 
 
 
-extern volatile unsigned char KEYCON1 @ 0x112;
+volatile unsigned char KEYCON1 @ 0x112;
 
 asm("KEYCON1 EQU 112H");
 
 
 
 
-extern volatile unsigned char KEYCON2 @ 0x113;
+volatile unsigned char KEYCON2 @ 0x113;
 
 asm("KEYCON2 EQU 113H");
 
 
 
 
-extern volatile unsigned char TRISD @ 0x114;
+volatile unsigned char TRISD @ 0x114;
 
 asm("TRISD EQU 114H");
 
 
 
 
-extern volatile unsigned char WPUD @ 0x115;
+volatile unsigned char WPUD @ 0x115;
 
 asm("WPUD EQU 115H");
 
 
 
 
-extern volatile unsigned char KEYDATAL @ 0x116;
+volatile unsigned char KEYDATAL @ 0x116;
 
 asm("KEYDATAL EQU 116H");
 
 
 
 
-extern volatile unsigned char KEYDATAH @ 0x117;
+volatile unsigned char KEYDATAH @ 0x117;
 
 asm("KEYDATAH EQU 117H");
 
 
 
 
-extern volatile unsigned char TXSTA0 @ 0x118;
+volatile unsigned char TXSTA0 @ 0x118;
 
 asm("TXSTA0 EQU 118H");
 
 
 
 
-extern volatile unsigned char RCSTA0 @ 0x119;
+volatile unsigned char RCSTA0 @ 0x119;
 
 asm("RCSTA0 EQU 119H");
 
 
 
 
-extern volatile unsigned char SPBRG0 @ 0x11A;
+volatile unsigned char SPBRG0 @ 0x11A;
 
 asm("SPBRG0 EQU 11AH");
 
 
 
 
-extern volatile unsigned char TXREG0 @ 0x11B;
+volatile unsigned char TXREG0 @ 0x11B;
 
 asm("TXREG0 EQU 11BH");
 
 
 
 
-extern volatile unsigned char RCREG0 @ 0x11C;
+volatile unsigned char RCREG0 @ 0x11C;
 
 asm("RCREG0 EQU 11CH");
 
 
 
 
-extern volatile unsigned char LCDCON0 @ 0x11D;
+volatile unsigned char LCDCON0 @ 0x11D;
 
 asm("LCDCON0 EQU 11DH");
 
 
 
 
-extern volatile unsigned char LCDCON1 @ 0x11E;
+volatile unsigned char LCDCON1 @ 0x11E;
 
 asm("LCDCON1 EQU 11EH");
 
 
 
 
-extern volatile unsigned char SEGEN1 @ 0x11F;
+volatile unsigned char SEGEN1 @ 0x11F;
 
 asm("SEGEN1 EQU 11FH");
 
 
 
 
-extern volatile unsigned char SEGEN2 @ 0x181;
+volatile unsigned char SEGEN2 @ 0x181;
 
 asm("SEGEN2 EQU 181H");
 
 
 
 
-extern volatile unsigned char TXSTA1 @ 0x185;
+volatile unsigned char TXSTA1 @ 0x185;
 
 asm("TXSTA1 EQU 185H");
 
 
 
 
-extern volatile unsigned char RCSTA1 @ 0x186;
+volatile unsigned char RCSTA1 @ 0x186;
 
 asm("RCSTA1 EQU 186H");
 
 
 
 
-extern volatile unsigned char TXREG1 @ 0x187;
+volatile unsigned char TXREG1 @ 0x187;
 
 asm("TXREG1 EQU 187H");
 
 
 
 
-extern volatile unsigned char RCREG1 @ 0x188;
+volatile unsigned char RCREG1 @ 0x188;
 
 asm("RCREG1 EQU 188H");
 
 
 
 
-extern volatile unsigned char SPBRG1 @ 0x189;
+volatile unsigned char SPBRG1 @ 0x189;
 
 asm("SPBRG1 EQU 189H");
 
 
 
 
-extern volatile unsigned char OPACON @ 0x18C;
+volatile unsigned char OPACON @ 0x18C;
 
 asm("OPACON EQU 18CH");
 
 
 
 
-extern volatile unsigned char OPAADJ @ 0x18D;
+volatile unsigned char OPAADJ @ 0x18D;
 
 asm("OPAADJ EQU 18DH");
 
 
 
 
-extern volatile unsigned char LEDCTR0 @ 0x18E;
+volatile unsigned char LEDCTR0 @ 0x18E;
 
 asm("LEDCTR0 EQU 18EH");
 
 
 
 
-extern volatile unsigned char LEDCTR1 @ 0x18F;
+volatile unsigned char LEDCTR1 @ 0x18F;
 
 asm("LEDCTR1 EQU 18FH");
 
 
 
 
-extern volatile unsigned char IICCON @ 0x190;
+volatile unsigned char IICCON @ 0x190;
 
 asm("IICCON EQU 190H");
 
 
 
 
-extern volatile unsigned char IICCON2 @ 0x191;
+volatile unsigned char IICCON2 @ 0x191;
 
 asm("IICCON2 EQU 191H");
 
 
 
 
-extern volatile unsigned char IICSTAT @ 0x192;
+volatile unsigned char IICSTAT @ 0x192;
 
 asm("IICSTAT EQU 192H");
 
 
 
 
-extern volatile unsigned char IICBUF @ 0x193;
+volatile unsigned char IICBUF @ 0x193;
 
 asm("IICBUF EQU 193H");
 
 
 
 
-extern volatile unsigned char IICADD @ 0x194;
+volatile unsigned char IICADD @ 0x194;
 
 asm("IICADD EQU 194H");
 
 
 
 
-extern volatile unsigned char CC0CON @ 0x195;
+volatile unsigned char CC0CON @ 0x195;
 
 asm("CC0CON EQU 195H");
 
 
 
 
-extern volatile unsigned char CC1CON @ 0x196;
+volatile unsigned char CC1CON @ 0x196;
 
 asm("CC1CON EQU 196H");
 
 
 
 
-extern volatile unsigned char PDCON0 @ 0x197;
+volatile unsigned char PDCON0 @ 0x197;
 
 asm("PDCON0 EQU 197H");
 
 
 
 
-extern volatile unsigned char PDCON1 @ 0x198;
+volatile unsigned char PDCON1 @ 0x198;
 
 asm("PDCON1 EQU 198H");
 
 
 
 
-extern volatile unsigned char PDADD @ 0x199;
+volatile unsigned char PDADD @ 0x199;
 
 asm("PDADD EQU 199H");
 
 
 
 
-extern volatile unsigned char PDRDATA @ 0x19A;
+volatile unsigned char PDRDATA @ 0x19A;
 
 asm("PDRDATA EQU 19AH");
 
 
 
 
-extern volatile unsigned char PDSDATA @ 0x19B;
+volatile unsigned char PDSDATA @ 0x19B;
 
 asm("PDSDATA EQU 19BH");
 
 
 
 
-extern volatile unsigned char LCDADD @ 0x19C;
+volatile unsigned char LCDADD @ 0x19C;
 
 asm("LCDADD EQU 19CH");
 
 
 
 
-extern volatile unsigned char LCDDATA @ 0x19D;
+volatile unsigned char LCDDATA @ 0x19D;
 
 asm("LCDDATA EQU 19DH");
 
 
 
 
-extern volatile unsigned char COMEN @ 0x19E;
+volatile unsigned char COMEN @ 0x19E;
 
 asm("COMEN EQU 19EH");
 
 
 
 
-extern volatile unsigned char SEGEN3 @ 0x19F;
+volatile unsigned char SEGEN3 @ 0x19F;
 
 asm("SEGEN3 EQU 19FH");
 
@@ -1508,7 +1508,7 @@ extern volatile bit SEGDRI0 @ ((unsigned)&SEGEN3*8)+3;
 extern volatile bit LCDDATA8 @ ((unsigned)&SEGEN3*8)+0;
 
 
-# 27 "H:\MyDownloads\IDE_RAR\SCMCU_IDE_V2.00.16_Beta9\data\include\sc.h"
+# 27 "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\sc.h"
 #pragma intrinsic(__nop)
 extern void __nop(void);
 
@@ -1525,7 +1525,7 @@ extern unsigned char __resetbits;
 extern __bit __powerdown;
 extern __bit __timeout;
 
-# 10 "H:\MyDownloads\说明书&测试报告\开发包\SC8F096AD开发包\SC8F096_DEMO_C\SC8F096_Uart_Demo\SC8F096_Uart_C.c"
+# 10 "E:\1.workspace\7.other\17.charge_demo\charge_demo\01-data\SC8F096AD832NPR_QFN32开发资料\SC8F096开发包\SC8F096_DEMO_C\SC8F096_Uart_Demo\SC8F096_Uart_C.c"
 unsigned char RxTable[10];
 bit RXOK_f;
 

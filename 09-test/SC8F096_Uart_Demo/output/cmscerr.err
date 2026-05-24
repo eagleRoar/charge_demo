@@ -1,0 +1,16 @@
+Warning[520]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c	第23行	function "_DelayXms" is never called
+Warning[520]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c	第37行	function "_test_io_high" is never called
+Warning[520]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c	第42行	function "_test_io_low" is never called
+Warning[520]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c	第47行	function "_control_test_io" is never called
+Warning[520]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c	第104行	function "_Init_System" is never called
+Warning[1090]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c	第64行	variable "main@i" is not used
+Warning[759]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_Uart_Demo\SC8F096_Uart_C.c	第64行	expression generates no code
+
+Memory Summary:
+    Program space        used    50h (    80) of  2000h words   (  1.0%)
+    Data space           used    11h (    17) of   140h bytes   (  5.3%)
+    EEPROM space         None available
+    Data stack space     used     0h (     0) of    50h bytes   (  0.0%)
+    Configuration bits   used     0h (     0) of     2h words   (  0.0%)
+    ID Location space    used     0h (     0) of     4h bytes   (  0.0%)
+
