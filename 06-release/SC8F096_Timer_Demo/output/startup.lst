@@ -1,7 +1,7 @@
 
 
 Microchip Technology PIC Macro Assembler V1.45 build -152302408 
-                                                                                                           Sun May 24 15:28:32 2026
+                                                                                                           Mon May 25 20:21:49 2026
 
 
      1                           
@@ -74,21 +74,21 @@ Microchip Technology PIC Macro Assembler V1.45 build -152302408
     68                           
     69                           ; jump to start
     70                           	goto	start & 0x7FF | (reset_vec & not 0x7FF)
-    71  0000  120A  118A  280E   
+    71  0000  120A  118A  2812   
     72                           
     73                           
     74                           	psect	init
     75                           start
-    76  000E                     	psect	end_init
+    76  0012                     	psect	end_init
     77                           	global start_initialization
     78                           	ljmp start_initialization	;jump to C runtime clear & initialization
-    79  000E  120A  118A  2811   
+    79  0012  120A  118A  2815   
 
 
 Microchip Technology PIC Macro Assembler V1.45 build -152302408 
-Symbol Table                                                                                               Sun May 24 15:28:32 2026
+Symbol Table                                                                                               Mon May 25 20:21:49 2026
 
-               ___sp 0000                 _main 007E                 start 000E               stackhi 0000  
-             stacklo 0000  start_initialization 0011             ___int_sp 0000             intlevel0 0000  
+               ___sp 0000                 _main 03D1                 start 0012               stackhi 0000  
+             stacklo 0000  start_initialization 0015             ___int_sp 0000             intlevel0 0000  
            intlevel1 0000             intlevel2 0000             intlevel3 0000             intlevel4 0000  
            intlevel5 0000             reset_vec 0000  

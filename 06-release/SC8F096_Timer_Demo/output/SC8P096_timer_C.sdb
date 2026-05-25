@@ -7,17 +7,39 @@
 [v ___ftpack __ftpack `(f  1 e 3 0 ]
 "86 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\ftadd.c
 [v ___ftadd __ftadd `(f  1 e 3 0 ]
-"17 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c
+"56 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\ftdiv.c
+[v ___ftdiv __ftdiv `(f  1 e 3 0 ]
+"44 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\fttol.c
+[v ___fttol __fttol `(l  1 e 4 0 ]
+"6 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwdiv.c
+[v ___lwdiv __lwdiv `(ui  1 e 2 0 ]
+"6 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwmod.c
+[v ___lwmod __lwmod `(ui  1 e 2 0 ]
+"28 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwtoft.c
+[v ___lwtoft __lwtoft `(f  1 e 3 0 ]
+"32 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c
 [v _gpio_init gpio_init `(v  1 e 1 0 ]
-"24
+"39
 [v _test_io_high test_io_high `(v  1 e 1 0 ]
-"29
+"44
 [v _test_io_low test_io_low `(v  1 e 1 0 ]
-"34
+"49
 [v _control_test_io control_test_io `(v  1 e 1 0 ]
-"46
+"61
+[v _AD_Init AD_Init `(v  1 e 1 0 ]
+"132
+[v _ADC_Sample ADC_Sample `(uc  1 e 1 0 ]
+"202
+[v _Adc_Test Adc_Test `(v  1 e 1 0 ]
+"234
 [v _main main `(v  1 e 1 0 ]
-"144
+"308
+[v _uart_send_char uart_send_char `(v  1 e 1 0 ]
+"314
+[v _uart_send_string uart_send_string `(v  1 e 1 0 ]
+"322
+[v _uart_send_number uart_send_number `(v  1 e 1 0 ]
+"348
 [v _Interrupt_Isr Interrupt_Isr `II(v  1 e 1 0 ]
 "18 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h
 [v _OPTION_REG OPTION_REG `VEuc  1 e 1 @1 ]
@@ -45,6 +67,16 @@
 [v _WPUA WPUA `VEuc  1 e 1 @136 ]
 "270
 [v _IOCA IOCA `VEuc  1 e 1 @137 ]
+"333
+[v _ANSEL1 ANSEL1 `VEuc  1 e 1 @148 ]
+"340
+[v _ADCON0 ADCON0 `VEuc  1 e 1 @149 ]
+"347
+[v _ADCON1 ADCON1 `VEuc  1 e 1 @150 ]
+"354
+[v _ADRESL ADRESL `VEuc  1 e 1 @152 ]
+"361
+[v _ADRESH ADRESH `VEuc  1 e 1 @153 ]
 "592
 [v _TXSTA1 TXSTA1 `VEuc  1 e 1 @389 ]
 "599
@@ -55,6 +87,12 @@
 [v _RCREG1 RCREG1 `VEuc  1 e 1 @392 ]
 "620
 [v _SPBRG1 SPBRG1 `VEuc  1 e 1 @393 ]
+"690
+[v _CC0CON CC0CON `VEuc  1 e 1 @405 ]
+"697
+[v _CC1CON CC1CON `VEuc  1 e 1 @406 ]
+"786
+[v _TRISB7 TRISB7 `VEb  1 e 0 @47 ]
 "836
 [v _GIE GIE `VEb  1 e 0 @95 ]
 "837
@@ -63,52 +101,193 @@
 [v _T0IE T0IE `VEb  1 e 0 @93 ]
 "841
 [v _T0IF T0IF `VEb  1 e 0 @90 ]
+"1091
+[v _GODONE GODONE `VEb  1 e 0 @1193 ]
+"1096
+[v _CHS4 CHS4 `VEb  1 e 0 @1206 ]
+"1097
+[v _LDO_EN LDO_EN `VEb  1 e 0 @1202 ]
 "1191
 [v _RC1IF RC1IF `VEb  1 e 0 @2168 ]
 "1201
 [v _RC1IE RC1IE `VEb  1 e 0 @2176 ]
 "1310
 [v _TRMT1 TRMT1 `VEb  1 e 0 @3113 ]
-"11 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c
+"22 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c
+[v _adresult adresult `VEui  1 e 2 0 ]
+"23
+[v _result result `VEui  1 e 2 0 ]
+"24
+[v _test_adc test_adc `VEuc  1 e 1 0 ]
+"25
+[v _power_ad power_ad `VEui  1 e 2 0 ]
+"26
 [v _timer_cnt timer_cnt `ui  1 s 2 timer_cnt ]
-"12
+"27
 [v _level level `ui  1 s 2 level ]
-"14
+"29
 [v _RxTable RxTable `[10]uc  1 e 10 0 ]
-"15
+"30
 [v _RXOK_f RXOK_f `b  1 e 0 0 ]
-"46
+"234
 [v _main main `(v  1 e 1 0 ]
 {
-"48
-[v main@i i `uc  1 a 1 0 ]
-"136
+"236
+[v main@i i `uc  1 a 1 52 ]
+"300
 } 0
-"17
+"32
 [v _gpio_init gpio_init `(v  1 e 1 0 ]
 {
-"22
+"37
 } 0
-"144
+"202
+[v _Adc_Test Adc_Test `(v  1 e 1 0 ]
+{
+"221
+[v Adc_Test@power_temp power_temp `VEul  1 a 4 48 ]
+"232
+} 0
+"28 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwtoft.c
+[v ___lwtoft __lwtoft `(f  1 e 3 0 ]
+{
+[v ___lwtoft@c c `ui  1 p 2 16 ]
+"31
+} 0
+"44 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\fttol.c
+[v ___fttol __fttol `(l  1 e 4 0 ]
+{
+"47
+[v ___fttol@lval lval `ul  1 a 4 42 ]
+"46
+[v ___fttol@exp1 exp1 `uc  1 a 1 46 ]
+[v ___fttol@sign1 sign1 `uc  1 a 1 41 ]
+"44
+[v ___fttol@f1 f1 `f  1 p 3 34 ]
+"73
+} 0
+"56 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\ftdiv.c
+[v ___ftdiv __ftdiv `(f  1 e 3 0 ]
+{
+"60
+[v ___ftdiv@f3 f3 `f  1 a 3 29 ]
+"59
+[v ___ftdiv@sign sign `uc  1 a 1 33 ]
+[v ___ftdiv@exp exp `uc  1 a 1 32 ]
+[v ___ftdiv@cntr cntr `uc  1 a 1 28 ]
+"56
+[v ___ftdiv@f2 f2 `f  1 p 3 19 ]
+[v ___ftdiv@f1 f1 `f  1 p 3 22 ]
+"86
+} 0
+"62 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\float.c
+[v ___ftpack __ftpack `(f  1 e 3 0 ]
+{
+[v ___ftpack@arg arg `um  1 p 3 8 ]
+[v ___ftpack@exp exp `uc  1 p 1 11 ]
+[v ___ftpack@sign sign `uc  1 p 1 12 ]
+"86
+} 0
+"132 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c
+[v _ADC_Sample ADC_Sample `(uc  1 e 1 0 ]
+{
+[v ADC_Sample@adch adch `uc  1 a 1 wreg ]
+"164
+[v ADC_Sample@j j `uc  1 a 1 13 ]
+"134
+[v ADC_Sample@adsum adsum `VEul  1 a 4 16 ]
+"136
+[v ADC_Sample@ad_temp ad_temp `VEui  1 a 2 24 ]
+"135
+[v ADC_Sample@admax admax `VEui  1 a 2 22 ]
+[v ADC_Sample@admin admin `VEui  1 a 2 20 ]
+"154
+[v ADC_Sample@i i `uc  1 a 1 15 ]
+"132
+[v ADC_Sample@adch adch `uc  1 a 1 wreg ]
+[v ADC_Sample@adldo adldo `uc  1 p 1 8 ]
+"134
+[v ADC_Sample@adch adch `uc  1 a 1 14 ]
+"200
+} 0
+"61
+[v _AD_Init AD_Init `(v  1 e 1 0 ]
+{
+"112
+} 0
+"348
 [v _Interrupt_Isr Interrupt_Isr `II(v  1 e 1 0 ]
 {
-"159
+"363
 [v Interrupt_Isr@RxNum RxNum `uc  1 s 1 RxNum ]
-"188
+"394
 } 0
-"34
+"314
+[v _uart_send_string uart_send_string `(v  1 e 1 0 ]
+{
+[v uart_send_string@str str `*.24uc  1 a 1 wreg ]
+[v uart_send_string@str str `*.24uc  1 a 1 wreg ]
+[v uart_send_string@str str `*.24uc  1 a 1 1 ]
+"320
+} 0
+"322
+[v _uart_send_number uart_send_number `(v  1 e 1 0 ]
+{
+"324
+[v uart_send_number@buf buf `[6]uc  1 a 6 0 ]
+"326
+[v uart_send_number@j j `uc  1 a 1 7 ]
+"325
+[v uart_send_number@i i `uc  1 a 1 6 ]
+"322
+[v uart_send_number@num num `ui  1 p 2 7 ]
+"323
+[v uart_send_number@F1331 F1331 `[6]uc  1 s 6 F1331 ]
+"346
+} 0
+"308
+[v _uart_send_char uart_send_char `(v  1 e 1 0 ]
+{
+[v uart_send_char@c c `uc  1 a 1 wreg ]
+[v uart_send_char@c c `uc  1 a 1 wreg ]
+[v uart_send_char@c c `uc  1 a 1 0 ]
+"312
+} 0
+"6 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwmod.c
+[v ___lwmod __lwmod `(ui  1 e 2 0 ]
+{
+"11
+[v ___lwmod@counter counter `uc  1 a 1 4 ]
+"6
+[v ___lwmod@divisor divisor `ui  1 p 2 0 ]
+[v ___lwmod@dividend dividend `ui  1 p 2 2 ]
+"26
+} 0
+"6 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwdiv.c
+[v ___lwdiv __lwdiv `(ui  1 e 2 0 ]
+{
+"11
+[v ___lwdiv@quotient quotient `ui  1 a 2 5 ]
+"12
+[v ___lwdiv@counter counter `uc  1 a 1 4 ]
+"6
+[v ___lwdiv@divisor divisor `ui  1 p 2 0 ]
+[v ___lwdiv@dividend dividend `ui  1 p 2 2 ]
+"31
+} 0
+"49 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c
 [v _control_test_io control_test_io `(v  1 e 1 0 ]
 {
 [v control_test_io@flag flag `ui  1 p 2 0 ]
-"44
+"59
 } 0
-"29
+"44
 [v _test_io_low test_io_low `(v  1 e 1 0 ]
 {
-"32
+"47
 } 0
-"24
+"39
 [v _test_io_high test_io_high `(v  1 e 1 0 ]
 {
-"27
+"42
 } 0
