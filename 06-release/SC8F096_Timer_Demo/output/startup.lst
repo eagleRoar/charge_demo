@@ -1,7 +1,7 @@
 
 
 Microchip Technology PIC Macro Assembler V1.45 build -152302408 
-                                                                                                           Mon May 25 20:21:49 2026
+                                                                                                           Mon Jun 01 14:59:16 2026
 
 
      1                           
@@ -14,8 +14,8 @@ Microchip Technology PIC Macro Assembler V1.45 build -152302408
      8                           	; Compiler options:
      9                           	;
     10                           	; -oSC8P096_timer_C.cof -mSC8P096_timer_C.map \
-    11                           	; --summary=default,-psect,-class --fill=0xFFFF --output=intel \
-    12                           	; SC8P096_Timer0_C.p1 --chip=SC8F096 -P --runtime=default, \
+    11                           	; --summary=default,-psect,-class --fill=0xFFFF --output=intel main.p1 \
+    12                           	; --chip=SC8F096 -P --runtime=default, \
     13                           	; --opt=-local,-asmfile,+asm,-speed,+space,-debug -E+cmscerr.err \
     14                           	; -D__DEBUG=1 -g --asmlist --warn=-9 --stack=compiled:auto:auto:auto \
     15                           	; --addrqual=request --mode=pro --errformat=Error[%n]:	%f	µÚ%lÐÐ	%s \
@@ -86,9 +86,9 @@ Microchip Technology PIC Macro Assembler V1.45 build -152302408
 
 
 Microchip Technology PIC Macro Assembler V1.45 build -152302408 
-Symbol Table                                                                                               Mon May 25 20:21:49 2026
+Symbol Table                                                                                               Mon Jun 01 14:59:16 2026
 
-               ___sp 0000                 _main 03D1                 start 0012               stackhi 0000  
+               ___sp 0000                 _main 0C14                 start 0012               stackhi 0000  
              stacklo 0000  start_initialization 0015             ___int_sp 0000             intlevel0 0000  
            intlevel1 0000             intlevel2 0000             intlevel3 0000             intlevel4 0000  
            intlevel5 0000             reset_vec 0000  

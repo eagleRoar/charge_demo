@@ -7,7 +7,9 @@ RuntimeValue=
 WarningValue=-9
 config=FFFF,FFEF,FFFF,FFFF,
 [FILE]
-SourceFile=SC8P096_Timer0_C.c
-OtherFile=SC8P096_OSC_Timer2_C.c
-OtherFile=SC8P096_Timer0_C.c
-OtherFile=SC8P096_Timer2_C.c
+SourceFile=main.c
+OtherFile=config.h
+OtherFile=adc_drv.c
+OtherFile=charge_mgr.c
+OtherFile=led.c
+OtherFile=uart_dbg.c

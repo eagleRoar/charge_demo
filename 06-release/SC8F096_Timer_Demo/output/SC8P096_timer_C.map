@@ -5,8 +5,8 @@ Linker command line:
 -W-9 \
   --edf=D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\dat\en_msgs.txt \
   -cs -h+SC8P096_timer_C.sym --cmf=SC8P096_timer_C.cmf -z -QSC8F096 \
-  -oC:\Users\YQ23405\AppData\Local\Temp\skao.2 -MSC8P096_timer_C.map -E1 \
-  -ver=XC8 -ASTACK=0120h-016fh -pstack=STACK -ACODE=00h-07FFhx4 \
+  -oC:\Users\YQ23405\AppData\Local\Temp\s3b4.2 -MSC8P096_timer_C.map -E1 \
+  -ver=XC8 -ASTACK=0B0h-0efh -pstack=STACK -ACODE=00h-07FFhx4 \
   -ASTRCODE=00h-01FFFh -ASTRING=00h-0FFhx32 -ACONST=00h-0FFhx32 \
   -AENTRY=00h-0FFhx32 -ACOMMON=070h-07Fh -ABANK0=020h-06Fh \
   -ABANK1=0A0h-0EFh -ABANK2=0120h-016Fh -ABANK3=01A0h-01EFh \
@@ -28,59 +28,79 @@ Machine type is SC8F096
 startup.obj     end_init                             12       12        3        8       0
                 reset_vec                             0        0        3        0       0
 SC8P096_timer_C.obj
-                cinit                                15       15       24        8       0
+                cinit                                15       15       23        8       0
                 intentry                              4        4        E        8       0
-                text9                               2AB      2AB      126        8       0
-                text8                               442      442        8      884       0
-                text2                                39       39      272        8       0
-                text1                               44A      44A        7      884       0
-                maintext                            3D1      3D1       5D        8       0
-                cstackBANK0                          20       20       35       20       1
-                cstackCOMMON                         70       70        D       70       1
-                bssBANK1                             A0       A0        A       A0       1
-                dataBANK0                            61       61        6       20       1
-                bssBANK0                             55       55        C       20       1
-                bitbssBANK0                         338       67        1       20       1     8
-                strings                             42E      42E       14      85C       0
+                text25                              416      416      195        8       0
+                text24                              DD3      DD3      111     1BA6       0
+                text15                              6F7      6F7       F6        8       0
+                text11                              5AB      5AB      14C        8       0
+                text10                              C3E      C3E       3C     187C       0
+                text8                               C7A      C7A       4D     18F4       0
+                text6                               D29      D29       AA     1A52       0
+                text5                               CC7      CC7       62     198E       0
+                text3                                38       38      3DE        8       0
+                text1                               EE4      EE4      11C     1DC8       0
+                maintext                            C14      C14       2A     1828       0
+                cstackBANK0                          20       20       23       20       1
+                cstackCOMMON                         70       70        E       70       1
+                cstackBANK1                          A0       A0        E       A0       1
+                clrtext                             7ED      7ED        8        8       0
+                bssBANK2                            120      120       48      120       1
+                bssBANK3                            1A0      1A0       48      1A0       1
+                bssBANK1                             AE       AE        2       A0       1
+                dataBANK0                            5A       5A        1       20       1
+                bssBANK0                             43       43       16       20       1
+                bitbssBANK0                         2C8       59        1       20       1     8
+                strings                             800      800       93     1000       0
 
 TOTAL           Name                               Link     Load   Length     Space
         CLASS   STACK          
 
         CLASS   CODE           
                 end_init                             12       12        3         0
-                cinit                                15       15       24         0
+                cinit                                15       15       23         0
                 intentry                              4        4        E         0
                 reset_vec                             0        0        3         0
-                text9                               2AB      2AB      126         0
-                text8                               442      442        8         0
-                text2                                39       39      272         0
-                text1                               44A      44A        7         0
-                maintext                            3D1      3D1       5D         0
+                text25                              416      416      195         0
+                text24                              DD3      DD3      111         0
+                text15                              6F7      6F7       F6         0
+                text11                              5AB      5AB      14C         0
+                text10                              C3E      C3E       3C         0
+                text8                               C7A      C7A       4D         0
+                text6                               D29      D29       AA         0
+                text5                               CC7      CC7       62         0
+                text3                                38       38      3DE         0
+                text1                               EE4      EE4      11C         0
+                maintext                            C14      C14       2A         0
+                clrtext                             7ED      7ED        8         0
 
         CLASS   STRCODE        
 
         CLASS   STRING         
-                strings                             42E      42E       14         0
+                strings                             800      800       93         0
 
         CLASS   CONST          
 
         CLASS   ENTRY          
 
         CLASS   COMMON         
-                cstackCOMMON                         70       70        D         1
+                cstackCOMMON                         70       70        E         1
 
         CLASS   BANK0          
-                cstackBANK0                          20       20       35         1
-                dataBANK0                            61       61        6         1
-                bssBANK0                             55       55        C         1
-                bitbssBANK0                         338       67        1         1
+                cstackBANK0                          20       20       23         1
+                dataBANK0                            5A       5A        1         1
+                bssBANK0                             43       43       16         1
+                bitbssBANK0                         2C8       59        1         1
 
         CLASS   BANK1          
-                bssBANK1                             A0       A0        A         1
+                cstackBANK1                          A0       A0        E         1
+                bssBANK1                             AE       AE        2         1
 
         CLASS   BANK2          
+                bssBANK2                            120      120       48         1
 
         CLASS   BANK3          
+                bssBANK3                            1A0      1A0       48         1
 
         CLASS   RAM            
 
@@ -106,339 +126,521 @@ TOTAL           Name                               Link     Load   Length     Sp
 SEGMENTS        Name                           Load    Length   Top    Selector   Space  Class     Delta
 
                 reset_vec                      000000  000003  000003         0       0  CODE        2
-                intentry                       000004  00042A  00042E         8       0  CODE        2
-                cstackBANK0                    000020  000048  000068        20       1  BANK0       1
-                cstackCOMMON                   000070  00000D  00007D        70       1  COMMON      1
-                bssBANK1                       0000A0  00000A  0000AA        A0       1  BANK1       1
-                strings                        00042E  000014  000442       85C       0  STRING      2
-                text8                          000442  00000F  000451       884       0  CODE        2
+                intentry                       000004  0007F1  0007F5         8       0  CODE        2
+                cstackBANK0                    000020  00003B  00005B        20       1  BANK0       1
+                cstackCOMMON                   000070  00000E  00007E        70       1  COMMON      1
+                cstackBANK1                    0000A0  000010  0000B0        A0       1  BANK1       1
+                bssBANK2                       000120  000048  000168       120       1  BANK2       1
+                bssBANK3                       0001A0  000048  0001E8       1A0       1  BANK3       1
+                strings                        000800  000093  000893      1000       0  STRING      2
+                maintext                       000C14  00002A  000C3E      1828       0  CODE        2
+                text10                         000C3E  00003C  000C7A      187C       0  CODE        2
+                text8                          000C7A  00004D  000CC7      18F4       0  CODE        2
+                text5                          000CC7  000062  000D29      198E       0  CODE        2
+                text6                          000D29  0000AA  000DD3      1A52       0  CODE        2
+                text24                         000DD3  000111  000EE4      1BA6       0  CODE        2
+                text1                          000EE4  00011C  001000      1DC8       0  CODE        2
 
 
 UNUSED ADDRESS RANGES
 
         Name                Unused          Largest block    Delta
-        BANK0            068-06F             8           1
-        BANK1            0AA-0EF            46           1
-        BANK2            120-16F            50           1
-        BANK3            1A0-1EF            50           1
-        CODE             003-003             1           2
-                         451-1FFF           800
-        COMMON           07D-07D             1           1
-        CONFIG           2007-2008             2           2
-        CONST            003-003             1           2
-                         451-1FFF           100
-        ENTRY            003-003             1           2
-                         451-1FFF           100
-        IDLOC            2000-2003             4           2
-        RAM              068-06F             8           1
-                         0AA-0EF            46
-                         120-16F            50
-                         1A0-1EF            50
-        SFR0             000-01F            20           1
-        SFR1             080-09F            20           1
-        SFR2             100-11F            20           1
-        SFR3             180-19F            20           1
-        STACK            120-16F            50           1
-        STRCODE          003-003             1           2
-                         451-1FFF          1BAF
-        STRING           003-003             1           2
-                         451-1FFF           100
+        BANK0            005B-006F             15           1
+        BANK1            00B0-00EF             40           1
+        BANK2            0168-016F              8           1
+        BANK3            01E8-01EF              8           1
+        CODE             0003-0003              1           2
+                         07F5-07FF              B
+                         0893-0C13            381
+                         1000-1FFF            800
+        CONFIG           2007-2008              2           2
+        CONST            0003-0003              1           2
+                         07F5-07FF              B
+                         0893-0C13            100
+                         1000-1FFF            100
+        ENTRY            0003-0003              1           2
+                         07F5-07FF              B
+                         0893-0C13            100
+                         1000-1FFF            100
+        IDLOC            2000-2003              4           2
+        RAM              005B-006F             15           1
+                         00B0-00EF             40
+                         0168-016F              8
+                         01E8-01EF              8
+        SFR0             0000-001F             20           1
+        SFR1             0080-009F             20           1
+        SFR2             0100-011F             20           1
+        SFR3             0180-019F             20           1
+        STACK            00B0-00EF             40           1
+        STRCODE          0003-0003              1           2
+                         07F5-07FF              B
+                         0893-0C13            381
+                         1000-1FFF           1000
+        STRING           0003-0003              1           2
+                         07F5-07FF              B
+                         0893-0C13            100
+                         1000-1FFF            100
 
                                   Symbol Table
 
-?___ftdiv                  cstackBANK0  033
-?___ftpack                 cstackBANK0  028
-?___fttol                  cstackBANK0  042
-?___lwdiv                  cstackCOMMON 070
-?___lwmod                  cstackCOMMON 070
-?___lwtoft                 cstackBANK0  030
-ADC_Sample@ad_temp         cstackBANK0  038
-ADC_Sample@adch            cstackBANK0  02E
-ADC_Sample@adldo           cstackBANK0  028
-ADC_Sample@admax           cstackBANK0  036
-ADC_Sample@admin           cstackBANK0  034
-ADC_Sample@adsum           cstackBANK0  030
-ADC_Sample@i               cstackBANK0  02F
-ADC_Sample@j               cstackBANK0  02D
-Adc_Test@power_temp        cstackBANK0  050
-Interrupt_Isr@RxNum        bssBANK0     05D
-PL2                        text2        28C
-PL4                        text2        29B
-PL6                        text2        2A4
-_ADCON0                    (abs)        095
-_ADCON1                    (abs)        096
-_ADC_Sample                text2        092
-_ADRESH                    (abs)        099
-_ADRESL                    (abs)        098
-_AD_Init                   text8        442
-_ANSEL1                    (abs)        094
-_Adc_Test                  text2        039
-_CC0CON                    (abs)        195
-_CC1CON                    (abs)        196
-_CHS4                      (abs)        4B6
-_GIE                       (abs)        05F
-_GODONE                    (abs)        4A9
-_IOCA                      (abs)        089
-_IOCB                      (abs)        009
-_Interrupt_Isr             text9        2AB
-_LDO_EN                    (abs)        4B2
-_OPTION_REG                (abs)        001
-_OSCCON                    (abs)        014
-_PEIE                      (abs)        05E
-_PORTA                     (abs)        086
-_PORTB                     (abs)        006
-_RC1IE                     (abs)        880
-_RC1IF                     (abs)        878
-_RCREG1                    (abs)        188
-_RCSTA1                    (abs)        186
-_RXOK_f                    bitbssBANK0  338
-_RxTable                   bssBANK1     0A0
-_SPBRG1                    (abs)        189
-_T0IE                      (abs)        05D
-_T0IF                      (abs)        05A
-_TMR0                      (abs)        081
-_TRISA                     (abs)        085
-_TRISB                     (abs)        005
-_TRISB7                    (abs)        02F
-_TRMT1                     (abs)        C29
-_TXREG1                    (abs)        187
-_TXSTA1                    (abs)        185
-_WPDA                      (abs)        087
-_WPDB                      (abs)        007
-_WPUA                      (abs)        088
-_WPUB                      (abs)        008
-__Habs1                    abs1         000
-__Hbank0                   bank0        000
-__Hbank1                   bank1        000
-__Hbank2                   bank2        000
-__Hbank3                   bank3        000
-__HbitbssBANK0             bitbssBANK0  000
-__HbssBANK0                bssBANK0     000
-__HbssBANK1                bssBANK1     000
-__Hcinit                   cinit        039
-__Hclrtext                 clrtext      000
-__Hcode                    code         000
-__Hcommon                  common       000
-__Hconfig                  config       000
-__HcstackBANK0             cstackBANK0  000
-__HcstackCOMMON            cstackCOMMON 000
-__HdataBANK0               dataBANK0    000
-__Heeprom_data             eeprom_data  000
-__Hend_init                end_init     015
-__Hfunctab                 functab      000
-__HidataBANK0              idataBANK0   000
-__Hidloc                   idloc        000
-__Hinit                    init         012
-__Hintentry                intentry     012
-__Hmaintext                maintext     000
-__Hpa_nodes0               pa_nodes0    000
-__Hpowerup                 powerup      000
-__Hram                     ram          000
-__Hreset_vec               reset_vec    003
-__Hsfr0                    sfr0         000
-__Hsfr1                    sfr1         000
-__Hsfr2                    sfr2         000
-__Hsfr3                    sfr3         000
-__Hspace_0                 (abs)        451
-__Hspace_1                 (abs)        339
-__Hspace_2                 (abs)        000
-__Hspace_3                 (abs)        000
-__Hstack                   stack        000
-__Hstrings                 strings      000
-__Htext                    text         000
-__Labs1                    abs1         000
-__Lbank0                   bank0        000
-__Lbank1                   bank1        000
-__Lbank2                   bank2        000
-__Lbank3                   bank3        000
-__LbitbssBANK0             bitbssBANK0  000
-__LbssBANK0                bssBANK0     000
-__LbssBANK1                bssBANK1     000
-__Lcinit                   cinit        015
-__Lclrtext                 clrtext      000
-__Lcode                    code         000
-__Lcommon                  common       000
-__Lconfig                  config       000
-__LcstackBANK0             cstackBANK0  000
-__LcstackCOMMON            cstackCOMMON 000
-__LdataBANK0               dataBANK0    000
-__Leeprom_data             eeprom_data  000
-__Lend_init                end_init     012
-__Lfunctab                 functab      000
-__LidataBANK0              idataBANK0   000
-__Lidloc                   idloc        000
-__Linit                    init         012
-__Lintentry                intentry     004
-__Lmaintext                maintext     000
-__Lpa_nodes0               pa_nodes0    000
-__Lpowerup                 powerup      000
-__Lram                     ram          000
-__Lreset_vec               reset_vec    000
-__Lsfr0                    sfr0         000
-__Lsfr1                    sfr1         000
-__Lsfr2                    sfr2         000
-__Lsfr3                    sfr3         000
-__Lspace_0                 (abs)        000
-__Lspace_1                 (abs)        000
-__Lspace_2                 (abs)        000
-__Lspace_3                 (abs)        000
-__Lstack                   stack        000
-__Lstrings                 strings      000
-__Ltext                    text         000
-__S0                       (abs)        451
-__S1                       (abs)        0AA
-__S2                       (abs)        000
-___ftdiv                   text2        177
-___ftdiv@cntr              cstackBANK0  03C
-___ftdiv@exp               cstackBANK0  040
-___ftdiv@f1                cstackBANK0  036
-___ftdiv@f2                cstackBANK0  033
-___ftdiv@f3                cstackBANK0  03D
-___ftdiv@sign              cstackBANK0  041
-___ftpack                  text2        1EF
-___ftpack@arg              cstackBANK0  028
-___ftpack@exp              cstackBANK0  02B
-___ftpack@sign             cstackBANK0  02C
-___fttol                   text2        231
-___fttol@exp1              cstackBANK0  04E
-___fttol@f1                cstackBANK0  042
-___fttol@lval              cstackBANK0  04A
-___fttol@sign1             cstackBANK0  049
-___int_sp                  stack        000
-___latbits                 (abs)        002
-___lwdiv                   text9        37D
-___lwdiv@counter           cstackCOMMON 074
-___lwdiv@dividend          cstackCOMMON 072
-___lwdiv@divisor           cstackCOMMON 070
-___lwdiv@quotient          cstackCOMMON 075
-___lwmod                   text9        3A7
-___lwmod@counter           cstackCOMMON 074
-___lwmod@dividend          cstackCOMMON 072
-___lwmod@divisor           cstackCOMMON 070
-___lwtoft                  text2        1DF
-___lwtoft@c                cstackBANK0  030
-___sp                      stack        000
-__end_ofPL2                text2        29B
-__end_ofPL4                text2        2A4
-__end_ofPL6                text2        2AB
-__end_of_ADC_Sample        text2        177
-__end_of_AD_Init           text8        44A
-__end_of_Adc_Test          text2        092
-__end_of_Interrupt_Isr     text9        308
-__end_of___ftdiv           text2        1DF
-__end_of___ftpack          text2        231
-__end_of___fttol           text2        28C
-__end_of___lwdiv           text9        3A7
-__end_of___lwmod           text9        3CB
-__end_of___lwtoft          text2        1EF
-__end_of__initialization   cinit        035
-__end_of__stringtab        strings      434
-__end_of_control_test_io   text9        325
-__end_of_gpio_init         text1        451
-__end_of_main              maintext     42E
-__end_of_test_io_high      text9        3CE
-__end_of_test_io_low       text9        3D1
-__end_of_uart_send_char    text9        32D
-__end_of_uart_send_number  text9        37D
-__end_of_uart_send_string  text9        31F
-__initialization           cinit        015
-__pbitbssBANK0             bitbssBANK0  338
-__pbssBANK0                bssBANK0     055
-__pbssBANK1                bssBANK1     0A0
-__pcstackBANK0             cstackBANK0  020
-__pcstackCOMMON            cstackCOMMON 070
-__pdataBANK0               dataBANK0    061
-__pidataBANK0              idataBANK0   000
-__pintentry                intentry     004
-__pmaintext                maintext     3D1
-__pstrings                 strings      42E
-__ptext1                   text1        44A
-__ptext10                  text9        308
-__ptext11                  text9        32D
-__ptext12                  text9        325
-__ptext13                  text9        3A7
-__ptext14                  text9        37D
-__ptext15                  text9        31F
-__ptext16                  text9        3CE
-__ptext17                  text9        3CB
-__ptext2                   text2        039
-__ptext3                   text2        1DF
-__ptext4                   text2        231
-__ptext5                   text2        177
-__ptext6                   text2        1EF
-__ptext7                   text2        092
-__ptext8                   text8        442
-__ptext9                   text9        2AB
-__size_of_ADC_Sample       (abs)        000
-__size_of_AD_Init          (abs)        000
-__size_of_Adc_Test         (abs)        000
-__size_of_Interrupt_Isr    (abs)        000
-__size_of___ftdiv          (abs)        000
-__size_of___ftpack         (abs)        000
-__size_of___fttol          (abs)        000
-__size_of___lwdiv          (abs)        000
-__size_of___lwmod          (abs)        000
-__size_of___lwtoft         (abs)        000
-__size_of_control_test_io  (abs)        000
-__size_of_gpio_init        (abs)        000
-__size_of_main             (abs)        000
-__size_of_test_io_high     (abs)        000
-__size_of_test_io_low      (abs)        000
-__size_of_uart_send_char   (abs)        000
-__size_of_uart_send_number (abs)        000
-__size_of_uart_send_string (abs)        000
-__stringbase               strings      433
-__stringtab                strings      42E
-_adresult                  bssBANK0     05F
-_control_test_io           text9        31F
-_gpio_init                 text1        44A
-_level                     bssBANK0     055
-_main                      maintext     3D1
-_power_ad                  bssBANK0     059
-_result                    bssBANK0     05B
-_test_adc                  bssBANK0     05E
-_test_io_high              text9        3CB
-_test_io_low               text9        3CE
-_timer_cnt                 bssBANK0     057
-_uart_send_char            text9        325
-_uart_send_number          text9        32D
-_uart_send_string          text9        308
-btemp                      (abs)        07E
-control_test_io@flag       cstackCOMMON 070
-end_of_initialization      cinit        035
-interrupt_function         intentry     004
-intlevel0                  functab      000
-intlevel1                  functab      000
-intlevel2                  functab      000
-intlevel3                  functab      000
-intlevel4                  functab      000
-intlevel5                  functab      000
-main@i                     cstackBANK0  054
-reset_vec                  reset_vec    000
-saved_w                    (abs)        07E
-stackhi                    (abs)        000
-stacklo                    (abs)        000
-start                      init         012
-start_initialization       cinit        015
-uart_send_char@c           cstackCOMMON 070
-uart_send_number@F1331     dataBANK0    061
-uart_send_number@buf       cstackBANK0  020
-uart_send_number@i         cstackBANK0  026
-uart_send_number@j         cstackBANK0  027
-uart_send_number@num       cstackCOMMON 077
-uart_send_string@str       cstackCOMMON 071
-wtemp0                     (abs)        07E
+?_ADC_ReadChannel            cstackCOMMON 0075
+?___ftdiv                    cstackBANK0  0020
+?___ftpack                   cstackCOMMON 0070
+?___fttol                    cstackBANK0  002C
+?___lldiv                    cstackBANK0  0020
+?___lmul                     cstackCOMMON 0070
+?___lwdiv                    cstackCOMMON 0070
+?___lwmod                    cstackCOMMON 0070
+?___lwtoft                   cstackCOMMON 0078
+ADC_ReadChannel@ch           cstackCOMMON 0078
+ADC_Sample@ad_temp           cstackBANK0  002B
+ADC_Sample@adch              cstackBANK0  0021
+ADC_Sample@adldo             cstackCOMMON 0070
+ADC_Sample@admax             cstackBANK0  0029
+ADC_Sample@admin             cstackBANK0  0027
+ADC_Sample@adsum             cstackBANK0  0023
+ADC_Sample@i                 cstackBANK0  0022
+ADC_Sample@j                 cstackBANK0  0020
+ChargeProcess_Slot@idx       cstackCOMMON 0075
+ChargeProcess_Slot@p         cstackCOMMON 007A
+ChargeProcess_Slot@v         cstackCOMMON 0078
+Charging_Control@chargeB1_6  cstackCOMMON 0074
+Charging_Control@chargeB7_12 cstackCOMMON 0075
+Charging_Control@i           cstackCOMMON 0077
+Charging_Control@s           cstackCOMMON 0076
+Detect_BatteryType@voltage   cstackCOMMON 0070
+Interrupt_Isr@RxNum          bssBANK0     0051
+Interrupt_Isr@power_temp     cstackBANK0  003F
+Led_BlinkProcess@i           cstackCOMMON 007A
+PL10                         text15       07D5
+PL12                         text3        03FC
+PL14                         text15       07E4
+PL16                         text25       05A6
+PL18                         text5        0D22
+PL2                          text25       058D
+PL20                         text3        0404
+PL22                         text3        040A
+PL24                         text3        0410
+PL26                         text8        0CC2
+PL4                          text25       059E
+PL6                          text1        0FEC
+PL8                          text1        0FF5
+Print_Status@i               cstackBANK0  002F
+Read_Temperature@ntcR        cstackBANK0  0034
+Read_Temperature@ntcVal      cstackBANK0  0031
+Read_Temperature@temp        cstackBANK0  0033
+SlotPin_ToAnalog@cfg         cstackCOMMON 0077
+SlotPin_ToAnalog@idx         cstackCOMMON 0076
+SlotPin_ToDigital@cfg        cstackCOMMON 0077
+SlotPin_ToDigital@idx        cstackCOMMON 0076
+System_Init@i                cstackBANK1  00AC
+Update_LED_Slot@idx          cstackCOMMON 0073
+Update_LED_Slot@p            cstackCOMMON 0074
+_ADCON0                      (abs)        0095
+_ADCON1                      (abs)        0096
+_ADC_ReadChannel             text3        03CD
+_ADC_Sample                  text15       06F7
+_ADRESH                      (abs)        0099
+_ADRESL                      (abs)        0098
+_ANSEL0                      (abs)        0093
+_ANSEL1                      (abs)        0094
+_ANSEL2                      (abs)        0109
+_ANSEL3                      (abs)        008C
+_CC0CON                      (abs)        0195
+_CC1CON                      (abs)        0196
+_CHS4                        (abs)        04B6
+_ChargeProcess_Slot          text25       0416
+_Charging_Control            text24       0DD3
+_Charging_Control$443        cstackCOMMON 0073
+_Detect_BatteryType          text25       0554
+_GIE                         (abs)        005F
+_GODONE                      (abs)        04A9
+_IOCA                        (abs)        0089
+_IOCB                        (abs)        0009
+_Interrupt_Isr               text3        0038
+_Interrupt_Isr$382           cstackBANK0  003E
+_LDO_EN                      (abs)        04B2
+_Led_BlinkProcess            text3        0172
+_Led_BlinkProcess$469        cstackCOMMON 0075
+_Led_BlinkProcess$480        cstackCOMMON 0076
+_Led_BlinkProcess$491        cstackCOMMON 0077
+_Led_BlinkProcess$502        cstackCOMMON 0078
+_Led_BlinkProcess$513        cstackCOMMON 0079
+_OPTION_REG                  (abs)        0001
+_OSCCON                      (abs)        0014
+_PEIE                        (abs)        005E
+_PORTA                       (abs)        0086
+_PORTB                       (abs)        0006
+_PORTC                       (abs)        0106
+_PORTD                       (abs)        0107
+_PowerOnLedSequence          text3        03A0
+_Print_Status                text3        01EF
+_Print_Status$546            cstackBANK0  0028
+_Print_Status$558            cstackBANK0  0029
+_Print_Status$570            cstackBANK0  002A
+_Print_Status$581            cstackBANK0  002B
+_Print_Status$593            cstackBANK0  002C
+_Print_Status$615            cstackBANK0  002D
+_Print_Status$616            cstackBANK0  002E
+_RA0                         (abs)        0430
+_RA1                         (abs)        0431
+_RA2                         (abs)        0432
+_RA3                         (abs)        0433
+_RA4                         (abs)        0434
+_RA5                         (abs)        0435
+_RA6                         (abs)        0436
+_RA7                         (abs)        0437
+_RB0                         (abs)        0030
+_RB1                         (abs)        0031
+_RB2                         (abs)        0032
+_RB3                         (abs)        0033
+_RC0                         (abs)        0830
+_RC1IE                       (abs)        0880
+_RC1IF                       (abs)        0878
+_RC4                         (abs)        0834
+_RC5                         (abs)        0835
+_RCREG1                      (abs)        0188
+_RCSTA1                      (abs)        0186
+_RD0                         (abs)        0838
+_RD1                         (abs)        0839
+_RD2                         (abs)        083A
+_RD3                         (abs)        083B
+_RXOK_f                      bitbssBANK0  02C8
+_Read_Temperature            text11       05AB
+_RxTable                     bssBANK0     0043
+_SPBRG1                      (abs)        0189
+_SlotPin_ToAnalog            text10       0C3E
+_SlotPin_ToDigital           text3        0138
+_System_Init                 text1        0EE4
+_System_Init$269             cstackBANK1  00A3
+_System_Init$280             cstackBANK1  00A4
+_System_Init$291             cstackBANK1  00A5
+_System_Init$302             cstackBANK1  00A6
+_System_Init$313             cstackBANK1  00A7
+_System_Init$324             cstackBANK1  00A8
+_System_Init$335             cstackBANK1  00A9
+_System_Init$346             cstackBANK1  00AA
+_System_Init$357             cstackBANK1  00AB
+_T0IE                        (abs)        005D
+_T0IF                        (abs)        005A
+_TMR0                        (abs)        0081
+_TRISA                       (abs)        0085
+_TRISB                       (abs)        0005
+_TRISC                       (abs)        0105
+_TRISD                       (abs)        0114
+_TRMT1                       (abs)        0C29
+_TXREG1                      (abs)        0187
+_TXSTA1                      (abs)        0185
+_Update_LED_Slot             text8        0C7A
+_WPDA                        (abs)        0087
+_WPDB                        (abs)        0007
+_WPUA                        (abs)        0088
+_WPUB                        (abs)        0008
+_WPUC                        (abs)        0108
+_WPUD                        (abs)        0115
+__Habs1                      abs1         0000
+__Hbank0                     bank0        0000
+__Hbank1                     bank1        0000
+__Hbank2                     bank2        0000
+__Hbank3                     bank3        0000
+__HbitbssBANK0               bitbssBANK0  0000
+__HbssBANK0                  bssBANK0     0000
+__HbssBANK1                  bssBANK1     0000
+__HbssBANK2                  bssBANK2     0000
+__HbssBANK3                  bssBANK3     0000
+__Hcinit                     cinit        0038
+__Hclrtext                   clrtext      0000
+__Hcode                      code         0000
+__Hcommon                    common       0000
+__Hconfig                    config       0000
+__HcstackBANK0               cstackBANK0  0000
+__HcstackBANK1               cstackBANK1  0000
+__HcstackCOMMON              cstackCOMMON 0000
+__HdataBANK0                 dataBANK0    0000
+__Heeprom_data               eeprom_data  0000
+__Hend_init                  end_init     0015
+__Hfunctab                   functab      0000
+__HidataBANK0                idataBANK0   0000
+__Hidloc                     idloc        0000
+__Hinit                      init         0012
+__Hintentry                  intentry     0012
+__Hmaintext                  maintext     0000
+__Hpa_nodes0                 pa_nodes0    0000
+__Hpowerup                   powerup      0000
+__Hram                       ram          0000
+__Hreset_vec                 reset_vec    0003
+__Hsfr0                      sfr0         0000
+__Hsfr1                      sfr1         0000
+__Hsfr2                      sfr2         0000
+__Hsfr3                      sfr3         0000
+__Hspace_0                   (abs)        1000
+__Hspace_1                   (abs)        02C9
+__Hspace_2                   (abs)        0000
+__Hspace_3                   (abs)        0000
+__Hstack                     stack        0000
+__Hstrings                   strings      0000
+__Htext                      text         0000
+__Labs1                      abs1         0000
+__Lbank0                     bank0        0000
+__Lbank1                     bank1        0000
+__Lbank2                     bank2        0000
+__Lbank3                     bank3        0000
+__LbitbssBANK0               bitbssBANK0  0000
+__LbssBANK0                  bssBANK0     0000
+__LbssBANK1                  bssBANK1     0000
+__LbssBANK2                  bssBANK2     0000
+__LbssBANK3                  bssBANK3     0000
+__Lcinit                     cinit        0015
+__Lclrtext                   clrtext      0000
+__Lcode                      code         0000
+__Lcommon                    common       0000
+__Lconfig                    config       0000
+__LcstackBANK0               cstackBANK0  0000
+__LcstackBANK1               cstackBANK1  0000
+__LcstackCOMMON              cstackCOMMON 0000
+__LdataBANK0                 dataBANK0    0000
+__Leeprom_data               eeprom_data  0000
+__Lend_init                  end_init     0012
+__Lfunctab                   functab      0000
+__LidataBANK0                idataBANK0   0000
+__Lidloc                     idloc        0000
+__Linit                      init         0012
+__Lintentry                  intentry     0004
+__Lmaintext                  maintext     0000
+__Lpa_nodes0                 pa_nodes0    0000
+__Lpowerup                   powerup      0000
+__Lram                       ram          0000
+__Lreset_vec                 reset_vec    0000
+__Lsfr0                      sfr0         0000
+__Lsfr1                      sfr1         0000
+__Lsfr2                      sfr2         0000
+__Lsfr3                      sfr3         0000
+__Lspace_0                   (abs)        0000
+__Lspace_1                   (abs)        0000
+__Lspace_2                   (abs)        0000
+__Lspace_3                   (abs)        0000
+__Lstack                     stack        0000
+__Lstrings                   strings      0000
+__Ltext                      text         0000
+__S0                         (abs)        1000
+__S1                         (abs)        01E8
+__S2                         (abs)        0000
+___bmul                      text1        0FDE
+___bmul@multiplicand         cstackBANK1  00A0
+___bmul@multiplier           cstackBANK1  00A2
+___bmul@product              cstackBANK1  00A1
+___ftdiv                     text6        0D29
+___ftdiv@cntr                cstackBANK0  0026
+___ftdiv@exp                 cstackBANK0  002A
+___ftdiv@f1                  cstackBANK0  0023
+___ftdiv@f2                  cstackBANK0  0020
+___ftdiv@f3                  cstackBANK0  0027
+___ftdiv@sign                cstackBANK0  002B
+___ftpack                    text6        0D91
+___ftpack@arg                cstackCOMMON 0070
+___ftpack@exp                cstackCOMMON 0073
+___ftpack@sign               cstackCOMMON 0074
+___fttol                     text5        0CC7
+___fttol@exp1                cstackBANK0  0038
+___fttol@f1                  cstackBANK0  002C
+___fttol@lval                cstackBANK0  0034
+___fttol@sign1               cstackBANK0  0033
+___int_sp                    stack        0000
+___latbits                   (abs)        0002
+___lldiv                     text11       067C
+___lldiv@counter             cstackBANK0  002C
+___lldiv@dividend            cstackBANK0  0024
+___lldiv@divisor             cstackBANK0  0020
+___lldiv@quotient            cstackBANK0  0028
+___lmul                      text11       06C4
+___lmul@multiplicand         cstackCOMMON 0074
+___lmul@multiplier           cstackCOMMON 0070
+___lmul@product              cstackCOMMON 0078
+___lwdiv                     text3        0352
+___lwdiv@counter             cstackCOMMON 0076
+___lwdiv@dividend            cstackCOMMON 0072
+___lwdiv@divisor             cstackCOMMON 0070
+___lwdiv@quotient            cstackCOMMON 0074
+___lwmod                     text3        037C
+___lwmod@counter             cstackCOMMON 0074
+___lwmod@dividend            cstackCOMMON 0072
+___lwmod@divisor             cstackCOMMON 0070
+___lwtoft                    text3        03EA
+___lwtoft@c                  cstackCOMMON 0078
+___sp                        stack        0000
+__end_ofPL10                 text15       07E4
+__end_ofPL12                 text3        0404
+__end_ofPL14                 text15       07ED
+__end_ofPL16                 text25       05AB
+__end_ofPL18                 text5        0D29
+__end_ofPL2                  text25       059E
+__end_ofPL20                 text3        040A
+__end_ofPL22                 text3        0410
+__end_ofPL24                 text3        0416
+__end_ofPL26                 text8        0CC7
+__end_ofPL4                  text25       05A6
+__end_ofPL6                  text1        0FF5
+__end_ofPL8                  text1        1000
+__end_of_ADC_ReadChannel     text3        03EA
+__end_of_ADC_Sample          text15       07D5
+__end_of_ChargeProcess_Slot  text25       0554
+__end_of_Charging_Control    text24       0EE4
+__end_of_Detect_BatteryType  text25       058D
+__end_of_Interrupt_Isr       text3        0138
+__end_of_Led_BlinkProcess    text3        01EF
+__end_of_PowerOnLedSequence  text3        03CD
+__end_of_Print_Status        text3        02E9
+__end_of_Read_Temperature    text11       067C
+__end_of_SlotPin_ToAnalog    text10       0C7A
+__end_of_SlotPin_ToDigital   text3        0172
+__end_of_System_Init         text1        0FDE
+__end_of_Update_LED_Slot     text8        0CC2
+__end_of___bmul              text1        0FEC
+__end_of___ftdiv             text6        0D91
+__end_of___ftpack            text6        0DD3
+__end_of___fttol             text5        0D22
+__end_of___lldiv             text11       06C4
+__end_of___lmul              text11       06F7
+__end_of___lwdiv             text3        037C
+__end_of___lwmod             text3        03A0
+__end_of___lwtoft            text3        03FC
+__end_of__initialization     cinit        0034
+__end_of__stringtab          strings      0806
+__end_of_main                maintext     0C3E
+__end_of_s_adcChannels       strings      0812
+__end_of_s_slotPins          strings      0866
+__end_of_uart_send_char      text3        0352
+__end_of_uart_send_number    text3        034A
+__end_of_uart_send_string    text3        030E
+__end_ofi1___bmul            text3        02F7
+__initialization             cinit        0015
+__pbitbssBANK0               bitbssBANK0  02C8
+__pbssBANK0                  bssBANK0     0043
+__pbssBANK1                  bssBANK1     00AE
+__pbssBANK2                  bssBANK2     0120
+__pbssBANK3                  bssBANK3     01A0
+__pcstackBANK0               cstackBANK0  0020
+__pcstackBANK1               cstackBANK1  00A0
+__pcstackCOMMON              cstackCOMMON 0070
+__pdataBANK0                 dataBANK0    005A
+__pidataBANK0                idataBANK0   0000
+__pintentry                  intentry     0004
+__pmaintext                  maintext     0C14
+__pstrings                   strings      0800
+__ptext1                     text1        0EE4
+__ptext10                    text10       0C3E
+__ptext11                    text11       05AB
+__ptext12                    text11       06C4
+__ptext13                    text11       067C
+__ptext14                    text3        03CD
+__ptext15                    text15       06F7
+__ptext16                    text3        01EF
+__ptext17                    text3        02F7
+__ptext18                    text3        030E
+__ptext19                    text3        034A
+__ptext2                     text1        0FDE
+__ptext20                    text3        037C
+__ptext21                    text3        0352
+__ptext22                    text3        03A0
+__ptext23                    text3        0172
+__ptext24                    text24       0DD3
+__ptext25                    text25       0416
+__ptext26                    text3        02E9
+__ptext27                    text25       0554
+__ptext3                     text3        0038
+__ptext4                     text3        03EA
+__ptext5                     text5        0CC7
+__ptext6                     text6        0D29
+__ptext7                     text6        0D91
+__ptext8                     text8        0C7A
+__ptext9                     text3        0138
+__size_of_ADC_ReadChannel    (abs)        0000
+__size_of_ADC_Sample         (abs)        0000
+__size_of_ChargeProcess_Slot (abs)        0000
+__size_of_Charging_Control   (abs)        0000
+__size_of_Detect_BatteryType (abs)        0000
+__size_of_Interrupt_Isr      (abs)        0000
+__size_of_Led_BlinkProcess   (abs)        0000
+__size_of_PowerOnLedSequence (abs)        0000
+__size_of_Print_Status       (abs)        0000
+__size_of_Read_Temperature   (abs)        0000
+__size_of_SlotPin_ToAnalog   (abs)        0000
+__size_of_SlotPin_ToDigital  (abs)        0000
+__size_of_System_Init        (abs)        0000
+__size_of_Update_LED_Slot    (abs)        0000
+__size_of___bmul             (abs)        0000
+__size_of___ftdiv            (abs)        0000
+__size_of___ftpack           (abs)        0000
+__size_of___fttol            (abs)        0000
+__size_of___lldiv            (abs)        0000
+__size_of___lmul             (abs)        0000
+__size_of___lwdiv            (abs)        0000
+__size_of___lwmod            (abs)        0000
+__size_of___lwtoft           (abs)        0000
+__size_of_main               (abs)        0000
+__size_of_uart_send_char     (abs)        0000
+__size_of_uart_send_number   (abs)        0000
+__size_of_uart_send_string   (abs)        0000
+__size_ofi1___bmul           (abs)        0000
+__stringbase                 strings      0805
+__stringtab                  strings      0800
+_adresult                    bssBANK0     0057
+_g_powerOnPhase              bssBANK0     0052
+_g_powerOnTimer              bssBANK1     00AE
+_g_scanIndex                 bssBANK0     0054
+_g_scanPhase                 bssBANK0     0053
+_g_slot0                     bssBANK3     01A0
+_g_slot1                     bssBANK2     0120
+_g_systemTick                bssBANK0     004D
+_g_tempProtect               bssBANK0     0056
+_g_temperature               dataBANK0    005A
+_main                        maintext     0C14
+_power_ad                    bssBANK0     004F
+_s_adcChannels               strings      0806
+_s_slotPins                  strings      0812
+_test_adc                    bssBANK0     0055
+_uart_send_char              text3        034A
+_uart_send_number            text3        030E
+_uart_send_string            text3        02F7
+btemp                        (abs)        007E
+clear_ram0                   clrtext      07ED
+end_of_initialization        cinit        0034
+i1___bmul                    text3        02E9
+i1___bmul@multiplicand       cstackCOMMON 0070
+i1___bmul@multiplier         cstackCOMMON 0071
+i1___bmul@product            cstackCOMMON 0072
+interrupt_function           intentry     0004
+intlevel0                    functab      0000
+intlevel1                    functab      0000
+intlevel2                    functab      0000
+intlevel3                    functab      0000
+intlevel4                    functab      0000
+intlevel5                    functab      0000
+main@i                       cstackBANK1  00AD
+reset_vec                    reset_vec    0000
+saved_w                      (abs)        007E
+stackhi                      (abs)        0000
+stacklo                      (abs)        0000
+start                        init         0012
+start_initialization         cinit        0015
+uart_send_char@c             cstackCOMMON 0070
+uart_send_number@buf         cstackBANK0  0020
+uart_send_number@i           cstackBANK0  0026
+uart_send_number@j           cstackBANK0  0027
+uart_send_number@num         cstackCOMMON 0077
+uart_send_string@str         cstackCOMMON 0071
+wtemp0                       (abs)        007E
 
 
 FUNCTION INFORMATION:
 
  *************** function _main *****************
  Defined at:
-		line 234 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+		line 133 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c"
  Parameters:    Size  Location     Type
 		None
  Auto vars:     Size  Location     Type
-  i               1   52[BANK0 ] unsigned char 
+  i               1   13[BANK1 ] unsigned char 
  Return value:  Size  Location     Type
                   1    wreg      void 
  Registers used:
@@ -449,80 +651,127 @@ FUNCTION INFORMATION:
 		Unchanged: 
  Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
       Params:         0       0       0       0       0
-      Locals:         0       1       0       0       0
+      Locals:         0       0       1       0       0
       Temps:          0       0       0       0       0
-      Totals:         0       1       0       0       0
+      Totals:         0       0       1       0       0
 Total ram usage:        1 bytes
  Hardware stack levels required when called:    6
  This function calls:
-		_AD_Init
-		_Adc_Test
-		_gpio_init
+		_System_Init
  This function is called by:
 		Startup code after reset
  This function uses a non-reentrant model
 
 
- *************** function _gpio_init *****************
+ *************** function _System_Init *****************
  Defined at:
-		line 32 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+		line 49 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c"
  Parameters:    Size  Location     Type
 		None
  Auto vars:     Size  Location     Type
-		None
+  i               1   12[BANK1 ] unsigned char 
  Return value:  Size  Location     Type
                   1    wreg      void 
  Registers used:
-		wreg
+		wreg, fsr0l, fsr0h, status,2, status,0, pclath, cstack
  Tracked objects:
 		On entry : 
 		On exit  : 
 		Unchanged: 
  Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
       Params:         0       0       0       0       0
-      Locals:         0       0       0       0       0
+      Locals:         0       0      10       0       0
       Temps:          0       0       0       0       0
-      Totals:         0       0       0       0       0
-Total ram usage:        0 bytes
+      Totals:         0       0      10       0       0
+Total ram usage:       10 bytes
  Hardware stack levels used:    1
- Hardware stack levels required when called:    3
+ Hardware stack levels required when called:    5
  This function calls:
-		Nothing
+		___bmul
  This function is called by:
 		_main
  This function uses a non-reentrant model
 
 
- *************** function _Adc_Test *****************
+ *************** function ___bmul *****************
  Defined at:
-		line 202 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+		line 4 in file "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\Umul8.c"
+ Parameters:    Size  Location     Type
+  multiplier      1    wreg     unsigned char 
+  multiplicand    1    0[BANK1 ] unsigned char 
+ Auto vars:     Size  Location     Type
+  multiplier      1    2[BANK1 ] unsigned char 
+  product         1    1[BANK1 ] unsigned char 
+ Return value:  Size  Location     Type
+                  1    wreg      unsigned char 
+ Registers used:
+		wreg, status,2, status,0
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       1       0       0
+      Locals:         0       0       2       0       0
+      Temps:          0       0       0       0       0
+      Totals:         0       0       3       0       0
+Total ram usage:        3 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    4
+ This function calls:
+		Nothing
+ This function is called by:
+		_System_Init
+		_Interrupt_Isr
+		_ChargeProcess_Slot
+		_Charging_Control
+		_Update_LED_Slot
+		_Led_BlinkProcess
+		_Print_Status
+ This function uses a non-reentrant model
+
+
+ *************** function _Interrupt_Isr *****************
+ Defined at:
+		line 161 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c"
  Parameters:    Size  Location     Type
 		None
  Auto vars:     Size  Location     Type
-  power_temp      4   48[BANK0 ] volatile unsigned long 
+  power_temp      4   31[BANK0 ] volatile unsigned long 
  Return value:  Size  Location     Type
                   1    wreg      void 
  Registers used:
-		wreg, status,2, status,0, pclath, cstack
+		wreg, fsr0l, fsr0h, status,2, status,0, btemp+1, pclath, cstack
  Tracked objects:
 		On entry : 
 		On exit  : 
 		Unchanged: 
  Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
       Params:         0       0       0       0       0
-      Locals:         0       4       0       0       0
-      Temps:          0       1       0       0       0
-      Totals:         0       5       0       0       0
-Total ram usage:        5 bytes
+      Locals:         0       5       0       0       0
+      Temps:          0       5       0       0       0
+      Totals:         0      10       0       0       0
+Total ram usage:       10 bytes
  Hardware stack levels used:    1
- Hardware stack levels required when called:    5
+ Hardware stack levels required when called:    3
  This function calls:
+		_ADC_ReadChannel
 		_ADC_Sample
+		_ChargeProcess_Slot
+		_Charging_Control
+		_Led_BlinkProcess
+		_PowerOnLedSequence
+		_Print_Status
+		_Read_Temperature
+		_SlotPin_ToAnalog
+		_SlotPin_ToDigital
+		_Update_LED_Slot
 		___ftdiv
 		___fttol
 		___lwtoft
+		i1___bmul
  This function is called by:
-		_main
+		Interrupt level 1
  This function uses a non-reentrant model
 
 
@@ -530,11 +779,11 @@ Total ram usage:        5 bytes
  Defined at:
 		line 28 in file "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwtoft.c"
  Parameters:    Size  Location     Type
-  c               2   16[BANK0 ] unsigned int 
+  c               2    8[COMMON] unsigned int 
  Auto vars:     Size  Location     Type
 		None
  Return value:  Size  Location     Type
-                  3   16[BANK0 ] float 
+                  3    8[COMMON] float 
  Registers used:
 		wreg, status,2, status,0, pclath, cstack
  Tracked objects:
@@ -542,17 +791,17 @@ Total ram usage:        5 bytes
 		On exit  : 
 		Unchanged: 
  Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
-      Params:         0       3       0       0       0
+      Params:         3       0       0       0       0
       Locals:         0       0       0       0       0
       Temps:          0       0       0       0       0
-      Totals:         0       3       0       0       0
+      Totals:         3       0       0       0       0
 Total ram usage:        3 bytes
  Hardware stack levels used:    1
- Hardware stack levels required when called:    4
+ Hardware stack levels required when called:    1
  This function calls:
 		___ftpack
  This function is called by:
-		_Adc_Test
+		_Interrupt_Isr
  This function uses a non-reentrant model
 
 
@@ -560,13 +809,13 @@ Total ram usage:        3 bytes
  Defined at:
 		line 44 in file "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\fttol.c"
  Parameters:    Size  Location     Type
-  f1              3   34[BANK0 ] float 
+  f1              3   12[BANK0 ] float 
  Auto vars:     Size  Location     Type
-  lval            4   42[BANK0 ] unsigned long 
-  exp1            1   46[BANK0 ] unsigned char 
-  sign1           1   41[BANK0 ] unsigned char 
+  lval            4   20[BANK0 ] unsigned long 
+  exp1            1   24[BANK0 ] unsigned char 
+  sign1           1   19[BANK0 ] unsigned char 
  Return value:  Size  Location     Type
-                  4   34[BANK0 ] long 
+                  4   12[BANK0 ] long 
  Registers used:
 		wreg, status,2, status,0
  Tracked objects:
@@ -580,11 +829,10 @@ Total ram usage:        3 bytes
       Totals:         0      13       0       0       0
 Total ram usage:       13 bytes
  Hardware stack levels used:    1
- Hardware stack levels required when called:    3
  This function calls:
 		Nothing
  This function is called by:
-		_Adc_Test
+		_Interrupt_Isr
  This function uses a non-reentrant model
 
 
@@ -592,15 +840,15 @@ Total ram usage:       13 bytes
  Defined at:
 		line 56 in file "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\ftdiv.c"
  Parameters:    Size  Location     Type
-  f2              3   19[BANK0 ] float 
-  f1              3   22[BANK0 ] float 
+  f2              3    0[BANK0 ] float 
+  f1              3    3[BANK0 ] float 
  Auto vars:     Size  Location     Type
-  f3              3   29[BANK0 ] float 
-  sign            1   33[BANK0 ] unsigned char 
-  exp             1   32[BANK0 ] unsigned char 
-  cntr            1   28[BANK0 ] unsigned char 
+  f3              3    7[BANK0 ] float 
+  sign            1   11[BANK0 ] unsigned char 
+  exp             1   10[BANK0 ] unsigned char 
+  cntr            1    6[BANK0 ] unsigned char 
  Return value:  Size  Location     Type
-                  3   19[BANK0 ] float 
+                  3    0[BANK0 ] float 
  Registers used:
 		wreg, status,2, status,0, pclath, cstack
  Tracked objects:
@@ -610,15 +858,15 @@ Total ram usage:       13 bytes
  Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
       Params:         0       6       0       0       0
       Locals:         0       6       0       0       0
-      Temps:          0       3       0       0       0
-      Totals:         0      15       0       0       0
+      Temps:          3       0       0       0       0
+      Totals:         3      12       0       0       0
 Total ram usage:       15 bytes
  Hardware stack levels used:    1
- Hardware stack levels required when called:    4
+ Hardware stack levels required when called:    1
  This function calls:
 		___ftpack
  This function is called by:
-		_Adc_Test
+		_Interrupt_Isr
  This function uses a non-reentrant model
 
 
@@ -626,13 +874,13 @@ Total ram usage:       15 bytes
  Defined at:
 		line 62 in file "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\float.c"
  Parameters:    Size  Location     Type
-  arg             3    8[BANK0 ] unsigned um
-  exp             1   11[BANK0 ] unsigned char 
-  sign            1   12[BANK0 ] unsigned char 
+  arg             3    0[COMMON] unsigned um
+  exp             1    3[COMMON] unsigned char 
+  sign            1    4[COMMON] unsigned char 
  Auto vars:     Size  Location     Type
 		None
  Return value:  Size  Location     Type
-                  3    8[BANK0 ] float 
+                  3    0[COMMON] float 
  Registers used:
 		wreg, status,2, status,0
  Tracked objects:
@@ -640,95 +888,29 @@ Total ram usage:       15 bytes
 		On exit  : 
 		Unchanged: 
  Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
-      Params:         0       5       0       0       0
+      Params:         5       0       0       0       0
       Locals:         0       0       0       0       0
-      Temps:          0       3       0       0       0
-      Totals:         0       8       0       0       0
+      Temps:          3       0       0       0       0
+      Totals:         8       0       0       0       0
 Total ram usage:        8 bytes
  Hardware stack levels used:    1
- Hardware stack levels required when called:    3
  This function calls:
 		Nothing
  This function is called by:
-		___ftdiv
 		___lwtoft
+		___ftdiv
  This function uses a non-reentrant model
 
 
- *************** function _ADC_Sample *****************
+ *************** function _Update_LED_Slot *****************
  Defined at:
-		line 132 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+		line 3 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\led.c"
  Parameters:    Size  Location     Type
-  adch            1    wreg     unsigned char 
-  adldo           1    8[BANK0 ] unsigned char 
+  idx             1    wreg     unsigned char 
  Auto vars:     Size  Location     Type
-  adch            1   14[BANK0 ] unsigned char 
-  j               1   13[BANK0 ] unsigned char 
-  adsum           4   16[BANK0 ] volatile unsigned long 
-  ad_temp         2   24[BANK0 ] volatile unsigned int 
-  admax           2   22[BANK0 ] volatile unsigned int 
-  admin           2   20[BANK0 ] volatile unsigned int 
-  i               1   15[BANK0 ] unsigned char 
- Return value:  Size  Location     Type
-                  1    wreg      unsigned char 
- Registers used:
-		wreg, status,2, status,0
- Tracked objects:
-		On entry : 
-		On exit  : 
-		Unchanged: 
- Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
-      Params:         0       1       0       0       0
-      Locals:         0      13       0       0       0
-      Temps:          0       4       0       0       0
-      Totals:         0      18       0       0       0
-Total ram usage:       18 bytes
- Hardware stack levels used:    1
- Hardware stack levels required when called:    3
- This function calls:
-		Nothing
- This function is called by:
-		_Adc_Test
- This function uses a non-reentrant model
-
-
- *************** function _AD_Init *****************
- Defined at:
-		line 61 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
- Parameters:    Size  Location     Type
-		None
- Auto vars:     Size  Location     Type
-		None
- Return value:  Size  Location     Type
-                  1    wreg      void 
- Registers used:
-		wreg, status,2
- Tracked objects:
-		On entry : 
-		On exit  : 
-		Unchanged: 
- Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
-      Params:         0       0       0       0       0
-      Locals:         0       0       0       0       0
-      Temps:          0       0       0       0       0
-      Totals:         0       0       0       0       0
-Total ram usage:        0 bytes
- Hardware stack levels used:    1
- Hardware stack levels required when called:    3
- This function calls:
-		Nothing
- This function is called by:
-		_main
- This function uses a non-reentrant model
-
-
- *************** function _Interrupt_Isr *****************
- Defined at:
-		line 348 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
- Parameters:    Size  Location     Type
-		None
- Auto vars:     Size  Location     Type
-		None
+  idx             1    3[COMMON] unsigned char 
+  p               1    4[COMMON] PTR struct .
+		 -> g_slot1(72), g_slot0(72), 
  Return value:  Size  Location     Type
                   1    wreg      void 
  Registers used:
@@ -739,30 +921,291 @@ Total ram usage:        0 bytes
 		Unchanged: 
  Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
       Params:         0       0       0       0       0
-      Locals:         0       0       0       0       0
-      Temps:          4       0       0       0       0
-      Totals:         4       0       0       0       0
-Total ram usage:        4 bytes
+      Locals:         2       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         2       0       0       0       0
+Total ram usage:        2 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    1
+ This function calls:
+		i1___bmul
+ This function is called by:
+		_Interrupt_Isr
+ This function uses a non-reentrant model
+
+
+ *************** function _SlotPin_ToDigital *****************
+ Defined at:
+		line 42 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c"
+ Parameters:    Size  Location     Type
+  idx             1    wreg     unsigned char 
+ Auto vars:     Size  Location     Type
+  idx             1    6[COMMON] unsigned char 
+  cfg             1    7[COMMON] PTR const struct .
+		 -> s_slotPins(84), 
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		wreg, fsr0l, fsr0h, status,2, status,0, btemp+1, pclath, cstack
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         2       0       0       0       0
+      Temps:          3       0       0       0       0
+      Totals:         5       0       0       0       0
+Total ram usage:        5 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    1
+ This function calls:
+		i1___bmul
+ This function is called by:
+		_Interrupt_Isr
+ This function uses a non-reentrant model
+
+
+ *************** function _SlotPin_ToAnalog *****************
+ Defined at:
+		line 35 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c"
+ Parameters:    Size  Location     Type
+  idx             1    wreg     unsigned char 
+ Auto vars:     Size  Location     Type
+  idx             1    6[COMMON] unsigned char 
+  cfg             1    7[COMMON] PTR const struct .
+		 -> s_slotPins(84), 
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		wreg, fsr0l, fsr0h, status,2, status,0, btemp+1, pclath, cstack
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         2       0       0       0       0
+      Temps:          3       0       0       0       0
+      Totals:         5       0       0       0       0
+Total ram usage:        5 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    1
+ This function calls:
+		i1___bmul
+ This function is called by:
+		_Interrupt_Isr
+ This function uses a non-reentrant model
+
+
+ *************** function _Read_Temperature *****************
+ Defined at:
+		line 7 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c"
+ Parameters:    Size  Location     Type
+		None
+ Auto vars:     Size  Location     Type
+  ntcR            2   20[BANK0 ] unsigned int 
+  ntcVal          2   17[BANK0 ] unsigned int 
+  temp            1   19[BANK0 ] unsigned char 
+ Return value:  Size  Location     Type
+                  1    wreg      unsigned char 
+ Registers used:
+		wreg, status,2, status,0, pclath, cstack
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         0       5       0       0       0
+      Temps:          0       4       0       0       0
+      Totals:         0       9       0       0       0
+Total ram usage:        9 bytes
  Hardware stack levels used:    1
  Hardware stack levels required when called:    2
  This function calls:
-		_control_test_io
+		_ADC_ReadChannel
+		___lldiv
+		___lmul
+ This function is called by:
+		_Interrupt_Isr
+ This function uses a non-reentrant model
+
+
+ *************** function ___lmul *****************
+ Defined at:
+		line 15 in file "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\Umul32.c"
+ Parameters:    Size  Location     Type
+  multiplier      4    0[COMMON] unsigned long 
+  multiplicand    4    4[COMMON] unsigned long 
+ Auto vars:     Size  Location     Type
+  product         4    8[COMMON] unsigned long 
+ Return value:  Size  Location     Type
+                  4    0[COMMON] unsigned long 
+ Registers used:
+		wreg, status,2, status,0
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         8       0       0       0       0
+      Locals:         4       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:        12       0       0       0       0
+Total ram usage:       12 bytes
+ Hardware stack levels used:    1
+ This function calls:
+		Nothing
+ This function is called by:
+		_Read_Temperature
+ This function uses a non-reentrant model
+
+
+ *************** function ___lldiv *****************
+ Defined at:
+		line 6 in file "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lldiv.c"
+ Parameters:    Size  Location     Type
+  divisor         4    0[BANK0 ] unsigned long 
+  dividend        4    4[BANK0 ] unsigned long 
+ Auto vars:     Size  Location     Type
+  quotient        4    8[BANK0 ] unsigned long 
+  counter         1   12[BANK0 ] unsigned char 
+ Return value:  Size  Location     Type
+                  4    0[BANK0 ] unsigned long 
+ Registers used:
+		wreg, status,2, status,0
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       8       0       0       0
+      Locals:         0       5       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         0      13       0       0       0
+Total ram usage:       13 bytes
+ Hardware stack levels used:    1
+ This function calls:
+		Nothing
+ This function is called by:
+		_Read_Temperature
+ This function uses a non-reentrant model
+
+
+ *************** function _ADC_ReadChannel *****************
+ Defined at:
+		line 83 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\adc_drv.c"
+ Parameters:    Size  Location     Type
+  ch              1    wreg     unsigned char 
+ Auto vars:     Size  Location     Type
+  ch              1    8[COMMON] unsigned char 
+ Return value:  Size  Location     Type
+                  2    5[COMMON] unsigned int 
+ Registers used:
+		wreg, status,2, status,0, pclath, cstack
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         2       0       0       0       0
+      Locals:         1       0       0       0       0
+      Temps:          1       0       0       0       0
+      Totals:         4       0       0       0       0
+Total ram usage:        4 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    1
+ This function calls:
+		_ADC_Sample
+ This function is called by:
+		_Interrupt_Isr
+		_Read_Temperature
+ This function uses a non-reentrant model
+
+
+ *************** function _ADC_Sample *****************
+ Defined at:
+		line 14 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\adc_drv.c"
+ Parameters:    Size  Location     Type
+  adch            1    wreg     unsigned char 
+  adldo           1    0[COMMON] unsigned char 
+ Auto vars:     Size  Location     Type
+  adch            1    1[BANK0 ] unsigned char 
+  j               1    0[BANK0 ] unsigned char 
+  adsum           4    3[BANK0 ] volatile unsigned long 
+  ad_temp         2   11[BANK0 ] volatile unsigned int 
+  admax           2    9[BANK0 ] volatile unsigned int 
+  admin           2    7[BANK0 ] volatile unsigned int 
+  i               1    2[BANK0 ] unsigned char 
+ Return value:  Size  Location     Type
+                  1    wreg      unsigned char 
+ Registers used:
+		wreg, status,2, status,0
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         1       0       0       0       0
+      Locals:         0      13       0       0       0
+      Temps:          4       0       0       0       0
+      Totals:         5      13       0       0       0
+Total ram usage:       18 bytes
+ Hardware stack levels used:    1
+ This function calls:
+		Nothing
+ This function is called by:
+		_Interrupt_Isr
+		_ADC_ReadChannel
+ This function uses a non-reentrant model
+
+
+ *************** function _Print_Status *****************
+ Defined at:
+		line 41 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\uart_dbg.c"
+ Parameters:    Size  Location     Type
+		None
+ Auto vars:     Size  Location     Type
+  i               1   15[BANK0 ] unsigned char 
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		wreg, fsr0l, fsr0h, status,2, status,0, pclath, cstack
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         0       8       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         0       8       0       0       0
+Total ram usage:        8 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    2
+ This function calls:
 		_uart_send_number
 		_uart_send_string
+		i1___bmul
  This function is called by:
-		Interrupt level 1
+		_Interrupt_Isr
  This function uses a non-reentrant model
 
 
  *************** function _uart_send_string *****************
  Defined at:
-		line 314 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+		line 13 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\uart_dbg.c"
  Parameters:    Size  Location     Type
-  str             1    wreg     PTR unsigned char 
-		 -> STR_2(3), STR_1(11), 
+  str             1    wreg     PTR const unsigned char 
+		 -> STR_11(3), STR_10(5), STR_9(6), STR_8(5), 
+		 -> STR_7(4), STR_6(4), STR_5(4), STR_4(2), 
+		 -> STR_3(5), STR_2(7), STR_1(3), 
  Auto vars:     Size  Location     Type
-  str             1    1[COMMON] PTR unsigned char 
-		 -> STR_2(3), STR_1(11), 
+  str             1    1[COMMON] PTR const unsigned char 
+		 -> STR_11(3), STR_10(5), STR_9(6), STR_8(5), 
+		 -> STR_7(4), STR_6(4), STR_5(4), STR_4(2), 
+		 -> STR_3(5), STR_2(7), STR_1(3), 
  Return value:  Size  Location     Type
                   1    wreg      void 
  Registers used:
@@ -782,13 +1225,13 @@ Total ram usage:        1 bytes
  This function calls:
 		_uart_send_char
  This function is called by:
-		_Interrupt_Isr
+		_Print_Status
  This function uses a non-reentrant model
 
 
  *************** function _uart_send_number *****************
  Defined at:
-		line 322 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+		line 19 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\uart_dbg.c"
  Parameters:    Size  Location     Type
   num             2    7[COMMON] unsigned int 
  Auto vars:     Size  Location     Type
@@ -816,13 +1259,13 @@ Total ram usage:       10 bytes
 		___lwmod
 		_uart_send_char
  This function is called by:
-		_Interrupt_Isr
+		_Print_Status
  This function uses a non-reentrant model
 
 
  *************** function _uart_send_char *****************
  Defined at:
-		line 308 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+		line 7 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\uart_dbg.c"
  Parameters:    Size  Location     Type
   c               1    wreg     unsigned char 
  Auto vars:     Size  Location     Type
@@ -887,8 +1330,8 @@ Total ram usage:        5 bytes
   divisor         2    0[COMMON] unsigned int 
   dividend        2    2[COMMON] unsigned int 
  Auto vars:     Size  Location     Type
-  quotient        2    5[COMMON] unsigned int 
-  counter         1    4[COMMON] unsigned char 
+  quotient        2    4[COMMON] unsigned int 
+  counter         1    6[COMMON] unsigned char 
  Return value:  Size  Location     Type
                   2    0[COMMON] unsigned int 
  Registers used:
@@ -911,17 +1354,182 @@ Total ram usage:        7 bytes
  This function uses a non-reentrant model
 
 
- *************** function _control_test_io *****************
+ *************** function _PowerOnLedSequence *****************
  Defined at:
-		line 49 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
+		line 48 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\led.c"
  Parameters:    Size  Location     Type
-  flag            2    0[COMMON] unsigned int 
+		None
  Auto vars:     Size  Location     Type
 		None
  Return value:  Size  Location     Type
                   1    wreg      void 
  Registers used:
-		wreg, status,2, status,0, pclath, cstack
+		wreg, status,2, status,0
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         0       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         0       0       0       0       0
+Total ram usage:        0 bytes
+ Hardware stack levels used:    1
+ This function calls:
+		Nothing
+ This function is called by:
+		_Interrupt_Isr
+ This function uses a non-reentrant model
+
+
+ *************** function _Led_BlinkProcess *****************
+ Defined at:
+		line 31 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\led.c"
+ Parameters:    Size  Location     Type
+		None
+ Auto vars:     Size  Location     Type
+  i               1   10[COMMON] unsigned char 
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		wreg, fsr0l, fsr0h, status,2, status,0, pclath, cstack
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         6       0       0       0       0
+      Temps:          2       0       0       0       0
+      Totals:         8       0       0       0       0
+Total ram usage:        8 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    1
+ This function calls:
+		i1___bmul
+ This function is called by:
+		_Interrupt_Isr
+ This function uses a non-reentrant model
+
+
+ *************** function _Charging_Control *****************
+ Defined at:
+		line 209 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c"
+ Parameters:    Size  Location     Type
+		None
+ Auto vars:     Size  Location     Type
+  s               1    6[COMMON] unsigned char 
+  i               1    7[COMMON] unsigned char 
+  chargeB7_12     1    5[COMMON] unsigned char 
+  chargeB1_6      1    4[COMMON] unsigned char 
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		wreg, fsr0l, fsr0h, status,2, status,0, pclath, cstack
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         5       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         5       0       0       0       0
+Total ram usage:        5 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    1
+ This function calls:
+		i1___bmul
+ This function is called by:
+		_Interrupt_Isr
+ This function uses a non-reentrant model
+
+
+ *************** function _ChargeProcess_Slot *****************
+ Defined at:
+		line 68 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c"
+ Parameters:    Size  Location     Type
+  idx             1    wreg     unsigned char 
+ Auto vars:     Size  Location     Type
+  idx             1    5[COMMON] unsigned char 
+  v               2    8[COMMON] unsigned int 
+  tick            2    0        unsigned int 
+  p               1   10[COMMON] PTR struct .
+		 -> g_slot1(72), g_slot0(72), 
+ Return value:  Size  Location     Type
+                  1    wreg      void 
+ Registers used:
+		wreg, fsr0l, fsr0h, status,2, status,0, pclath, cstack
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         0       0       0       0       0
+      Locals:         6       0       0       0       0
+      Temps:          2       0       0       0       0
+      Totals:         8       0       0       0       0
+Total ram usage:        8 bytes
+ Hardware stack levels used:    1
+ Hardware stack levels required when called:    1
+ This function calls:
+		_Detect_BatteryType
+		i1___bmul
+ This function is called by:
+		_Interrupt_Isr
+ This function uses a non-reentrant model
+
+
+ *************** function i1___bmul *****************
+ Defined at:
+		line 4 in file "D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\Umul8.c"
+ Parameters:    Size  Location     Type
+  multiplier      1    wreg     unsigned char 
+  multiplicand    1    0[COMMON] unsigned char 
+ Auto vars:     Size  Location     Type
+  multiplier      1    1[COMMON] unsigned char 
+  __bmul          1    2[COMMON] unsigned char 
+ Return value:  Size  Location     Type
+                  1    wreg      unsigned char 
+ Registers used:
+		wreg, status,2, status,0
+ Tracked objects:
+		On entry : 
+		On exit  : 
+		Unchanged: 
+ Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
+      Params:         1       0       0       0       0
+      Locals:         2       0       0       0       0
+      Temps:          0       0       0       0       0
+      Totals:         3       0       0       0       0
+Total ram usage:        3 bytes
+ Hardware stack levels used:    1
+ This function calls:
+		Nothing
+ This function is called by:
+		_Interrupt_Isr
+		_ChargeProcess_Slot
+		_Charging_Control
+		_Update_LED_Slot
+		_Led_BlinkProcess
+		_Print_Status
+		_SlotPin_ToAnalog
+		_SlotPin_ToDigital
+ This function uses a non-reentrant model
+
+
+ *************** function _Detect_BatteryType *****************
+ Defined at:
+		line 45 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c"
+ Parameters:    Size  Location     Type
+  voltage         2    0[COMMON] unsigned int 
+ Auto vars:     Size  Location     Type
+		None
+ Return value:  Size  Location     Type
+                  1    wreg      unsigned char 
+ Registers used:
+		wreg
  Tracked objects:
 		On entry : 
 		On exit  : 
@@ -933,70 +1541,10 @@ Total ram usage:        7 bytes
       Totals:         2       0       0       0       0
 Total ram usage:        2 bytes
  Hardware stack levels used:    1
- Hardware stack levels required when called:    1
- This function calls:
-		_test_io_high
-		_test_io_low
- This function is called by:
-		_Interrupt_Isr
- This function uses a non-reentrant model
-
-
- *************** function _test_io_low *****************
- Defined at:
-		line 44 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
- Parameters:    Size  Location     Type
-		None
- Auto vars:     Size  Location     Type
-		None
- Return value:  Size  Location     Type
-                  1    wreg      void 
- Registers used:
-		None
- Tracked objects:
-		On entry : 
-		On exit  : 
-		Unchanged: 
- Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
-      Params:         0       0       0       0       0
-      Locals:         0       0       0       0       0
-      Temps:          0       0       0       0       0
-      Totals:         0       0       0       0       0
-Total ram usage:        0 bytes
- Hardware stack levels used:    1
  This function calls:
 		Nothing
  This function is called by:
-		_control_test_io
- This function uses a non-reentrant model
-
-
- *************** function _test_io_high *****************
- Defined at:
-		line 39 in file "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c"
- Parameters:    Size  Location     Type
-		None
- Auto vars:     Size  Location     Type
-		None
- Return value:  Size  Location     Type
-                  1    wreg      void 
- Registers used:
-		None
- Tracked objects:
-		On entry : 
-		On exit  : 
-		Unchanged: 
- Data sizes:     COMMON   BANK0   BANK1   BANK3   BANK2
-      Params:         0       0       0       0       0
-      Locals:         0       0       0       0       0
-      Temps:          0       0       0       0       0
-      Totals:         0       0       0       0       0
-Total ram usage:        0 bytes
- Hardware stack levels used:    1
- This function calls:
-		Nothing
- This function is called by:
-		_control_test_io
+		_ChargeProcess_Slot
  This function uses a non-reentrant model
 
 
@@ -1005,57 +1553,107 @@ MODULE INFORMATION
 
 Module		Function		Class		Link	Load	Size
 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\float.c
-		___ftpack      		CODE           	01EF	0000	67
+		___ftpack      		CODE           	0D91	0000	67
 
 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\float.c estimated size: 67
 
-D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwtoft.c
-		___lwtoft      		CODE           	01DF	0000	17
+E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\uart_dbg.c
+		_Print_Status  		CODE           	01EF	0000	251
+		_uart_send_string		CODE           	02F7	0000	24
+		_uart_send_number		CODE           	030E	0000	61
+		_uart_send_char		CODE           	034A	0000	9
 
-D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwtoft.c estimated size: 17
+E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\uart_dbg.c estimated size: 345
+
+D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwtoft.c
+		___lwtoft      		CODE           	03EA	0000	19
+
+D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwtoft.c estimated size: 19
 
 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwmod.c
-		___lwmod       		CODE           	03A7	0000	37
+		___lwmod       		CODE           	037C	0000	37
 
 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwmod.c estimated size: 37
 
-E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c
-		_test_io_low   		CODE           	03CE	0000	4
-		_test_io_high  		CODE           	03CB	0000	4
-		_main          		CODE           	03D1	0000	94
-		_Interrupt_Isr 		CODE           	02AB	0000	94
-		_AD_Init       		CODE           	0442	0000	9
-		_Adc_Test      		CODE           	0039	0000	90
-		_gpio_init     		CODE           	044A	0000	8
-		_uart_send_string		CODE           	0308	0000	24
-		_uart_send_number		CODE           	032D	0000	81
-		_control_test_io		CODE           	031F	0000	7
-		_ADC_Sample    		CODE           	0092	0000	230
-		_uart_send_char		CODE           	0325	0000	9
+E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c
+		_ChargeProcess_Slot		CODE           	0416	0000	319
+		_Detect_BatteryType		CODE           	0554	0000	58
+		_Charging_Control		CODE           	0DD3	0000	274
+		_Read_Temperature		CODE           	05AB	0000	210
 
-E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\SC8P096_Timer0_C.c estimated size: 654
+E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c estimated size: 861
+
+E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\adc_drv.c
+		_ADC_ReadChannel		CODE           	03CD	0000	30
+		_ADC_Sample    		CODE           	06F7	0000	223
+
+E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\adc_drv.c estimated size: 253
 
 shared
-		__stringtab    		STRING         	042E	0000	7
-		__initialization		CODE           	0015	0000	33
-		PL2            		CODE           	028C	0000	16
-		PL4            		CODE           	029B	0000	10
-		PL6            		CODE           	02A4	0000	8
+		PL12           		CODE           	03FC	0000	9
+		PL8            		CODE           	0FF5	0000	12
+		PL22           		CODE           	040A	0000	7
+		PL14           		CODE           	07E4	0000	10
+		PL24           		CODE           	0410	0000	7
+		__stringtab    		STRING         	0800	0000	7
+		PL16           		CODE           	05A6	0000	6
+		PL26           		CODE           	0CC2	0000	6
+		PL18           		CODE           	0D22	0000	8
+		__initialization		CODE           	0015	0000	32
+		_s_slotPins    		STRING         	0812	0000	85
+		i1___bmul      		CODE           	02E9	0000	15
+		PL2            		CODE           	058D	0000	18
+		_s_adcChannels 		STRING         	0806	0000	13
+		PL10           		CODE           	07D5	0000	16
+		PL4            		CODE           	059E	0000	9
+		PL20           		CODE           	0404	0000	7
+		PL6            		CODE           	0FEC	0000	10
 
-shared estimated size: 74
+shared estimated size: 277
 
 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\ftdiv.c
-		___ftdiv       		CODE           	0177	0000	105
+		___ftdiv       		CODE           	0D29	0000	105
 
 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\ftdiv.c estimated size: 105
 
 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwdiv.c
-		___lwdiv       		CODE           	037D	0000	43
+		___lwdiv       		CODE           	0352	0000	43
 
 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwdiv.c estimated size: 43
 
+E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c
+		_main          		CODE           	0C14	0000	43
+		_Interrupt_Isr 		CODE           	0038	0000	257
+		_SlotPin_ToAnalog		CODE           	0C3E	0000	61
+		_System_Init   		CODE           	0EE4	0000	251
+		_SlotPin_ToDigital		CODE           	0138	0000	59
+
+E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c estimated size: 671
+
+D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lldiv.c
+		___lldiv       		CODE           	067C	0000	73
+
+D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lldiv.c estimated size: 73
+
+E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\led.c
+		_Led_BlinkProcess		CODE           	0172	0000	126
+		_Update_LED_Slot		CODE           	0C7A	0000	73
+		_PowerOnLedSequence		CODE           	03A0	0000	46
+
+E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\led.c estimated size: 245
+
+D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\Umul8.c
+		___bmul        		CODE           	0FDE	0000	15
+
+D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\Umul8.c estimated size: 15
+
 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\fttol.c
-		___fttol       		CODE           	0231	0000	92
+		___fttol       		CODE           	0CC7	0000	92
 
 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\fttol.c estimated size: 92
+
+D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\Umul32.c
+		___lmul        		CODE           	06C4	0000	52
+
+D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\Umul32.c estimated size: 52
 

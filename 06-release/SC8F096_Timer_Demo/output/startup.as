@@ -8,8 +8,8 @@
 	; Compiler options:
 	;
 	; -oSC8P096_timer_C.cof -mSC8P096_timer_C.map \
-	; --summary=default,-psect,-class --fill=0xFFFF --output=intel \
-	; SC8P096_Timer0_C.p1 --chip=SC8F096 -P --runtime=default, \
+	; --summary=default,-psect,-class --fill=0xFFFF --output=intel main.p1 \
+	; --chip=SC8F096 -P --runtime=default, \
 	; --opt=-local,-asmfile,+asm,-speed,+space,-debug -E+cmscerr.err \
 	; -D__DEBUG=1 -g --asmlist --warn=-9 --stack=compiled:auto:auto:auto \
 	; --addrqual=request --mode=pro --errformat=Error[%n]:	%f	µÚ%lÐÐ	%s \
