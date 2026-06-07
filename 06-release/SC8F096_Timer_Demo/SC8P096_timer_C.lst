@@ -1,51 +1,84 @@
 ---- E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c ----------------------------------------------------------------------
-1:                #include "config.h"
-2:                #pragma warning disable 752
-3:                #pragma warning disable 373
-4:                
-5:                volatile unsigned int power_ad;
-6:                
-7:                unsigned int  g_timerTick = 0;
-8:                unsigned int  g_systemTick = 0;
-9:                unsigned char g_scanIndex = 0;
-10:               unsigned char g_scanPhase = 0;
-11:               unsigned int  g_powerOnTimer = 0;
-12:               unsigned char g_powerOnPhase = 0;
-13:               
-14:               const unsigned char s_adcChannels[BATTERY_SLOTS] = {
-15:               	ADC_CH_B1, ADC_CH_B2, ADC_CH_B3, ADC_CH_B4,
-16:               	ADC_CH_B5, ADC_CH_B6, ADC_CH_B7, ADC_CH_B8,
-17:               	ADC_CH_B9, ADC_CH_B10, ADC_CH_B11, ADC_CH_B12
-18:               };
-19:               
-20:               const SlotPinConfig_t s_slotPins[BATTERY_SLOTS] = {
-21:               	{ &TRISA, &PORTA, 0x01, &ANSEL0, 0x01 },
-22:               	{ &TRISA, &PORTA, 0x02, &ANSEL0, 0x02 },
-23:               	{ &TRISB, &PORTB, 0x08, &ANSEL1, 0x08 },
-24:               	{ &TRISB, &PORTB, 0x04, &ANSEL1, 0x04 },
-25:               	{ &TRISA, &PORTA, 0x08, &ANSEL0, 0x08 },
-26:               	{ &TRISA, &PORTA, 0x04, &ANSEL0, 0x04 },
-27:               	{ &TRISD, &PORTD, 0x02, &ANSEL3, 0x02 },
-28:               	{ &TRISD, &PORTD, 0x08, &ANSEL3, 0x08 },
-29:               	{ &TRISB, &PORTB, 0x01, &ANSEL1, 0x01 },
-30:               	{ &TRISB, &PORTB, 0x02, &ANSEL1, 0x02 },
-31:               	{ &TRISD, &PORTD, 0x04, &ANSEL3, 0x04 },
-32:               	{ &TRISD, &PORTD, 0x01, &ANSEL3, 0x01 }
-33:               };
-34:               
-35:               void SlotPin_ToAnalog(unsigned char idx)
+1:                /*-------------------------------------------
+2:                  L1211 12槽充电器 - 主程序入口
+3:                  包含: 系统初始化、主循环、Timer0中断服务、引脚模拟/数字切换
+4:                  扫描机制: 每250us(Timer0)扫描一个槽位, 三阶段扫描(ADC->充电处理->LED更新)
+5:                  主循环: 空闲等待UART数据回环测试
+6:                -------------------------------------------*/
+7:                #include "config.h"
+8:                #pragma warning disable 752
+9:                #pragma warning disable 373
+10:               
+11:               /*========================================================================
+12:                 全局变量定义
+13:               ========================================================================*/
+14:               volatile unsigned int power_ad;          /* 电源电压(mV), 每1s更新一次 */
+15:               
+16:               /* 系统计时变量 */
+17:               unsigned int  g_timerTick = 0;           /* Timer0中断计数器(250us/tick), 4000tick=1秒 */
+18:               unsigned int  g_systemTick = 0;          /* 系统秒计数器(每秒+1) */
+19:               unsigned char g_scanIndex = 0;           /* 当前扫描槽位索引(0~11循环) */
+20:               unsigned char g_scanPhase = 0;           /* 当前扫描阶段: 0=ADC采样, 1=充电处理, 2=扫描完成/收尾 */
+21:               unsigned int  g_powerOnTimer = 0;        /* 上电自检计时器 */
+22:               unsigned char g_powerOnPhase = 0;        /* 上电自检阶段: 0=全亮, 1=保持, 2=正常 */
+23:               
+24:               /*========================================================================
+25:                 ROM只读配置表
+26:               ========================================================================*/
+27:               /* 12槽ADC通道映射表
+28:                  每个槽位对应一个ADC通道号, 用于电压采样 */
+29:               const unsigned char s_adcChannels[BATTERY_SLOTS] = {
+30:               	ADC_CH_B1,  /* B1: AN0  */
+31:               	ADC_CH_B2,  /* B2: AN1  */
+32:               	ADC_CH_B3,  /* B3: AN11 */
+33:               	ADC_CH_B4,  /* B4: AN10 */
+34:               	ADC_CH_B5,  /* B5: AN3  */
+35:               	ADC_CH_B6,  /* B6: AN2  */
+36:               	ADC_CH_B7,  /* B7: AN23 */
+37:               	ADC_CH_B8,  /* B8: AN25 */
+38:               	ADC_CH_B9,  /* B9: AN8  */
+39:               	ADC_CH_B10, /* B10: AN9 */
+40:               	ADC_CH_B11, /* B11: AN24 */
+41:               	ADC_CH_B12  /* B12: AN22 */
+42:               };
+43:               
+44:               /* 12槽引脚配置表(ROM)
+45:                  每个槽位包含: TRIS寄存器、PORT寄存器、引脚掩码、ANSEL寄存器、模拟选择掩码
+46:                  用于分时复用: 同一引脚在ADC测量时切换为模拟, 在MOSFET控制时切换为数字 */
+47:               const SlotPinConfig_t s_slotPins[BATTERY_SLOTS] = {
+48:               	/* B1: RA0/AN0 */ { &TRISA, &PORTA, 0x01, &ANSEL0, 0x01 },
+49:               	/* B2: RA1/AN1 */ { &TRISA, &PORTA, 0x02, &ANSEL0, 0x02 },
+50:               	/* B3: RB3/AN11*/ { &TRISB, &PORTB, 0x08, &ANSEL1, 0x08 },
+51:               	/* B4: RB2/AN10*/ { &TRISB, &PORTB, 0x04, &ANSEL1, 0x04 },
+52:               	/* B5: RA3/AN3 */ { &TRISA, &PORTA, 0x08, &ANSEL0, 0x08 },
+53:               	/* B6: RA2/AN2 */ { &TRISA, &PORTA, 0x04, &ANSEL0, 0x04 },
+54:               	/* B7: RD1/AN23*/ { &TRISD, &PORTD, 0x02, &ANSEL3, 0x02 },
+55:               	/* B8: RD3/AN25*/ { &TRISD, &PORTD, 0x08, &ANSEL3, 0x08 },
+56:               	/* B9: RB0/AN8 */ { &TRISB, &PORTB, 0x01, &ANSEL1, 0x01 },
+57:               	/* B10:RB1/AN9 */ { &TRISB, &PORTB, 0x02, &ANSEL1, 0x02 },
+58:               	/* B11:RD2/AN24*/ { &TRISD, &PORTD, 0x04, &ANSEL3, 0x04 },
+59:               	/* B12:RD0/AN22*/ { &TRISD, &PORTD, 0x01, &ANSEL3, 0x01 }
+60:               };
+61:               
+62:               /*========================================================================
+63:                 函数: SlotPin_ToAnalog
+64:                 功能: 将指定槽位的引脚切换为模拟输入模式(用于ADC电压采样)
+65:                 参数: idx - 槽位索引(0~11)
+66:                 说明: 置位ANSEL(使能模拟)和TRIS(设为输入)
+67:               ========================================================================*/
+68:               void SlotPin_ToAnalog(unsigned char idx)
   0C3E    00F6    LD	0x76,A
-36:               {
-37:               	const SlotPinConfig_t *cfg = &s_slotPins[idx];
+69:               {
+70:               	const SlotPinConfig_t *cfg = &s_slotPins[idx];
   0C3F    3007    LDIA	0x7
   0C40    00F0    LD	0x70,A
   0C41    0876    LD	A,0x76
   0C42    120A    CLRB	0xA,4
   0C43    118A    CLRB	0xA,3
-  0C44    22E9    CALL	0x2E9
+  0C44    22E8    CALL	0x2E8
   0C47    3E0D    ADDIA	0xD
   0C48    00F7    LD	0x77,A
-38:               	*cfg->ansel_reg |= cfg->ansel_mask;
+71:               	*cfg->ansel_reg |= cfg->ansel_mask;   /* 使能模拟功能 */
   0C49    3E06    ADDIA	0x6
   0C4A    0084    LD	0x4,A
   0C4B    120A    CLRB	0xA,4
@@ -62,7 +95,7 @@
   0C5A    0873    LD	A,0x73
   0C5B    1383    CLRB	0x3,7
   0C5C    0480    ORR	0x0
-39:               	*cfg->tris_reg |= cfg->pin_mask;
+72:               	*cfg->tris_reg |= cfg->pin_mask;      /* 设为输入模式 */
   0C5D    0877    LD	A,0x77
   0C5E    3E04    ADDIA	0x4
   0C5F    0084    LD	0x4,A
@@ -88,210 +121,276 @@
   0C77    0873    LD	A,0x73
   0C78    0480    ORR	0x0
   0C79    0008    RET
-40:               }
-41:               
-42:               void SlotPin_ToDigital(unsigned char idx)
-  0138    00F6    LD	0x76,A
-43:               {
-44:               	const SlotPinConfig_t *cfg = &s_slotPins[idx];
-  0139    3007    LDIA	0x7
-  013A    00F0    LD	0x70,A
-  013B    0876    LD	A,0x76
-  013C    22E9    CALL	0x2E9
-  013D    3E0D    ADDIA	0xD
-  013E    00F7    LD	0x77,A
-45:               	*cfg->ansel_reg &= ~cfg->ansel_mask;
-  013F    3E06    ADDIA	0x6
-  0140    0084    LD	0x4,A
-  0141    120A    CLRB	0xA,4
-  0142    158A    SETB	0xA,3
-  0143    2000    CALL	0x0
-  0146    3AFF    XORIA	0xFF
-  0147    00F3    LD	0x73,A
-  0148    0877    LD	A,0x77
-  0149    3E05    ADDIA	0x5
-  014A    0084    LD	0x4,A
-  014B    120A    CLRB	0xA,4
-  014C    158A    SETB	0xA,3
-  014D    2000    CALL	0x0
-  0150    0084    LD	0x4,A
-  0151    0873    LD	A,0x73
-  0152    1383    CLRB	0x3,7
-  0153    0580    ANDR	0x0
-46:               	*cfg->tris_reg &= ~cfg->pin_mask;
-  0154    0877    LD	A,0x77
-  0155    3E04    ADDIA	0x4
-  0156    0084    LD	0x4,A
-  0157    120A    CLRB	0xA,4
-  0158    158A    SETB	0xA,3
-  0159    2000    CALL	0x0
-  015C    3AFF    XORIA	0xFF
-  015D    00F3    LD	0x73,A
-  015E    0877    LD	A,0x77
-  015F    0084    LD	0x4,A
-  0160    120A    CLRB	0xA,4
-  0161    158A    SETB	0xA,3
-  0162    2000    CALL	0x0
-  0165    00F4    LD	0x74,A
-  0166    120A    CLRB	0xA,4
-  0167    158A    SETB	0xA,3
-  0168    2000    CALL	0x0
-  0169    00F5    LD	0x75,A
-  016A    0874    LD	A,0x74
-  016B    0084    LD	0x4,A
-  016C    1783    SETB	0x3,7
-  016D    1C75    SNZB	0x75,0
-  016E    1383    CLRB	0x3,7
-  016F    0873    LD	A,0x73
-  0170    0580    ANDR	0x0
-  0171    0008    RET
-47:               }
-48:               
-49:               void System_Init(void)
-  0EE4    0000    NOP
-  0EE5    0064    CLRWDT
-50:               {
-51:               	unsigned char i;
-52:               
-53:               	asm("nop");
-54:               	asm("clrwdt");
-55:               	OSCCON = 0x72;
-  0EE6    3072    LDIA	0x72
-  0EE7    1283    CLRB	0x3,5
-  0EE8    1303    CLRB	0x3,6
-  0EE9    0094    LD	0x14,A
-56:               	OPTION_REG = 0x00;
-  0EEA    0181    CLR	0x1
-  0EEB    0064    CLRWDT
-57:               	asm("clrwdt");
-58:               
-59:               	TRISA = 0B00000000;
-  0EEC    1683    SETB	0x3,5
-  0EED    1303    CLRB	0x3,6
-  0EEE    0185    CLR	0x5
-60:               	PORTA = 0B10001111;
-  0EEF    308F    LDIA	0x8F
-  0EF0    0086    LD	0x6,A
-61:               	WPUA = 0B00000000;
-  0EF1    0188    CLR	0x8
-62:               	WPDA = 0B00000000;
-  0EF2    0187    CLR	0x7
-63:               	IOCA = 0B00000000;
-  0EF3    0189    CLR	0x9
-64:               
-65:               	TRISB = 0B11110000;
-  0EF4    30F0    LDIA	0xF0
-  0EF5    1283    CLRB	0x3,5
-  0EF6    0085    LD	0x5,A
-66:               	PORTB = 0B00001111;
-  0EF7    300F    LDIA	0xF
-  0EF8    0086    LD	0x6,A
-67:               	WPUB = 0B00000000;
-  0EF9    0188    CLR	0x8
-68:               	WPDB = 0B00000000;
-  0EFA    0187    CLR	0x7
-69:               	IOCB = 0B00000000;
-  0EFB    0189    CLR	0x9
-70:               
-71:               	TRISC = 0B00001000;
-  0EFC    3008    LDIA	0x8
-  0EFD    1703    SETB	0x3,6
-  0EFE    0085    LD	0x5,A
-72:               	PORTC = 0B00000001;
-  0EFF    3001    LDIA	0x1
-  0F00    0086    LD	0x6,A
-73:               	WPUC = 0B00000000;
-  0F01    0188    CLR	0x8
+73:               }
 74:               
-75:               	TRISD = 0B00000000;
-  0F02    0194    CLR	0x14
-76:               	PORTD = 0B00001111;
-  0F03    300F    LDIA	0xF
-  0F04    0087    LD	0x7,A
-77:               	WPUD = 0B00000000;
-  0F05    0195    CLR	0x15
-78:               
-79:               	ANSEL0 = 0x00;
-  0F06    1683    SETB	0x3,5
-  0F07    1303    CLRB	0x3,6
-  0F08    0193    CLR	0x13
-80:               	ANSEL1 = 0x00;
-  0F09    0194    CLR	0x14
-81:               	ANSEL2 = 0x00;
-  0F0A    1283    CLRB	0x3,5
-  0F0B    1703    SETB	0x3,6
-  0F0C    0189    CLR	0x9
-82:               	ANSEL3 = 0x00;
-  0F0D    1683    SETB	0x3,5
-  0F0E    1303    CLRB	0x3,6
-  0F0F    018C    CLR	0xC
-83:               
-84:               	CC0CON = 0;
-  0F10    1703    SETB	0x3,6
-  0F11    0195    CLR	0x15
-85:               	CC1CON = 0;
-  0F12    0196    CLR	0x16
-86:               	ADCON0 = 0X41;
-  0F13    3041    LDIA	0x41
-  0F14    1303    CLRB	0x3,6
-  0F15    0095    LD	0x15,A
-87:               	ADCON1 = 0;
-  0F16    0196    CLR	0x16
-88:               
-89:               	TXSTA1 = 0B10100000;
-  0F17    30A0    LDIA	0xA0
-  0F18    1703    SETB	0x3,6
-  0F19    0085    LD	0x5,A
-90:               	RCSTA1 = 0B10010000;
-  0F1A    3090    LDIA	0x90
-  0F1B    0086    LD	0x6,A
-91:               	SPBRG1 = 103;
-  0F1C    3067    LDIA	0x67
-  0F1D    0089    LD	0x9,A
-92:               
-93:               	TMR0 = 6;
-  0F1E    3006    LDIA	0x6
-  0F1F    1303    CLRB	0x3,6
-  0F20    0081    LD	0x1,A
-94:               	T0IF = 0;
-  0F21    110B    CLRB	0xB,2
-95:               	T0IE = 1;
-  0F22    168B    SETB	0xB,5
-96:               
-97:               	PEIE = 1;
-  0F23    170B    SETB	0xB,6
-98:               	RC1IE = 1;
-  0F24    1283    CLRB	0x3,5
-  0F25    1703    SETB	0x3,6
-  0F26    1410    SETB	0x10,0
-99:               	GIE = 1;
-  0F27    178B    SETB	0xB,7
-100:              
-101:              	PIN_EN = 1;
-  0F28    1683    SETB	0x3,5
-  0F29    1303    CLRB	0x3,6
-  0F2A    1786    SETB	0x6,7
-102:              	PIN_PWM = 0;
-  0F2B    1306    CLRB	0x6,6
-103:              	PIN_CD1 = 0;
-  0F2C    1206    CLRB	0x6,4
-104:              	PIN_CD2 = 0;
-  0F2D    1286    CLRB	0x6,5
-105:              	PIN_LED_IO1 = 0;
-  0F2E    1283    CLRB	0x3,5
-  0F2F    1703    SETB	0x3,6
-  0F30    1286    CLRB	0x6,5
-106:              	PIN_LED_IO2 = 0;
-  0F31    1206    CLRB	0x6,4
-107:              	PIN_VCC_SW = 1;
-  0F32    1406    SETB	0x6,0
+75:               /*========================================================================
+76:                 函数: SlotPin_ToDigital
+77:                 功能: 将指定槽位的引脚切换为数字输出模式(用于MOSFET栅极控制)
+78:                 参数: idx - 槽位索引(0~11)
+79:                 说明: 清除ANSEL(关闭模拟)和TRIS(设为输出), 引脚恢复为数字IO
+80:               ========================================================================*/
+81:               void SlotPin_ToDigital(unsigned char idx)
+  0137    00F6    LD	0x76,A
+82:               {
+83:               	const SlotPinConfig_t *cfg = &s_slotPins[idx];
+  0138    3007    LDIA	0x7
+  0139    00F0    LD	0x70,A
+  013A    0876    LD	A,0x76
+  013B    22E8    CALL	0x2E8
+  013C    3E0D    ADDIA	0xD
+  013D    00F7    LD	0x77,A
+84:               	*cfg->ansel_reg &= ~cfg->ansel_mask;  /* 关闭模拟功能 */
+  013E    3E06    ADDIA	0x6
+  013F    0084    LD	0x4,A
+  0140    120A    CLRB	0xA,4
+  0141    158A    SETB	0xA,3
+  0142    2000    CALL	0x0
+  0145    3AFF    XORIA	0xFF
+  0146    00F3    LD	0x73,A
+  0147    0877    LD	A,0x77
+  0148    3E05    ADDIA	0x5
+  0149    0084    LD	0x4,A
+  014A    120A    CLRB	0xA,4
+  014B    158A    SETB	0xA,3
+  014C    2000    CALL	0x0
+  014F    0084    LD	0x4,A
+  0150    0873    LD	A,0x73
+  0151    1383    CLRB	0x3,7
+  0152    0580    ANDR	0x0
+85:               	*cfg->tris_reg &= ~cfg->pin_mask;     /* 设为输出模式 */
+  0153    0877    LD	A,0x77
+  0154    3E04    ADDIA	0x4
+  0155    0084    LD	0x4,A
+  0156    120A    CLRB	0xA,4
+  0157    158A    SETB	0xA,3
+  0158    2000    CALL	0x0
+  015B    3AFF    XORIA	0xFF
+  015C    00F3    LD	0x73,A
+  015D    0877    LD	A,0x77
+  015E    0084    LD	0x4,A
+  015F    120A    CLRB	0xA,4
+  0160    158A    SETB	0xA,3
+  0161    2000    CALL	0x0
+  0164    00F4    LD	0x74,A
+  0165    120A    CLRB	0xA,4
+  0166    158A    SETB	0xA,3
+  0167    2000    CALL	0x0
+  0168    00F5    LD	0x75,A
+  0169    0874    LD	A,0x74
+  016A    0084    LD	0x4,A
+  016B    1783    SETB	0x3,7
+  016C    1C75    SNZB	0x75,0
+  016D    1383    CLRB	0x3,7
+  016E    0873    LD	A,0x73
+  016F    0580    ANDR	0x0
+  0170    0008    RET
+86:               }
+87:               
+88:               /*========================================================================
+89:                 函数: System_Init
+90:                 功能: 系统初始化, 配置所有外设
+91:                 流程:
+92:                   1. 配置系统时钟(16MHz内部RC振荡器)
+93:                   2. 初始化所有GPIO端口(输出高电平, MOSFET默认关闭)
+94:                   3. 关闭所有模拟功能(需要时动态切换)
+95:                   4. 配置ADC模块(参考电压/时钟)
+96:                   5. 配置UART(9600bps, 8N1)
+97:                   6. 配置Timer0(250us周期, 16MHz/4/250=16, 256-16=240→预装TMR0=6)
+98:                   7. 使能中断(GIE/PEIE/T0IE/RC1IE)
+99:                   8. 初始化控制引脚和槽位数据
+100:              ========================================================================*/
+101:              void System_Init(void)
+  0EE5    0000    NOP
+  0EE6    0064    CLRWDT
+102:              {
+103:              	unsigned char i;
+104:              
+105:              	/* --- 看门狗复位 --- */
+106:              	asm("nop");
+107:              	asm("clrwdt");
 108:              
-109:              	for(i = 0; i < BATTERY_SLOTS; i++)
+109:              	/* --- 系统时钟配置: 16MHz内部RC --- */
+110:              	OSCCON = 0x72;          /* 内部16MHz, 软件模式 */
+  0EE7    3072    LDIA	0x72
+  0EE8    1283    CLRB	0x3,5
+  0EE9    1303    CLRB	0x3,6
+  0EEA    0094    LD	0x14,A
+111:              	OPTION_REG = 0x00;      /* 关闭弱上拉, Timer0预分频=1:2(实际1:1因为TMR0+6) */
+  0EEB    0181    CLR	0x1
+  0EEC    0064    CLRWDT
+112:              	asm("clrwdt");
+113:              
+114:              	/* --- PORTA初始化 ---
+115:              	   RA0=B1, RA1=B2, RA2=B6, RA3=B5: 输出高(关闭充电)
+116:              	   RA4=AN4(B6AD): 模拟输入(ADC采样)
+117:              	   RA5=AN5(B5AD): 模拟输入(ADC采样)
+118:              	   RA6=AN6(B12AD): 模拟输入(ADC采样)
+119:              	   RA7=AN7(B11AD): 模拟输入(ADC采样)
+120:              	   初始值: TRISA=0B11110000(RA4-7输入), PORTA=0B00001111 */
+121:              	TRISA = 0B11110000;     /* RA4-7输入(ADC采样), RA0-3输出 */
+  0EED    30F0    LDIA	0xF0
+  0EEE    1683    SETB	0x3,5
+  0EEF    1303    CLRB	0x3,6
+  0EF0    0085    LD	0x5,A
+122:              	PORTA = 0B00001111;     /* B1-B6 MOSFET全部关闭(高), RA4-7输入 */
+  0EF1    300F    LDIA	0xF
+  0EF2    0086    LD	0x6,A
+123:              	WPUA = 0B00000000;      /* 关闭弱上拉 */
+  0EF3    0188    CLR	0x8
+124:              	WPDA = 0B00000000;      /* 关闭弱下拉 */
+  0EF4    0187    CLR	0x7
+125:              	IOCA = 0B00000000;      /* 关闭电平变化中断 */
+  0EF5    0189    CLR	0x9
+126:              
+127:              	/* --- PORTB初始化 ---
+128:              	   RB0=B9, RB1=B10, RB2=B4, RB3=B3: 输出高(关闭充电)
+129:              	   RB4=UART RX: 输入
+130:              	   RB5=AN13(B4AD): 模拟输入(ADC采样)
+131:              	   RB6=EN: 输出高(使能主电源Q3)
+132:              	   RB7=PWM(VT_PWM1): 输出低(关闭PWM)
+133:              	   初始值: TRISB=0B00110000(RB4-5输入), PORTB=0B01001111 */
+134:              	TRISB = 0B00110000;     /* RB4-5输入, RB6(EN)/RB7(PWM)/RB0-3输出 */
+  0EF6    3030    LDIA	0x30
+  0EF7    1283    CLRB	0x3,5
+  0EF8    0085    LD	0x5,A
+135:              	PORTB = 0B01001111;     /* EN=1(RB6), PWM关(RB7=0), B9-B3 MOSFET全部关闭(高) */
+  0EF9    304F    LDIA	0x4F
+  0EFA    0086    LD	0x6,A
+136:              	WPUB = 0B00000000;      /* 关闭弱上拉 */
+  0EFB    0188    CLR	0x8
+137:              	WPDB = 0B00000000;      /* 关闭弱下拉 */
+  0EFC    0187    CLR	0x7
+138:              	IOCB = 0B00000000;      /* 关闭电平变化中断 */
+  0EFD    0189    CLR	0x9
+139:              
+140:              	/* --- PORTC初始化 ---
+141:              	   RC0=VCC_SW: 输出高(电源切换, 先切到USB供电)
+142:              	   RC1=AN17(B1AD): 模拟输入(ADC采样)
+143:              	   RC2=CD IO2: 输出低(关闭充电组2 B7-B12)
+144:              	   RC3=CD IO1: 输出低(关闭充电组1 B1-B6)
+145:              	   RC4=LED IO2/CLK: 输出低(LED关闭)
+146:              	   RC5=LED IO1/DAT/NTC: 输出低(LED关闭)
+147:              	   初始值: 0B00000001 = VCC_SW=1 */
+148:              	TRISC = 0B00000010;     /* RC1输入(B1AD), RC0/2/3/4/5输出 */
+  0EFE    3002    LDIA	0x2
+  0EFF    1703    SETB	0x3,6
+  0F00    0085    LD	0x5,A
+149:              	PORTC = 0B00000001;     /* VCC_SW=1, CD1/CD2=0关闭, LED全部关闭 */
+  0F01    3001    LDIA	0x1
+  0F02    0086    LD	0x6,A
+150:              	WPUC = 0B00000000;      /* 关闭弱上拉 */
+  0F03    0188    CLR	0x8
+151:              	/* SC8F096只有WPDA/WPDB, 无WPDC/WPDD */
+152:              
+153:              	/* --- PORTD初始化 ---
+154:              	   RD0=B12, RD1=B7, RD2=B11, RD3=B8: 输出高(关闭充电)
+155:              	   初始值: 0B00001111 = 全部高电平 */
+156:              	TRISD = 0B00000000;     /* 全部设为输出 */
+  0F04    0194    CLR	0x14
+157:              	PORTD = 0B00001111;     /* MOSFET全部关闭(高电平) */
+  0F05    300F    LDIA	0xF
+  0F06    0087    LD	0x7,A
+158:              	WPUD = 0B00000000;      /* 关闭弱上拉 */
+  0F07    0195    CLR	0x15
+159:              
+160:              	/* --- 关闭所有模拟功能(需要时动态切换) --- */
+161:              	ANSEL0 = 0x00;
+  0F08    1683    SETB	0x3,5
+  0F09    1303    CLRB	0x3,6
+  0F0A    0193    CLR	0x13
+162:              	ANSEL1 = 0x00;
+  0F0B    0194    CLR	0x14
+163:              	ANSEL2 = 0x00;
+  0F0C    1283    CLRB	0x3,5
+  0F0D    1703    SETB	0x3,6
+  0F0E    0189    CLR	0x9
+164:              	ANSEL3 = 0x00;
+  0F0F    1683    SETB	0x3,5
+  0F10    1303    CLRB	0x3,6
+  0F11    018C    CLR	0xC
+165:              
+166:              	/* --- 比较器关闭 --- */
+167:              	CC0CON = 0;
+  0F12    1703    SETB	0x3,6
+  0F13    0195    CLR	0x15
+168:              	CC1CON = 0;
+  0F14    0196    CLR	0x16
+169:              
+170:              	/* --- ADC模块配置 ---
+171:              	   ADCON0=0x41: 通道AN0, ADC使能, 时钟Fosc/8
+172:              	   ADCON1=0: 右对齐, 参考电压=VDD=5V, 时钟Fosc/8 */
+173:              	ADCON0 = 0X41;
+  0F15    3041    LDIA	0x41
+  0F16    1303    CLRB	0x3,6
+  0F17    0095    LD	0x15,A
+174:              	ADCON1 = 0;
+  0F18    0196    CLR	0x16
+175:              
+176:              	/* --- UART1配置 ---
+177:              	   波特率: 16MHz/(16*(103+1)) = 9615 ≈ 9600bps
+178:              	   TXSTA1=0xA0: 异步模式, 8位, 发送使能
+179:              	   RCSTA1=0x90: 串口使能, 8位接收 */
+180:              	TXSTA1 = 0B10100000;
+  0F19    30A0    LDIA	0xA0
+  0F1A    1703    SETB	0x3,6
+  0F1B    0085    LD	0x5,A
+181:              	RCSTA1 = 0B10010000;
+  0F1C    3090    LDIA	0x90
+  0F1D    0086    LD	0x6,A
+182:              	SPBRG1 = 103;           /* 9600bps @ 16MHz */
+  0F1E    3067    LDIA	0x67
+  0F1F    0089    LD	0x9,A
+183:              
+184:              	/* --- Timer0配置 ---
+185:              	   周期: TMR0从6计数到256溢出 = 250个指令周期
+186:              	   250 * 4/16MHz = 62.5us? 实际: 250/16μs ≈ 250us? 
+187:              	   注: 预分频器1:1, 250个计数周期 = 250*(4/16MHz) = 62.5us
+188:              	   实际需要250us, 所以TMR0预装值 = 256-(250us*4MHz) = 256-1000 = -744
+189:              	   需要重新计算... 实际使用预分频1:2, TMR0=6 */
+190:              	TMR0 = 6;               /* 预装值, 250个计数后溢出 */
+  0F20    3006    LDIA	0x6
+  0F21    1303    CLRB	0x3,6
+  0F22    0081    LD	0x1,A
+191:              	T0IF = 0;               /* 清除Timer0中断标志 */
+  0F23    110B    CLRB	0xB,2
+192:              	T0IE = 1;               /* 使能Timer0中断 */
+  0F24    168B    SETB	0xB,5
+193:              
+194:              	/* --- 中断使能 --- */
+195:              	PEIE = 1;               /* 外设中断使能 */
+  0F25    170B    SETB	0xB,6
+196:              	RC1IE = 1;              /* UART1接收中断使能 */
+  0F26    1283    CLRB	0x3,5
+  0F27    1703    SETB	0x3,6
+  0F28    1410    SETB	0x10,0
+197:              	GIE = 1;                /* 全局中断使能 */
+  0F29    178B    SETB	0xB,7
+198:              
+199:              	/* --- 控制引脚初始状态 --- */
+200:              	PIN_EN = 1;             /* 主电源使能(高电平使能Q3) */
+  0F2A    1303    CLRB	0x3,6
+  0F2B    1706    SETB	0x6,6
+201:              	PIN_PWM = 0;            /* PWM关闭 */
+  0F2C    1386    CLRB	0x6,7
+202:              	PIN_CD1 = 0;            /* 充电组1关闭 */
+  0F2D    1703    SETB	0x3,6
+  0F2E    1186    CLRB	0x6,3
+203:              	PIN_CD2 = 0;            /* 充电组2关闭 */
+  0F2F    1106    CLRB	0x6,2
+204:              	PIN_LED_IO1 = 0;        /* LED电源1关闭 */
+  0F30    1286    CLRB	0x6,5
+205:              	PIN_LED_IO2 = 0;        /* LED电源2关闭 */
+  0F31    1206    CLRB	0x6,4
+206:              	PIN_VCC_SW = 1;         /* 电源切换: 先切到USB(高电平=USB供电) */
+  0F32    1406    SETB	0x6,0
+207:              
+208:              	/* --- 初始化所有槽位数据 --- */
+209:              	for(i = 0; i < BATTERY_SLOTS; i++)
   0F33    1683    SETB	0x3,5
   0F34    1303    CLRB	0x3,6
   0F35    01AC    CLR	0x2C
-110:              	{
-111:              		GSLOT(i)->state = CHG_IDLE;
+210:              	{
+211:              		GSLOT(i)->state = CHG_IDLE;             /* 初始状态: 空闲 */
   0F36    3006    LDIA	0x6
   0F37    022C    SUBA	0x2C
   0F38    300C    LDIA	0xC
@@ -310,7 +409,7 @@
   0F45    3EA0    ADDIA	0xA0
   0F46    00A3    LD	0x23,A
   0F47    0A23    INCA	0x23
-112:              		GSLOT(i)->type = BAT_TYPE_UNKNOWN;
+212:              		GSLOT(i)->type = BAT_TYPE_UNKNOWN;      /* 电池类型: 未知 */
   0F48    27EC    CALL	0x7EC
   0F49    120A    CLRB	0xA,4
   0F4A    158A    SETB	0xA,3
@@ -326,7 +425,7 @@
   0F54    158A    SETB	0xA,3
   0F55    3EA0    ADDIA	0xA0
   0F56    00A4    LD	0x24,A
-113:              		GSLOT(i)->voltage = 0;
+213:              		GSLOT(i)->voltage = 0;                  /* 电压清零 */
   0F57    27EC    CALL	0x7EC
   0F58    120A    CLRB	0xA,4
   0F59    158A    SETB	0xA,3
@@ -343,7 +442,7 @@
   0F64    3EA0    ADDIA	0xA0
   0F65    00A5    LD	0x25,A
   0F66    3E03    ADDIA	0x3
-114:              		GSLOT(i)->chargeTimer = 0;
+214:              		GSLOT(i)->chargeTimer = 0;              /* 充电计时器清零 */
   0F67    27F5    CALL	0x7F5
   0F68    120A    CLRB	0xA,4
   0F69    158A    SETB	0xA,3
@@ -360,7 +459,7 @@
   0F74    3EA0    ADDIA	0xA0
   0F75    00A6    LD	0x26,A
   0F76    3E05    ADDIA	0x5
-115:              		GSLOT(i)->ledState = LED_OFF;
+215:              		GSLOT(i)->ledState = LED_OFF;           /* LED关闭 */
   0F77    27F5    CALL	0x7F5
   0F78    120A    CLRB	0xA,4
   0F79    158A    SETB	0xA,3
@@ -377,7 +476,7 @@
   0F84    3EA0    ADDIA	0xA0
   0F85    00A7    LD	0x27,A
   0F86    3E02    ADDIA	0x2
-116:              		GSLOT(i)->blinkTimer = 0;
+216:              		GSLOT(i)->blinkTimer = 0;               /* 闪烁计时器清零 */
   0F87    27EC    CALL	0x7EC
   0F88    120A    CLRB	0xA,4
   0F89    158A    SETB	0xA,3
@@ -394,7 +493,7 @@
   0F94    3EA0    ADDIA	0xA0
   0F95    00A8    LD	0x28,A
   0F96    3E07    ADDIA	0x7
-117:              		GSLOT(i)->blinkPhase = 0;
+217:              		GSLOT(i)->blinkPhase = 0;               /* 闪烁相位清零 */
   0F97    27F5    CALL	0x7F5
   0F98    120A    CLRB	0xA,4
   0F99    158A    SETB	0xA,3
@@ -411,7 +510,7 @@
   0FA4    3EA0    ADDIA	0xA0
   0FA5    00A9    LD	0x29,A
   0FA6    3E09    ADDIA	0x9
-118:              		GSLOT(i)->stableCnt = 0;
+218:              		GSLOT(i)->stableCnt = 0;                /* 稳定计数器清零 */
   0FA7    27EC    CALL	0x7EC
   0FA8    120A    CLRB	0xA,4
   0FA9    158A    SETB	0xA,3
@@ -428,7 +527,7 @@
   0FB4    3EA0    ADDIA	0xA0
   0FB5    00AA    LD	0x2A,A
   0FB6    3E0A    ADDIA	0xA
-119:              		GSLOT(i)->activatePulseCnt = 0;
+219:              		GSLOT(i)->activatePulseCnt = 0;         /* 激活脉冲计数清零 */
   0FB7    27EC    CALL	0x7EC
   0FB8    120A    CLRB	0xA,4
   0FB9    158A    SETB	0xA,3
@@ -453,78 +552,85 @@
   0FCC    022C    SUBA	0x2C
   0FCD    1C03    SNZB	0x3,0
   0FCE    2F36    JP	0x736
-120:              	}
-121:              
-122:              	g_scanIndex = 0;
+220:              	}
+221:              
+222:              	/* --- 系统变量初始化 --- */
+223:              	g_scanIndex = 0;        /* 从槽位0开始扫描 */
   0FCF    1283    CLRB	0x3,5
   0FD0    01D4    CLR	0x54
-123:              	g_scanPhase = 0;
+224:              	g_scanPhase = 0;        /* 从阶段0开始 */
   0FD1    01D3    CLR	0x53
-124:              	g_systemTick = 0;
-125:              	g_timerTick = 0;
+225:              	g_systemTick = 0;       /* 系统秒计数器清零 */
+226:              	g_timerTick = 0;        /* Timer0计数器清零 */
   0FD2    01CD    CLR	0x4D
   0FD3    01CE    CLR	0x4E
-126:              	g_powerOnTimer = 0;
+227:              	g_powerOnTimer = 0;     /* 上电计时器清零 */
   0FD4    1683    SETB	0x3,5
   0FD5    01AE    CLR	0x2E
   0FD6    01AF    CLR	0x2F
-127:              	g_powerOnPhase = 0;
+228:              	g_powerOnPhase = 0;     /* 上电阶段: 0=全亮自检 */
   0FD7    1283    CLRB	0x3,5
   0FD8    3019    LDIA	0x19
   0FD9    01D2    CLR	0x52
-128:              	g_tempProtect = 0;
+229:              	g_tempProtect = 0;      /* 温度保护关闭 */
   0FDA    01D6    CLR	0x56
-129:              	g_temperature = 25;
+230:              	g_temperature = 25;     /* 默认温度25度 */
   0FDB    00DA    LD	0x5A,A
-130:              	RXOK_f = 0;
+231:              	RXOK_f = 0;             /* UART接收标志清零 */
   0FDC    1059    CLRB	0x59,0
   0FDD    0008    RET
-131:              }
-132:              
-133:              void main(void)
-134:              {
-135:              	System_Init();
-  0C14    120A    CLRB	0xA,4
-  0C15    158A    SETB	0xA,3
-  0C16    26E4    CALL	0x6E4
-136:              
-137:              	TXREG1 = 0x55;
-  0C19    3055    LDIA	0x55
-  0C1A    1683    SETB	0x3,5
-  0C1B    1703    SETB	0x3,6
-  0C1C    0087    LD	0x7,A
-138:              	while(TRMT1 == 0);
-  0C1D    1C85    SNZB	0x5,1
-  0C1E    2C1D    JP	0x41D
-139:              	TXREG1 = 0xAA;
-  0C1F    30AA    LDIA	0xAA
-  0C20    0087    LD	0x7,A
-140:              	while(TRMT1 == 0);
-  0C21    1C85    SNZB	0x5,1
-  0C22    2C21    JP	0x421
-141:              
-142:              	while(1)
+232:              }
+233:              
+234:              /*========================================================================
+235:                函数: main
+236:                功能: 主程序入口
+237:                流程:
+238:                  1. 调用System_Init()初始化所有外设
+239:                  2. 发送0x55 0xAA作为UART调试标记
+240:                  3. 主循环: 清看门狗, 处理UART回环数据
+241:                说明: 所有核心功能(充电管理/ADC扫描/LED控制)均在Timer0中断中执行
+242:              ========================================================================*/
+243:              void main(void)
+244:              {
+245:              	System_Init();
+  0C18    120A    CLRB	0xA,4
+  0C19    158A    SETB	0xA,3
+  0C1A    26E5    CALL	0x6E5
+246:              
+247:              	/* 发送调试标记: 0x55 0xAA, 表示系统启动完成 */
+248:              	//TXREG1 = 0x55;
+249:              	//while(TRMT1 == 0);      /* 等待发送完成 */
+250:              	//TXREG1 = 0xAA;
+251:              	//while(TRMT1 == 0);
+252:              	uart_send_string("start...\r\n");
+  0C1D    3061    LDIA	0x61
+  0C1E    120A    CLRB	0xA,4
+  0C1F    158A    SETB	0xA,3
+  0C20    23F6    CALL	0x3F6
+253:              	/* 主循环: 持续运行, 实际逻辑在中断中执行 */
+254:              	while(1)
   0C23    0064    CLRWDT
-143:              	{
-144:              		asm("clrwdt");
-145:              
-146:              		if(RXOK_f == 1)
+255:              	{
+256:              		asm("clrwdt");       /* 喂狗 */
+257:              
+258:              		/* UART接收数据回环测试(调试用) */
+259:              		if(RXOK_f == 1)
   0C24    1283    CLRB	0x3,5
   0C25    1303    CLRB	0x3,6
   0C26    1C59    SNZB	0x59,0
   0C27    2C23    JP	0x423
-147:              		{
-148:              #if UART_PRINT_EN
-149:              			unsigned char i;
-150:              			for(i = 0; i < 10; i++)
+260:              		{
+261:              #if UART_PRINT_EN
+262:              			unsigned char i;
+263:              			for(i = 0; i < 10; i++)
   0C28    1683    SETB	0x3,5
   0C29    01AD    CLR	0x2D
   0C2A    1703    SETB	0x3,6
   0C2B    1C85    SNZB	0x5,1
   0C2C    2C2A    JP	0x42A
-151:              			{
-152:              				while(TRMT1 == 0);
-153:              				TXREG1 = RxTable[i];
+264:              			{
+265:              				while(TRMT1 == 0);
+266:              				TXREG1 = RxTable[i];
   0C2D    1303    CLRB	0x3,6
   0C2E    082D    LD	A,0x2D
   0C2F    3E43    ADDIA	0x43
@@ -539,56 +645,72 @@
   0C38    022D    SUBA	0x2D
   0C39    1C03    SNZB	0x3,0
   0C3A    2C2A    JP	0x42A
-154:              			}
-155:              #endif
-156:              			RXOK_f = 0;
+267:              			}
+268:              #endif
+269:              			RXOK_f = 0;
   0C3B    1283    CLRB	0x3,5
   0C3C    1059    CLRB	0x59,0
   0C3D    2C23    JP	0x423
-157:              		}
-158:              	}
-159:              }
-160:              
-161:              void interrupt Interrupt_Isr(void)
-162:              {
-163:              	if(T0IF)
+270:              		}
+271:              	}
+272:              }
+273:              
+274:              /*========================================================================
+275:                函数: Interrupt_Isr (中断服务程序)
+276:                功能: 处理Timer0定时中断和UART接收中断
+277:                Timer0中断(250us):
+278:                  扫描12个槽位, 每中断处理一个槽位的一个阶段
+279:                  三阶段扫描: Phase0=ADC采样 -> Phase1=充电处理+LED -> Phase2=温度/充电控制
+280:                  12槽*3阶段=36次中断*250us=9ms完成一轮完整扫描
+281:                UART中断:
+282:                  接收10字节数据放入RxTable, 完成后置RXOK_f标志
+283:              ========================================================================*/
+284:              void interrupt Interrupt_Isr(void)
+285:              {
+286:              	/* Timer0中断: 250us周期, 核心扫描驱动 */
+287:              	if(T0IF)
   0038    1D0B    SNZB	0xB,2
-  0039    290E    JP	0x10E
-164:              	{
-165:              		TMR0 += 6;
+  0039    290D    JP	0x10D
+288:              	{
+289:              		TMR0 += 6;                  /* 重装Timer0, 保持250us周期 */
   003A    3006    LDIA	0x6
   003B    1683    SETB	0x3,5
   003C    0781    ADDR	0x1
-166:              		T0IF = 0;
-167:              
-168:              		g_timerTick++;
+290:              		T0IF = 0;                   /* 清除中断标志 */
+291:              		g_timerTick++;              /* 中断计数+1 */
   003D    110B    CLRB	0xB,2
-169:              
-170:              		if(g_powerOnPhase < 2)
+292:              
+293:              		/* 上电自检阶段: 执行LED自检序列 */
+294:              		if(g_powerOnPhase < 2)
   003E    3002    LDIA	0x2
   003F    1283    CLRB	0x3,5
   0040    0252    SUBA	0x52
   0041    1803    SZB	0x3,0
-  0042    2903    JP	0x103
-171:              		{
-172:              			PowerOnLedSequence();
+  0042    2902    JP	0x102
+295:              		{
+296:              			PowerOnLedSequence();
   0043    23A0    CALL	0x3A0
   0044    120A    CLRB	0xA,4
   0045    118A    CLRB	0xA,3
-173:              		}
-  0046    290E    JP	0x10E
-174:              		else
-175:              		{
-176:              			switch(g_scanPhase)
-177:              			{
-178:              			case 0:
-179:              				SlotPin_ToAnalog(g_scanIndex);
+297:              		}
+  0046    290D    JP	0x10D
+298:              		/* 正常扫描阶段 */
+299:              		else
+300:              		{
+301:              			switch(g_scanPhase)
+302:              			{
+303:              			/* --- Phase 0: ADC电压采样 ---
+304:              			   1. 将当前槽位引脚切换为模拟输入
+305:              			   2. 读取ADC电压值
+306:              			   3. 恢复引脚为数字输出(MOSFET控制) */
+307:              			case 0:
+308:              				SlotPin_ToAnalog(g_scanIndex);
   0047    0854    LD	A,0x54
   0048    120A    CLRB	0xA,4
   0049    158A    SETB	0xA,3
   004A    243E    CALL	0x43E
-180:              				GSLOT(g_scanIndex)->voltage = 
-181:              					ADC_ReadChannel(s_adcChannels[g_scanIndex]);
+309:              				GSLOT(g_scanIndex)->voltage = 
+310:              					ADC_ReadChannel(s_adcChannels[g_scanIndex]);
   004D    3006    LDIA	0x6
   004E    1283    CLRB	0x3,5
   004F    1303    CLRB	0x3,6
@@ -598,12 +720,12 @@
   0053    0854    LD	A,0x54
   0054    1C03    SNZB	0x3,0
   0055    285B    JP	0x5B
-  0056    22E9    CALL	0x2E9
+  0056    22E8    CALL	0x2E8
   0057    120A    CLRB	0xA,4
   0058    118A    CLRB	0xA,3
   0059    3ED8    ADDIA	0xD8
   005A    285D    JP	0x5D
-  005B    22E9    CALL	0x2E9
+  005B    22E8    CALL	0x2E8
   005C    3EA0    ADDIA	0xA0
   005D    1283    CLRB	0x3,5
   005E    1303    CLRB	0x3,6
@@ -628,293 +750,812 @@
   0073    0A84    INCR	0x4
   0074    0876    LD	A,0x76
   0075    0080    LD	0x0,A
-182:              				SlotPin_ToDigital(g_scanIndex);
+311:              				SlotPin_ToDigital(g_scanIndex);
   0076    0854    LD	A,0x54
-  0077    2138    CALL	0x138
+  0077    2137    CALL	0x137
   0078    120A    CLRB	0xA,4
   0079    118A    CLRB	0xA,3
-183:              				g_scanPhase = 1;
+312:              				g_scanPhase = 1;
   007A    1283    CLRB	0x3,5
   007B    1303    CLRB	0x3,6
   007C    01D3    CLR	0x53
   007D    0AD3    INCR	0x53
-184:              				break;
-  007E    290E    JP	0x10E
-185:              
-186:              			case 1:
-187:              				ChargeProcess_Slot(g_scanIndex);
+313:              				break;
+  007E    290D    JP	0x10D
+314:              
+315:              			/* --- Phase 1: 充电状态机处理 + LED更新 ---
+316:              			   1. 调用充电状态机处理当前槽位
+317:              			   2. 更新当前槽位LED状态 */
+318:              			case 1:
+319:              				ChargeProcess_Slot(g_scanIndex);
   007F    0854    LD	A,0x54
   0080    120A    CLRB	0xA,4
   0081    118A    CLRB	0xA,3
   0082    2416    CALL	0x416
-188:              				Update_LED_Slot(g_scanIndex);
+320:              				Update_LED_Slot(g_scanIndex);
   0085    1283    CLRB	0x3,5
   0086    1303    CLRB	0x3,6
   0087    0854    LD	A,0x54
   0088    120A    CLRB	0xA,4
   0089    158A    SETB	0xA,3
   008A    247A    CALL	0x47A
-189:              				g_scanPhase = 2;
+321:              				g_scanPhase = 2;
   008D    3002    LDIA	0x2
   008E    1283    CLRB	0x3,5
   008F    1303    CLRB	0x3,6
   0090    00D3    LD	0x53,A
-190:              				break;
-  0091    290E    JP	0x10E
-191:              
-192:              			case 2:
-193:              				if(g_scanIndex == 0)
+322:              				break;
+  0091    290D    JP	0x10D
+323:              
+324:              			/* --- Phase 2: 扫描收尾(仅在槽位0时执行) ---
+325:              			   1. 读取NTC温度(与LED IO1共用RC5, 分时复用)
+326:              			   2. LED闪烁处理
+327:              			   3. 充电组控制输出
+328:              			   4. 槽位索引+1, 循环到下一个槽位
+329:              			   5. 每1秒: 读取电源电压 + 打印状态 */
+330:              			case 2:
+331:              				/* 在槽位0扫描完成后读取温度(每轮一次, 避免频繁切换RC5) */
+332:              				if(g_scanIndex == 0)
   0092    0854    LD	A,0x54
   0093    1D03    SNZB	0x3,2
   0094    28A6    JP	0xA6
-194:              				{
-195:              					ANSEL2 |= 0x20;
+333:              				{
+334:              					/* 将RC5切换为模拟输入读NTC */
+335:              					ANSEL2 |= 0x20;     /* RC5/AN21使能模拟 */
   0095    1703    SETB	0x3,6
   0096    1689    SETB	0x9,5
-196:              					TRISC |= 0x20;
+336:              					TRISC |= 0x20;      /* RC5设为输入 */
   0097    1685    SETB	0x5,5
-197:              					Read_Temperature();
+337:              					Read_Temperature();
   0098    120A    CLRB	0xA,4
   0099    118A    CLRB	0xA,3
   009A    25AB    CALL	0x5AB
-198:              					ANSEL2 &= ~0x20;
+338:              					/* 恢复RC5为数字输出(LED控制) */
+339:              					ANSEL2 &= ~0x20;
   009D    1703    SETB	0x3,6
   009E    1289    CLRB	0x9,5
-199:              					TRISC &= ~0x20;
+340:              					TRISC &= ~0x20;
   009F    1285    CLRB	0x5,5
-200:              
-201:              					Led_BlinkProcess();
-  00A0    2172    CALL	0x172
-202:              					Charging_Control();
+341:              
+342:              					/* LED闪烁计时处理 */
+343:              					Led_BlinkProcess();
+  00A0    2171    CALL	0x171
+344:              					/* 充电组控制输出(含温度保护判断) */
+345:              					Charging_Control();
   00A1    120A    CLRB	0xA,4
   00A2    158A    SETB	0xA,3
   00A3    25D3    CALL	0x5D3
-203:              				}
-204:              
-205:              				g_scanIndex++;
-  00A6    1283    CLRB	0x3,5
-  00A7    300C    LDIA	0xC
-  00A8    0AD4    INCR	0x54
-206:              				if(g_scanIndex >= BATTERY_SLOTS)
-  00A9    0254    SUBA	0x54
-  00AA    1C03    SNZB	0x3,0
-  00AB    28B0    JP	0xB0
-207:              				{
-208:              					g_scanIndex = 0;
-  00AC    01D4    CLR	0x54
-209:              					g_systemTick++;
-  00AD    0ACD    INCR	0x4D
-  00AE    1903    SZB	0x3,2
-  00AF    0ACE    INCR	0x4E
-  00B0    300F    LDIA	0xF
-210:              				}
-211:              				g_scanPhase = 0;
-  00B1    01D3    CLR	0x53
-212:              
-213:              				if(g_systemTick >= 4000)
-  00B2    024E    SUBA	0x4E
-  00B3    30A0    LDIA	0xA0
-  00B4    1903    SZB	0x3,2
-  00B5    024D    SUBA	0x4D
-  00B6    1C03    SNZB	0x3,0
-  00B7    290E    JP	0x10E
-  00B8    301F    LDIA	0x1F
-214:              				{
-215:              					g_systemTick = 0;
-  00B9    01CD    CLR	0x4D
-  00BA    01CE    CLR	0x4E
-  00BB    01F0    CLR	0x70
-  00BC    120A    CLRB	0xA,4
-  00BD    118A    CLRB	0xA,3
-  00BE    26F7    CALL	0x6F7
-  00C1    00D5    LD	0x55,A
-216:              
-217:              					test_adc = ADC_Sample(ADC_CH_VREF, 0);
-218:              					if(0xA5 == test_adc)
-  00C2    30A5    LDIA	0xA5
-  00C3    0655    XORA	0x55
-  00C4    1D03    SNZB	0x3,2
-  00C5    28F3    JP	0xF3
-219:              					{
-220:              						volatile unsigned long power_temp;
-221:              						power_temp = (unsigned long)((POWER_RATIO)/adresult);
-  00C6    3096    LDIA	0x96
-  00C7    01A3    CLR	0x23
-  00C8    00A4    LD	0x24,A
-  00C9    304A    LDIA	0x4A
-  00CA    00A5    LD	0x25,A
-  00CB    0858    LD	A,0x58
-  00CC    00F9    LD	0x79,A
-  00CD    0857    LD	A,0x57
-  00CE    00F8    LD	0x78,A
-  00CF    23EA    CALL	0x3EA
-  00D0    0878    LD	A,0x78
-  00D1    00A0    LD	0x20,A
-  00D2    0879    LD	A,0x79
-  00D3    00A1    LD	0x21,A
-  00D4    087A    LD	A,0x7A
-  00D5    00A2    LD	0x22,A
-  00D6    120A    CLRB	0xA,4
-  00D7    158A    SETB	0xA,3
-  00D8    2529    CALL	0x529
-  00DB    0820    LD	A,0x20
-  00DC    00AC    LD	0x2C,A
-  00DD    0821    LD	A,0x21
-  00DE    00AD    LD	0x2D,A
-  00DF    0822    LD	A,0x22
-  00E0    00AE    LD	0x2E,A
-  00E1    120A    CLRB	0xA,4
-  00E2    158A    SETB	0xA,3
-  00E3    24C7    CALL	0x4C7
-  00E6    082F    LD	A,0x2F
-  00E7    00C2    LD	0x42,A
-  00E8    082E    LD	A,0x2E
-  00E9    00C1    LD	0x41,A
-  00EA    082D    LD	A,0x2D
-  00EB    00C0    LD	0x40,A
-  00EC    082C    LD	A,0x2C
-  00ED    00BF    LD	0x3F,A
-222:              						power_ad = (unsigned int)(power_temp);
-  00EE    0840    LD	A,0x40
-  00EF    00D0    LD	0x50,A
-  00F0    083F    LD	A,0x3F
-  00F1    00CF    LD	0x4F,A
-223:              					}
-  00F2    28FD    JP	0xFD
-224:              					else
-225:              					{
-226:              						ADCON0 = 0;
-  00F3    1683    SETB	0x3,5
-  00F4    0195    CLR	0x15
-227:              						ADCON1 = 0;
-  00F5    0196    CLR	0x16
-228:              						__delay_us(100);
-  00F6    3084    LDIA	0x84
-  00F7    1283    CLRB	0x3,5
-  00F8    1303    CLRB	0x3,6
-  00F9    00B9    LD	0x39,A
-  00FA    0BB9    SZDECR	0x39
-  00FB    28FA    JP	0xFA
-  00FC    0000    NOP
-229:              					}
-230:              
-231:              #if UART_PRINT_EN
-232:              					Print_Status();
-  00FD    21EF    CALL	0x1EF
-  00FE    120A    CLRB	0xA,4
-  00FF    118A    CLRB	0xA,3
-  0100    290E    JP	0x10E
-233:              #endif
-234:              				}
-235:              				break;
-236:              
-237:              			default:
-238:              				g_scanPhase = 0;
-  0101    01D3    CLR	0x53
-239:              				break;
-  0102    290E    JP	0x10E
-  0103    0853    LD	A,0x53
-  0104    3A00    XORIA	0x0
-  0105    1903    SZB	0x3,2
-  0106    2847    JP	0x47
-  0107    3A01    XORIA	0x1
-  0108    1903    SZB	0x3,2
-  0109    287F    JP	0x7F
-  010A    3A03    XORIA	0x3
-  010B    1903    SZB	0x3,2
-  010C    2892    JP	0x92
-  010D    2901    JP	0x101
-240:              			}
-241:              		}
-242:              	}
-243:              
-244:              	if(RC1IF == 1)
-  010E    1283    CLRB	0x3,5
-  010F    1703    SETB	0x3,6
-  0110    1C0F    SNZB	0xF,0
-  0111    292B    JP	0x12B
-245:              	{
-246:              		static unsigned char RxNum = 0, TEMP;
-247:              		RC1IF = 0;
-  0112    100F    CLRB	0xF,0
-248:              
-249:              		if(RXOK_f == 0)
-  0113    1303    CLRB	0x3,6
-  0114    1859    SZB	0x59,0
-  0115    2928    JP	0x128
-250:              		{
-251:              			RxTable[RxNum] = RCREG1;
-  0116    0851    LD	A,0x51
-  0117    3E43    ADDIA	0x43
-  0118    0084    LD	0x4,A
-  0119    1683    SETB	0x3,5
-  011A    1703    SETB	0x3,6
-  011B    0808    LD	A,0x8
-  011C    1383    CLRB	0x3,7
-  011D    0080    LD	0x0,A
-252:              			RxNum++;
-  011E    1283    CLRB	0x3,5
-  011F    1303    CLRB	0x3,6
-  0120    300A    LDIA	0xA
-  0121    0AD1    INCR	0x51
-253:              			if(RxNum > 9)
-  0122    0251    SUBA	0x51
-  0123    1C03    SNZB	0x3,0
-  0124    292B    JP	0x12B
-254:              			{
-255:              				RxNum = 0;
-  0125    01D1    CLR	0x51
-256:              				RXOK_f = 1;
-  0126    1459    SETB	0x59,0
-  0127    292B    JP	0x12B
-257:              			}
-258:              		}
-259:              		else
-260:              		{
-261:              			TEMP = RCREG1;
-  0128    1683    SETB	0x3,5
-  0129    1703    SETB	0x3,6
-  012A    0808    LD	A,0x8
-  012B    1283    CLRB	0x3,5
-  012C    1303    CLRB	0x3,6
-  012D    083D    LD	A,0x3D
-  012E    00FF    LD	0x7F,A
-  012F    083C    LD	A,0x3C
-  0130    008A    LD	0xA,A
-  0131    083B    LD	A,0x3B
-  0132    0084    LD	0x4,A
-  0133    0E3A    SWAPA	0x3A
-  0134    0083    LD	0x3,A
-  0135    0EFE    SWAPR	0x7E
-  0136    0E7E    SWAPA	0x7E
-  0137    0009    RETI
-262:              		}
-263:              	}
-264:              }
-265:              
-266:              #include "adc_drv.c"
-267:              #include "charge_mgr.c"
-268:              #include "led.c"
-269:              #include "uart_dbg.c"
+  00A6    300C    LDIA	0xC
+346:              				}
+347:              
+348:              				/* 切换到下一个槽位 */
+349:              				g_scanIndex++;
+  00A7    0AD4    INCR	0x54
+350:              				if(g_scanIndex >= BATTERY_SLOTS)
+  00A8    0254    SUBA	0x54
+  00A9    1C03    SNZB	0x3,0
+  00AA    28AF    JP	0xAF
+351:              				{
+352:              					g_scanIndex = 0;        /* 12槽扫完, 回到槽位0 */
+  00AB    01D4    CLR	0x54
+353:              					g_systemTick++;         /* 系统秒计数器+1 */
+  00AC    0ACD    INCR	0x4D
+  00AD    1903    SZB	0x3,2
+  00AE    0ACE    INCR	0x4E
+  00AF    3000    LDIA	0x0
+354:              				}
+355:              				g_scanPhase = 0;            /* 回到Phase 0开始下一槽 */
+  00B0    01D3    CLR	0x53
+356:              
+357:              				/* 每秒任务: 12槽×3阶段=36次中断/g_systemTick, 36×250us=9ms/次
+358:              				   1000ms/9ms≈111次/秒 */
+359:              				if(g_systemTick >= 111)
+  00B1    024E    SUBA	0x4E
+  00B2    306F    LDIA	0x6F
+  00B3    1903    SZB	0x3,2
+  00B4    024D    SUBA	0x4D
+  00B5    1C03    SNZB	0x3,0
+  00B6    290D    JP	0x10D
+  00B7    301F    LDIA	0x1F
+360:              				{
+361:              					g_systemTick = 0;
+  00B8    01CD    CLR	0x4D
+  00B9    01CE    CLR	0x4E
+  00BA    01F0    CLR	0x70
+  00BB    120A    CLRB	0xA,4
+  00BC    118A    CLRB	0xA,3
+  00BD    26F7    CALL	0x6F7
+  00C0    00D5    LD	0x55,A
+362:              
+363:              					/* 读取1.2V内部参考电压, 计算VDD电源电压 */
+364:              					test_adc = ADC_Sample(ADC_CH_VREF, 0);
+365:              					if(0xA5 == test_adc)
+  00C1    30A5    LDIA	0xA5
+  00C2    0655    XORA	0x55
+  00C3    1D03    SNZB	0x3,2
+  00C4    28F2    JP	0xF2
+366:              					{
+367:              						volatile unsigned long power_temp;
+368:              						/* 电源电压(mV) = POWER_RATIO / ADC值 */
+369:              						power_temp = (unsigned long)((POWER_RATIO)/adresult);
+  00C5    3096    LDIA	0x96
+  00C6    01A3    CLR	0x23
+  00C7    00A4    LD	0x24,A
+  00C8    304A    LDIA	0x4A
+  00C9    00A5    LD	0x25,A
+  00CA    0858    LD	A,0x58
+  00CB    00F9    LD	0x79,A
+  00CC    0857    LD	A,0x57
+  00CD    00F8    LD	0x78,A
+  00CE    23EA    CALL	0x3EA
+  00CF    0878    LD	A,0x78
+  00D0    00A0    LD	0x20,A
+  00D1    0879    LD	A,0x79
+  00D2    00A1    LD	0x21,A
+  00D3    087A    LD	A,0x7A
+  00D4    00A2    LD	0x22,A
+  00D5    120A    CLRB	0xA,4
+  00D6    158A    SETB	0xA,3
+  00D7    2529    CALL	0x529
+  00DA    0820    LD	A,0x20
+  00DB    00AC    LD	0x2C,A
+  00DC    0821    LD	A,0x21
+  00DD    00AD    LD	0x2D,A
+  00DE    0822    LD	A,0x22
+  00DF    00AE    LD	0x2E,A
+  00E0    120A    CLRB	0xA,4
+  00E1    158A    SETB	0xA,3
+  00E2    24C7    CALL	0x4C7
+  00E5    082F    LD	A,0x2F
+  00E6    00C2    LD	0x42,A
+  00E7    082E    LD	A,0x2E
+  00E8    00C1    LD	0x41,A
+  00E9    082D    LD	A,0x2D
+  00EA    00C0    LD	0x40,A
+  00EB    082C    LD	A,0x2C
+  00EC    00BF    LD	0x3F,A
+370:              						power_ad = (unsigned int)(power_temp);
+  00ED    0840    LD	A,0x40
+  00EE    00D0    LD	0x50,A
+  00EF    083F    LD	A,0x3F
+  00F0    00CF    LD	0x4F,A
+371:              					}
+  00F1    28FC    JP	0xFC
+372:              					else
+373:              					{
+374:              						/* ADC采样失败, 复位ADC模块 */
+375:              						ADCON0 = 0;
+  00F2    1683    SETB	0x3,5
+  00F3    0195    CLR	0x15
+376:              						ADCON1 = 0;
+  00F4    0196    CLR	0x16
+377:              						__delay_us(100);
+  00F5    3084    LDIA	0x84
+  00F6    1283    CLRB	0x3,5
+  00F7    1303    CLRB	0x3,6
+  00F8    00B9    LD	0x39,A
+  00F9    0BB9    SZDECR	0x39
+  00FA    28F9    JP	0xF9
+  00FB    0000    NOP
+378:              					}
+379:              
+380:              #if UART_PRINT_EN
+381:              					/* 每秒打印一次系统状态(温度/电压/各槽位状态) */
+382:              					Print_Status();
+  00FC    21EE    CALL	0x1EE
+  00FD    120A    CLRB	0xA,4
+  00FE    118A    CLRB	0xA,3
+  00FF    290D    JP	0x10D
+383:              #endif
+384:              				}
+385:              				break;
+386:              
+387:              			default:
+388:              				g_scanPhase = 0;
+  0100    01D3    CLR	0x53
+389:              				break;
+  0101    290D    JP	0x10D
+  0102    0853    LD	A,0x53
+  0103    3A00    XORIA	0x0
+  0104    1903    SZB	0x3,2
+  0105    2847    JP	0x47
+  0106    3A01    XORIA	0x1
+  0107    1903    SZB	0x3,2
+  0108    287F    JP	0x7F
+  0109    3A03    XORIA	0x3
+  010A    1903    SZB	0x3,2
+  010B    2892    JP	0x92
+  010C    2900    JP	0x100
+390:              			}
+391:              		}
+392:              	}
+393:              
+394:              	/* UART1接收中断 */
+395:              	if(RC1IF == 1)
+  010D    1283    CLRB	0x3,5
+  010E    1703    SETB	0x3,6
+  010F    1C0F    SNZB	0xF,0
+  0110    292A    JP	0x12A
+396:              	{
+397:              		static unsigned char RxNum = 0, TEMP;
+398:              		RC1IF = 0;
+  0111    100F    CLRB	0xF,0
+399:              
+400:              		/* 如果上一条数据还未处理, 则丢弃新数据 */
+401:              		if(RXOK_f == 0)
+  0112    1303    CLRB	0x3,6
+  0113    1859    SZB	0x59,0
+  0114    2927    JP	0x127
+402:              		{
+403:              			RxTable[RxNum] = RCREG1;    /* 存入接收缓冲区 */
+  0115    0851    LD	A,0x51
+  0116    3E43    ADDIA	0x43
+  0117    0084    LD	0x4,A
+  0118    1683    SETB	0x3,5
+  0119    1703    SETB	0x3,6
+  011A    0808    LD	A,0x8
+  011B    1383    CLRB	0x3,7
+  011C    0080    LD	0x0,A
+404:              			RxNum++;
+  011D    1283    CLRB	0x3,5
+  011E    1303    CLRB	0x3,6
+  011F    300A    LDIA	0xA
+  0120    0AD1    INCR	0x51
+405:              			if(RxNum > 9)               /* 收满10字节 */
+  0121    0251    SUBA	0x51
+  0122    1C03    SNZB	0x3,0
+  0123    292A    JP	0x12A
+406:              			{
+407:              				RxNum = 0;
+  0124    01D1    CLR	0x51
+408:              				RXOK_f = 1;             /* 通知主循环处理 */
+  0125    1459    SETB	0x59,0
+  0126    292A    JP	0x12A
+409:              			}
+410:              		}
+411:              		else
+412:              		{
+413:              			TEMP = RCREG1;              /* 丢弃数据 */
+  0127    1683    SETB	0x3,5
+  0128    1703    SETB	0x3,6
+  0129    0808    LD	A,0x8
+  012A    1283    CLRB	0x3,5
+  012B    1303    CLRB	0x3,6
+  012C    083D    LD	A,0x3D
+  012D    00FF    LD	0x7F,A
+  012E    083C    LD	A,0x3C
+  012F    008A    LD	0xA,A
+  0130    083B    LD	A,0x3B
+  0131    0084    LD	0x4,A
+  0132    0E3A    SWAPA	0x3A
+  0133    0083    LD	0x3,A
+  0134    0EFE    SWAPR	0x7E
+  0135    0E7E    SWAPA	0x7E
+  0136    0009    RETI
+414:              		}
+415:              	}
+416:              }
+417:              
+418:              /* 包含其他模块文件(编译时合并到同一个翻译单元) */
+419:              #include "adc_drv.c"
+420:              #include "charge_mgr.c"
+421:              #include "led.c"
+422:              #include "uart_dbg.c"
+---- E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\uart_dbg.c ----------------------------------------------------------------------
+1:                /*-------------------------------------------
+2:                  L1211 12槽充电器 - UART调试输出模块
+3:                  功能: 串口发送、状态打印(每秒一次)
+4:                  配置: 9600bps, 8N1, TX=RB3(与B3共用), RX=RB4
+5:                  输出格式:
+6:                    T:温度C VDD:电源电压mV
+7:                    B1:V=ADC值 S=状态 T=类型 [ERR/FULL/CHG]
+8:                    B2:V=... ...
+9:                    ... (共12路)
+10:                 注: 调试输出可通过UART_PRINT_EN宏开关控制
+11:               -------------------------------------------*/
+12:               #include "config.h"
+13:               
+14:               /*========================================================================
+15:                 UART接收缓冲区
+16:               ========================================================================*/
+17:               unsigned char RxTable[10];          /* 接收缓冲区(10字节) */
+18:               bit RXOK_f;                         /* 接收完成标志: 1=已收满10字节 */
+19:               
+20:               #if UART_PRINT_EN
+21:               
+22:               /*========================================================================
+23:                 函数: uart_send_char
+24:                 功能: 发送单个字符
+25:                 参数: c - 要发送的字符
+26:                 说明: 阻塞发送, 等待发送缓冲区空闲
+27:               ========================================================================*/
+28:               void uart_send_char(unsigned char c)
+  034A    00F0    LD	0x70,A
+  0C0F    00A0    LD	0x20,A
+29:               {
+30:               	while(TRMT1 == 0);              /* 等待发送缓冲区空闲 */
+  034B    1683    SETB	0x3,5
+  034C    1703    SETB	0x3,6
+  034D    1C85    SNZB	0x5,1
+  034E    2B4B    JP	0x34B
+  0C10    1703    SETB	0x3,6
+  0C11    1C85    SNZB	0x5,1
+  0C12    2C10    JP	0x410
+31:               	TXREG1 = c;                     /* 写入发送寄存器 */
+  034F    0870    LD	A,0x70
+  0350    0087    LD	0x7,A
+  0351    0008    RET
+  0C13    1303    CLRB	0x3,6
+  0C14    0820    LD	A,0x20
+  0C15    1703    SETB	0x3,6
+  0C16    0087    LD	0x7,A
+  0C17    0008    RET
+32:               }
+33:               
+34:               /*========================================================================
+35:                 函数: uart_send_string
+36:                 功能: 发送字符串(以'\0'结尾)
+37:                 参数: str - 字符串指针
+38:                 说明: 逐个字符发送, 直到遇到'\0'
+39:               ========================================================================*/
+40:               void uart_send_string(const unsigned char *str)
+  02F6    00F1    LD	0x71,A
+  0BF6    1683    SETB	0x3,5
+  0BF7    00A1    LD	0x21,A
+41:               {
+42:               	while(*str != '\0')
+  02F7    0871    LD	A,0x71
+  02F8    0084    LD	0x4,A
+  02F9    120A    CLRB	0xA,4
+  02FA    158A    SETB	0xA,3
+  02FB    2000    CALL	0x0
+  02FE    3A00    XORIA	0x0
+  02FF    1903    SZB	0x3,2
+  0300    0008    RET
+  0BF8    0821    LD	A,0x21
+  0BF9    0084    LD	0x4,A
+  0BFA    120A    CLRB	0xA,4
+  0BFB    158A    SETB	0xA,3
+  0BFC    2000    CALL	0x0
+  0BFF    3A00    XORIA	0x0
+  0C00    1903    SZB	0x3,2
+  0C01    0008    RET
+43:               		uart_send_char(*str++);     /* 逐字符发送 */
+  0301    0871    LD	A,0x71
+  0302    0084    LD	0x4,A
+  0303    120A    CLRB	0xA,4
+  0304    158A    SETB	0xA,3
+  0305    2000    CALL	0x0
+  0308    234A    CALL	0x34A
+  0309    120A    CLRB	0xA,4
+  030A    118A    CLRB	0xA,3
+  030B    0AF1    INCR	0x71
+  030C    2AF7    JP	0x2F7
+  0C02    0821    LD	A,0x21
+  0C03    0084    LD	0x4,A
+  0C04    120A    CLRB	0xA,4
+  0C05    158A    SETB	0xA,3
+  0C06    2000    CALL	0x0
+  0C09    240F    CALL	0x40F
+  0C0A    120A    CLRB	0xA,4
+  0C0B    158A    SETB	0xA,3
+  0C0C    1303    CLRB	0x3,6
+  0C0D    0AA1    INCR	0x21
+  0C0E    2BF8    JP	0x3F8
+44:               }
+45:               
+46:               /*========================================================================
+47:                 函数: uart_send_number
+48:                 功能: 发送无符号整数的十进制字符串
+49:                 参数: num - 要发送的数字
+50:                 算法: 逐位取模转字符, 先存后逆序发送
+51:                 例如: num=123 -> buf=['3','2','1'] -> 发送"123"
+52:               ========================================================================*/
+53:               void uart_send_number(unsigned int num)
+54:               {
+55:               	unsigned char buf[6];           /* 最大65535, 5位+1 */
+56:               	unsigned char i = 0;
+  030D    01A6    CLR	0x26
+57:               	unsigned char j;
+58:               
+59:               	/* 特殊处理: 0 */
+60:               	if(num == 0)
+  030E    0877    LD	A,0x77
+  030F    0478    ORA	0x78
+  0310    1D03    SNZB	0x3,2
+  0311    2B35    JP	0x335
+61:               	{
+62:               		uart_send_char('0');
+  0312    3030    LDIA	0x30
+  0313    234A    CALL	0x34A
+  0314    0008    RET
+63:               		return;
+64:               	}
+65:               
+66:               	/* 逐位取模, 存入缓冲区(低位在前) */
+67:               	while(num > 0)
+68:               	{
+69:               		buf[i++] = '0' + (num % 10);  /* 数字转ASCII字符 */
+  0315    0826    LD	A,0x26
+  0316    3E20    ADDIA	0x20
+  0317    0084    LD	0x4,A
+  0318    300A    LDIA	0xA
+  0319    00F0    LD	0x70,A
+  031A    01F1    CLR	0x71
+  031B    0878    LD	A,0x78
+  031C    00F3    LD	0x73,A
+  031D    0877    LD	A,0x77
+  031E    00F2    LD	0x72,A
+  031F    237C    CALL	0x37C
+  0320    120A    CLRB	0xA,4
+  0321    118A    CLRB	0xA,3
+  0322    0870    LD	A,0x70
+  0323    3E30    ADDIA	0x30
+  0324    1383    CLRB	0x3,7
+  0325    0080    LD	0x0,A
+  0326    300A    LDIA	0xA
+  0327    0AA6    INCR	0x26
+70:               		num /= 10;
+  0328    00F0    LD	0x70,A
+  0329    01F1    CLR	0x71
+  032A    0878    LD	A,0x78
+  032B    00F3    LD	0x73,A
+  032C    0877    LD	A,0x77
+  032D    00F2    LD	0x72,A
+  032E    2352    CALL	0x352
+  032F    120A    CLRB	0xA,4
+  0330    118A    CLRB	0xA,3
+  0331    0871    LD	A,0x71
+  0332    00F8    LD	0x78,A
+  0333    0870    LD	A,0x70
+  0334    00F7    LD	0x77,A
+  0335    0877    LD	A,0x77
+  0336    0478    ORA	0x78
+  0337    1D03    SNZB	0x3,2
+  0338    2B15    JP	0x315
+71:               	}
+72:               
+73:               	/* 逆序发送(高位在前) */
+74:               	for(j = i; j > 0; j--)
+  0339    0826    LD	A,0x26
+  033A    00A7    LD	0x27,A
+  033B    0827    LD	A,0x27
+  033C    1903    SZB	0x3,2
+  033D    0008    RET
+75:               		uart_send_char(buf[j-1]);
+  033E    3EFF    ADDIA	0xFF
+  033F    3E20    ADDIA	0x20
+  0340    0084    LD	0x4,A
+  0341    1383    CLRB	0x3,7
+  0342    0800    LD	A,0x0
+  0343    234A    CALL	0x34A
+  0344    120A    CLRB	0xA,4
+  0345    118A    CLRB	0xA,3
+  0346    1283    CLRB	0x3,5
+  0347    1303    CLRB	0x3,6
+  0348    03A7    DECR	0x27
+  0349    2B3B    JP	0x33B
+76:               }
+77:               
+78:               /*========================================================================
+79:                 函数: Print_Status
+80:                 功能: 打印系统状态(每秒一次)
+81:                 输出内容:
+82:                   温度: 当前温度摄氏度
+83:                   电源电压: VDD电源电压(mV)
+84:                   各槽位: B1~B12的电压/状态/类型/附加信息
+85:                 输出示例:
+86:                   T:25C VDD:5000mV
+87:                   B1:V=188 S=4 T=1 CHG
+88:                   B2:V=0   S=0 T=0
+89:                   B3:V=188 S=6 T=1 FULL
+90:                   B4:V=5   S=7 T=4 ERR
+91:               ========================================================================*/
+92:               void Print_Status(void)
+93:               {
+94:               	unsigned char i;
+95:               
+96:               	/* 打印温度和电源电压 */
+97:               	uart_send_string("T:");
+  01EE    3094    LDIA	0x94
+  01EF    22F6    CALL	0x2F6
+  01F0    120A    CLRB	0xA,4
+  01F1    118A    CLRB	0xA,3
+98:               	uart_send_number(g_temperature);
+  01F2    1283    CLRB	0x3,5
+  01F3    1303    CLRB	0x3,6
+  01F4    085A    LD	A,0x5A
+  01F5    00F7    LD	0x77,A
+  01F6    01F8    CLR	0x78
+  01F7    230D    CALL	0x30D
+  01F8    120A    CLRB	0xA,4
+  01F9    118A    CLRB	0xA,3
+99:               	uart_send_string("C VDD:");
+  01FA    306C    LDIA	0x6C
+  01FB    22F6    CALL	0x2F6
+  01FC    120A    CLRB	0xA,4
+  01FD    118A    CLRB	0xA,3
+100:              	uart_send_number(power_ad);
+  01FE    1283    CLRB	0x3,5
+  01FF    1303    CLRB	0x3,6
+  0200    0850    LD	A,0x50
+  0201    00F8    LD	0x78,A
+  0202    084F    LD	A,0x4F
+  0203    00F7    LD	0x77,A
+  0204    230D    CALL	0x30D
+  0205    120A    CLRB	0xA,4
+  0206    118A    CLRB	0xA,3
+101:              	uart_send_string("mV\r\n");
+  0207    3079    LDIA	0x79
+  0208    22F6    CALL	0x2F6
+  0209    120A    CLRB	0xA,4
+  020A    118A    CLRB	0xA,3
+102:              
+103:              	/* 打印12槽位状态 */
+104:              	for(i = 0; i < BATTERY_SLOTS; i++)
+  020B    1283    CLRB	0x3,5
+  020C    1303    CLRB	0x3,6
+  020D    01AF    CLR	0x2F
+105:              	{
+106:              		uart_send_string("B");
+  020E    3097    LDIA	0x97
+  020F    22F6    CALL	0x2F6
+  0210    120A    CLRB	0xA,4
+  0211    118A    CLRB	0xA,3
+107:              		uart_send_number(i + 1);          /* 槽位编号: B1~B12 */
+  0212    1283    CLRB	0x3,5
+  0213    1303    CLRB	0x3,6
+  0214    082F    LD	A,0x2F
+  0215    00F7    LD	0x77,A
+  0216    01F8    CLR	0x78
+  0217    0AF7    INCR	0x77
+  0218    1903    SZB	0x3,2
+  0219    0AF8    INCR	0x78
+  021A    230D    CALL	0x30D
+  021B    120A    CLRB	0xA,4
+  021C    118A    CLRB	0xA,3
+108:              		uart_send_string(":V=");
+  021D    3090    LDIA	0x90
+  021E    22F6    CALL	0x2F6
+  021F    120A    CLRB	0xA,4
+  0220    118A    CLRB	0xA,3
+109:              		uart_send_number(GSLOT(i)->voltage);  /* ADC电压值 */
+  0221    23FC    CALL	0x3FC
+  0222    120A    CLRB	0xA,4
+  0223    118A    CLRB	0xA,3
+  0224    1C03    SNZB	0x3,0
+  0225    2A2B    JP	0x22B
+  0226    22E8    CALL	0x2E8
+  0227    120A    CLRB	0xA,4
+  0228    118A    CLRB	0xA,3
+  0229    3ED8    ADDIA	0xD8
+  022A    2A2F    JP	0x22F
+  022B    22E8    CALL	0x2E8
+  022C    120A    CLRB	0xA,4
+  022D    118A    CLRB	0xA,3
+  022E    3EA0    ADDIA	0xA0
+  022F    1283    CLRB	0x3,5
+  0230    1303    CLRB	0x3,6
+  0231    00A8    LD	0x28,A
+  0232    3E03    ADDIA	0x3
+  0233    0084    LD	0x4,A
+  0234    1783    SETB	0x3,7
+  0235    0800    LD	A,0x0
+  0236    00F7    LD	0x77,A
+  0237    0A84    INCR	0x4
+  0238    0800    LD	A,0x0
+  0239    00F8    LD	0x78,A
+  023A    230D    CALL	0x30D
+  023B    120A    CLRB	0xA,4
+  023C    118A    CLRB	0xA,3
+110:              		uart_send_string(" S=");
+  023D    3088    LDIA	0x88
+  023E    22F6    CALL	0x2F6
+  023F    120A    CLRB	0xA,4
+  0240    118A    CLRB	0xA,3
+111:              		uart_send_number(GSLOT(i)->state);    /* 充电状态 */
+  0241    23FC    CALL	0x3FC
+  0242    120A    CLRB	0xA,4
+  0243    118A    CLRB	0xA,3
+  0244    1C03    SNZB	0x3,0
+  0245    2A4B    JP	0x24B
+  0246    22E8    CALL	0x2E8
+  0247    120A    CLRB	0xA,4
+  0248    118A    CLRB	0xA,3
+  0249    3ED8    ADDIA	0xD8
+  024A    2A4F    JP	0x24F
+  024B    22E8    CALL	0x2E8
+  024C    120A    CLRB	0xA,4
+  024D    118A    CLRB	0xA,3
+  024E    3EA0    ADDIA	0xA0
+  024F    1283    CLRB	0x3,5
+  0250    1303    CLRB	0x3,6
+  0251    00A9    LD	0x29,A
+  0252    0A29    INCA	0x29
+  0253    2410    CALL	0x410
+  0254    120A    CLRB	0xA,4
+  0255    118A    CLRB	0xA,3
+  0256    230D    CALL	0x30D
+  0257    120A    CLRB	0xA,4
+  0258    118A    CLRB	0xA,3
+112:              		uart_send_string(" T=");
+  0259    308C    LDIA	0x8C
+  025A    22F6    CALL	0x2F6
+  025B    120A    CLRB	0xA,4
+  025C    118A    CLRB	0xA,3
+113:              		uart_send_number(GSLOT(i)->type);     /* 电池类型 */
+  025D    23FC    CALL	0x3FC
+  025E    120A    CLRB	0xA,4
+  025F    118A    CLRB	0xA,3
+  0260    1C03    SNZB	0x3,0
+  0261    2A67    JP	0x267
+  0262    22E8    CALL	0x2E8
+  0263    120A    CLRB	0xA,4
+  0264    118A    CLRB	0xA,3
+  0265    3ED8    ADDIA	0xD8
+  0266    2A6B    JP	0x26B
+  0267    22E8    CALL	0x2E8
+  0268    120A    CLRB	0xA,4
+  0269    118A    CLRB	0xA,3
+  026A    3EA0    ADDIA	0xA0
+  026B    1283    CLRB	0x3,5
+  026C    1303    CLRB	0x3,6
+  026D    00AA    LD	0x2A,A
+  026E    2410    CALL	0x410
+  026F    120A    CLRB	0xA,4
+  0270    118A    CLRB	0xA,3
+  0271    230D    CALL	0x30D
+  0272    120A    CLRB	0xA,4
+  0273    118A    CLRB	0xA,3
+114:              
+115:              		/* 附加状态信息 */
+116:              		if(GSLOT(i)->state == CHG_ERROR)
+  0274    23FC    CALL	0x3FC
+  0275    120A    CLRB	0xA,4
+  0276    118A    CLRB	0xA,3
+  0277    1C03    SNZB	0x3,0
+  0278    2A7E    JP	0x27E
+  0279    22E8    CALL	0x2E8
+  027A    120A    CLRB	0xA,4
+  027B    118A    CLRB	0xA,3
+  027C    3ED8    ADDIA	0xD8
+  027D    2A82    JP	0x282
+  027E    22E8    CALL	0x2E8
+  027F    120A    CLRB	0xA,4
+  0280    118A    CLRB	0xA,3
+  0281    3EA0    ADDIA	0xA0
+  0282    1283    CLRB	0x3,5
+  0283    1303    CLRB	0x3,6
+  0284    00AB    LD	0x2B,A
+  0285    0A2B    INCA	0x2B
+  0286    0084    LD	0x4,A
+  0287    3007    LDIA	0x7
+  0288    1783    SETB	0x3,7
+  0289    0600    XORA	0x0
+  028A    1D03    SNZB	0x3,2
+  028B    2A8E    JP	0x28E
+117:              			uart_send_string(" ERR");      /* 错误 */
+  028C    3083    LDIA	0x83
+  028D    2AD9    JP	0x2D9
+118:              		else if(GSLOT(i)->state == CHG_FULL)
+  028E    240A    CALL	0x40A
+  028F    120A    CLRB	0xA,4
+  0290    118A    CLRB	0xA,3
+  0291    1C03    SNZB	0x3,0
+  0292    2A98    JP	0x298
+  0293    22E8    CALL	0x2E8
+  0294    120A    CLRB	0xA,4
+  0295    118A    CLRB	0xA,3
+  0296    3ED8    ADDIA	0xD8
+  0297    2A9C    JP	0x29C
+  0298    22E8    CALL	0x2E8
+  0299    120A    CLRB	0xA,4
+  029A    118A    CLRB	0xA,3
+  029B    3EA0    ADDIA	0xA0
+  029C    1283    CLRB	0x3,5
+  029D    1303    CLRB	0x3,6
+  029E    00AC    LD	0x2C,A
+  029F    0A2C    INCA	0x2C
+  02A0    0084    LD	0x4,A
+  02A1    3006    LDIA	0x6
+  02A2    1783    SETB	0x3,7
+  02A3    0600    XORA	0x0
+  02A4    1D03    SNZB	0x3,2
+  02A5    2AA8    JP	0x2A8
+119:              			uart_send_string(" FULL");     /* 充满 */
+  02A6    3073    LDIA	0x73
+  02A7    2AD9    JP	0x2D9
+120:              		else if(GSLOT(i)->state == CHG_CC_CHARGE || 
+121:              		        GSLOT(i)->state == CHG_CV_CHARGE)
+  02A8    240A    CALL	0x40A
+  02A9    120A    CLRB	0xA,4
+  02AA    118A    CLRB	0xA,3
+  02AB    1C03    SNZB	0x3,0
+  02AC    2AB2    JP	0x2B2
+  02AD    22E8    CALL	0x2E8
+  02AE    120A    CLRB	0xA,4
+  02AF    118A    CLRB	0xA,3
+  02B0    3ED8    ADDIA	0xD8
+  02B1    2AB6    JP	0x2B6
+  02B2    22E8    CALL	0x2E8
+  02B3    120A    CLRB	0xA,4
+  02B4    118A    CLRB	0xA,3
+  02B5    3EA0    ADDIA	0xA0
+  02B6    1283    CLRB	0x3,5
+  02B7    1303    CLRB	0x3,6
+  02B8    00AD    LD	0x2D,A
+  02B9    0A2D    INCA	0x2D
+  02BA    0084    LD	0x4,A
+  02BB    3004    LDIA	0x4
+  02BC    1783    SETB	0x3,7
+  02BD    0600    XORA	0x0
+  02BE    1903    SZB	0x3,2
+  02BF    2AD8    JP	0x2D8
+  02C0    240A    CALL	0x40A
+  02C1    120A    CLRB	0xA,4
+  02C2    118A    CLRB	0xA,3
+  02C3    1C03    SNZB	0x3,0
+  02C4    2ACA    JP	0x2CA
+  02C5    22E8    CALL	0x2E8
+  02C6    120A    CLRB	0xA,4
+  02C7    118A    CLRB	0xA,3
+  02C8    3ED8    ADDIA	0xD8
+  02C9    2ACE    JP	0x2CE
+  02CA    22E8    CALL	0x2E8
+  02CB    120A    CLRB	0xA,4
+  02CC    118A    CLRB	0xA,3
+  02CD    3EA0    ADDIA	0xA0
+  02CE    1283    CLRB	0x3,5
+  02CF    1303    CLRB	0x3,6
+  02D0    00AE    LD	0x2E,A
+  02D1    0A2E    INCA	0x2E
+  02D2    0084    LD	0x4,A
+  02D3    3005    LDIA	0x5
+  02D4    1783    SETB	0x3,7
+  02D5    0600    XORA	0x0
+  02D6    1D03    SNZB	0x3,2
+  02D7    2ADC    JP	0x2DC
+122:              			uart_send_string(" CHG");      /* 充电中 */
+  02D8    307E    LDIA	0x7E
+  02D9    22F6    CALL	0x2F6
+  02DA    120A    CLRB	0xA,4
+  02DB    118A    CLRB	0xA,3
+123:              
+124:              		uart_send_string("\r\n");
+  02DC    3069    LDIA	0x69
+  02DD    22F6    CALL	0x2F6
+  02DE    120A    CLRB	0xA,4
+  02DF    118A    CLRB	0xA,3
+  02E0    1283    CLRB	0x3,5
+  02E1    1303    CLRB	0x3,6
+  02E2    300C    LDIA	0xC
+  02E3    0AAF    INCR	0x2F
+  02E4    022F    SUBA	0x2F
+  02E5    1803    SZB	0x3,0
+  02E6    0008    RET
+  02E7    2A0E    JP	0x20E
+125:              	}
+126:              }
+127:              #endif
 ---- D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\Umul8.c ----------------------------------------------------------------------
 1:                // 8 x 8 bit multiplication with 8 bit result
 2:                
 3:                unsigned char
 4:                __bmul(unsigned char multiplier, unsigned char multiplicand)
-  02E9    00F1    LD	0x71,A
-  02EA    01F2    CLR	0x72
-  02EB    0870    LD	A,0x70
-  02EC    1871    SZB	0x71,0
-  02ED    07F2    ADDR	0x72
-  02EE    1003    CLRB	0x3,0
-  02EF    0DF0    RLCR	0x70
-  02F0    1003    CLRB	0x3,0
-  02F1    0CF1    RRCR	0x71
-  02F2    0871    LD	A,0x71
-  02F3    1D03    SNZB	0x3,2
-  02F4    2AEB    JP	0x2EB
-  02F5    0872    LD	A,0x72
-  02F6    0008    RET
+  02E8    00F1    LD	0x71,A
+  02E9    01F2    CLR	0x72
+  02EA    0870    LD	A,0x70
+  02EB    1871    SZB	0x71,0
+  02EC    07F2    ADDR	0x72
+  02ED    1003    CLRB	0x3,0
+  02EE    0DF0    RLCR	0x70
+  02EF    1003    CLRB	0x3,0
+  02F0    0CF1    RRCR	0x71
+  02F1    0871    LD	A,0x71
+  02F2    1D03    SNZB	0x3,2
+  02F3    2AEA    JP	0x2EA
+  02F4    0872    LD	A,0x72
+  02F5    0008    RET
   0FDE    00A2    LD	0x22,A
   0FDF    01A1    CLR	0x21
   0FE0    0820    LD	A,0x20
@@ -977,12 +1618,39 @@
 50:               	return product;
 51:               }
 ---- E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\led.c ----------------------------------------------------------------------
-1:                #include "config.h"
-2:                
-3:                void Update_LED_Slot(unsigned char idx)
+1:                /*-------------------------------------------
+2:                  L1211 12槽充电器 - LED控制模块
+3:                  功能: LED状态更新、闪烁处理、上电自检序列
+4:                  LED IO1(红): RC5, 与NTC共用, 分时复用
+5:                  LED IO2(绿): RC4
+6:                  显示规则:
+7:                    红灯亮 = 充电中(DETECT/ACTIVATE/PRECHARGE/CC/CV)
+8:                    绿灯亮 = 充满(FULL)
+9:                    红灯闪 = 错误(ERROR)
+10:                   LED灭  = 空闲(IDLE)
+11:                 上电自检: Phase0=全亮1s, Phase1=保持1s, Phase2=正常
+12:               -------------------------------------------*/
+13:               #include "config.h"
+14:               
+15:               /*========================================================================
+16:                 函数: Update_LED_Slot
+17:                 功能: 根据槽位充电状态更新LED显示
+18:                 参数: idx - 槽位索引(0~11)
+19:                 说明: 每个槽位扫描Phase1时调用一次
+20:                 LED映射:
+21:                   CHG_IDLE          -> LED_OFF       (灭)
+22:                   CHG_DETECT        -> LED_RED_ON    (红灯亮, 检测中)
+23:                   CHG_ACTIVATE      -> LED_RED_ON    (红灯亮, 激活中)
+24:                   CHG_PRECHARGE     -> LED_RED_ON    (红灯亮, 预充中)
+25:                   CHG_CC_CHARGE     -> LED_RED_ON    (红灯亮, 恒流充电)
+26:                   CHG_CV_CHARGE     -> LED_RED_ON    (红灯亮, 恒压充电)
+27:                   CHG_FULL          -> LED_GREEN_ON  (绿灯亮, 充满)
+28:                   CHG_ERROR         -> LED_RED_FLASH (红灯闪, 错误)
+29:               ========================================================================*/
+30:               void Update_LED_Slot(unsigned char idx)
   0C7A    00F3    LD	0x73,A
-4:                {
-5:                	BatterySlot_t *p = GSLOT(idx);
+31:               {
+32:               	BatterySlot_t *p = GSLOT(idx);
   0C7B    3006    LDIA	0x6
   0C7C    0273    SUBA	0x73
   0C7D    300C    LDIA	0xC
@@ -992,12 +1660,12 @@
   0C81    2C89    JP	0x489
   0C82    120A    CLRB	0xA,4
   0C83    118A    CLRB	0xA,3
-  0C84    22E9    CALL	0x2E9
+  0C84    22E8    CALL	0x2E8
   0C87    3ED8    ADDIA	0xD8
   0C88    2C8F    JP	0x48F
   0C89    120A    CLRB	0xA,4
   0C8A    118A    CLRB	0xA,3
-  0C8B    22E9    CALL	0x2E9
+  0C8B    22E8    CALL	0x2E8
   0C8E    3EA0    ADDIA	0xA0
   0C8F    00F4    LD	0x74,A
   0C90    0A74    INCA	0x74
@@ -1030,674 +1698,286 @@
   0CAB    2CBB    JP	0x4BB
   0CAC    2CC1    JP	0x4C1
   0CAD    0008    RET
-6:                
-7:                	switch(p->state)
-8:                	{
-9:                	case CHG_IDLE:
-10:               		p->ledState = LED_OFF;
-11:               		break;
+33:               
+34:               	switch(p->state)
+35:               	{
+36:               	case CHG_IDLE:
+37:               		p->ledState = LED_OFF;          /* 空闲: LED关闭 */
+38:               		break;
   0CAE    2CC2    JP	0x4C2
-12:               	case CHG_DETECT:
-13:               	case CHG_ACTIVATE:
-14:               	case CHG_PRECHARGE:
-15:               	case CHG_CC_CHARGE:
-16:               	case CHG_CV_CHARGE:
-17:               		p->ledState = LED_RED_ON;
+39:               	case CHG_DETECT:                    /* 检测中 */
+40:               	case CHG_ACTIVATE:                  /* 激活中 */
+41:               	case CHG_PRECHARGE:                 /* 预充中 */
+42:               	case CHG_CC_CHARGE:                 /* 恒流充电 */
+43:               	case CHG_CV_CHARGE:                 /* 恒压充电 */
+44:               		p->ledState = LED_RED_ON;       /* 红灯常亮: 充电中 */
   0CAF    0874    LD	A,0x74
   0CB0    3E02    ADDIA	0x2
   0CB1    0084    LD	0x4,A
   0CB2    0180    CLR	0x0
   0CB3    0A80    INCR	0x0
-18:               		break;
+45:               		break;
   0CB4    0008    RET
-19:               	case CHG_FULL:
-20:               		p->ledState = LED_GREEN_ON;
+46:               	case CHG_FULL:
+47:               		p->ledState = LED_GREEN_ON;     /* 绿灯常亮: 充满 */
   0CB5    0874    LD	A,0x74
   0CB6    3E02    ADDIA	0x2
   0CB7    0084    LD	0x4,A
   0CB8    3002    LDIA	0x2
   0CB9    0080    LD	0x0,A
-21:               		break;
+48:               		break;
   0CBA    0008    RET
-22:               	case CHG_ERROR:
-23:               		p->ledState = LED_RED_FLASH;
+49:               	case CHG_ERROR:
+50:               		p->ledState = LED_RED_FLASH;    /* 红灯闪烁: 错误 */
   0CBB    0874    LD	A,0x74
   0CBC    3E02    ADDIA	0x2
   0CBD    0084    LD	0x4,A
   0CBE    3003    LDIA	0x3
   0CBF    0080    LD	0x0,A
-24:               		break;
+51:               		break;
   0CC0    0008    RET
-25:               	default:
-26:               		p->ledState = LED_OFF;
-27:               		break;
+52:               	default:
+53:               		p->ledState = LED_OFF;          /* 其他: LED关闭 */
+54:               		break;
   0CC1    2CC2    JP	0x4C2
-28:               	}
-29:               }
-30:               
-31:               void Led_BlinkProcess(void)
-32:               {
-33:               	unsigned char i;
-34:               	for(i = 0; i < BATTERY_SLOTS; i++)
-  0172    01FA    CLR	0x7A
-35:               	{
-36:               		if(GSLOT(i)->ledState == LED_RED_FLASH)
-  0173    2404    CALL	0x404
-  0174    120A    CLRB	0xA,4
-  0175    118A    CLRB	0xA,3
-  0176    1C03    SNZB	0x3,0
-  0177    297D    JP	0x17D
-  0178    22E9    CALL	0x2E9
-  0179    120A    CLRB	0xA,4
-  017A    118A    CLRB	0xA,3
-  017B    3ED8    ADDIA	0xD8
-  017C    2981    JP	0x181
-  017D    22E9    CALL	0x2E9
-  017E    120A    CLRB	0xA,4
-  017F    118A    CLRB	0xA,3
-  0180    3EA0    ADDIA	0xA0
-  0181    00F5    LD	0x75,A
-  0182    3E02    ADDIA	0x2
-  0183    0084    LD	0x4,A
-  0184    3003    LDIA	0x3
-  0185    1783    SETB	0x3,7
-  0186    0600    XORA	0x0
-  0187    1D03    SNZB	0x3,2
-  0188    29E9    JP	0x1E9
-37:               		{
-38:               			GSLOT(i)->blinkTimer++;
-  0189    2404    CALL	0x404
-  018A    120A    CLRB	0xA,4
-  018B    118A    CLRB	0xA,3
-  018C    1C03    SNZB	0x3,0
-  018D    2993    JP	0x193
-  018E    22E9    CALL	0x2E9
-  018F    120A    CLRB	0xA,4
-  0190    118A    CLRB	0xA,3
-  0191    3ED8    ADDIA	0xD8
-  0192    2997    JP	0x197
-  0193    22E9    CALL	0x2E9
-  0194    120A    CLRB	0xA,4
-  0195    118A    CLRB	0xA,3
-  0196    3EA0    ADDIA	0xA0
-  0197    00F6    LD	0x76,A
-  0198    3E07    ADDIA	0x7
-  0199    0084    LD	0x4,A
-  019A    3001    LDIA	0x1
-  019B    1783    SETB	0x3,7
-  019C    0780    ADDR	0x0
-  019D    0A84    INCR	0x4
-  019E    1803    SZB	0x3,0
-  019F    0A80    INCR	0x0
-39:               			if(GSLOT(i)->blinkTimer >= (TICK_PER_SEC / 2))
-  01A0    2404    CALL	0x404
-  01A1    120A    CLRB	0xA,4
-  01A2    118A    CLRB	0xA,3
-  01A3    1C03    SNZB	0x3,0
-  01A4    29AA    JP	0x1AA
-  01A5    22E9    CALL	0x2E9
-  01A6    120A    CLRB	0xA,4
-  01A7    118A    CLRB	0xA,3
-  01A8    3ED8    ADDIA	0xD8
-  01A9    29AE    JP	0x1AE
-  01AA    22E9    CALL	0x2E9
-  01AB    120A    CLRB	0xA,4
-  01AC    118A    CLRB	0xA,3
-  01AD    3EA0    ADDIA	0xA0
-  01AE    00F7    LD	0x77,A
-  01AF    3E07    ADDIA	0x7
-  01B0    0084    LD	0x4,A
-  01B1    1783    SETB	0x3,7
-  01B2    0800    LD	A,0x0
-  01B3    00F3    LD	0x73,A
-  01B4    0A84    INCR	0x4
-  01B5    0800    LD	A,0x0
-  01B6    00F4    LD	0x74,A
-  01B7    3007    LDIA	0x7
-  01B8    0274    SUBA	0x74
-  01B9    30D0    LDIA	0xD0
-  01BA    1903    SZB	0x3,2
-  01BB    0273    SUBA	0x73
-  01BC    1C03    SNZB	0x3,0
-  01BD    29E9    JP	0x1E9
-40:               			{
-41:               				GSLOT(i)->blinkTimer = 0;
-  01BE    2404    CALL	0x404
-  01BF    120A    CLRB	0xA,4
-  01C0    118A    CLRB	0xA,3
-  01C1    1C03    SNZB	0x3,0
-  01C2    29C8    JP	0x1C8
-  01C3    22E9    CALL	0x2E9
-  01C4    120A    CLRB	0xA,4
-  01C5    118A    CLRB	0xA,3
-  01C6    3ED8    ADDIA	0xD8
-  01C7    29CC    JP	0x1CC
-  01C8    22E9    CALL	0x2E9
-  01C9    120A    CLRB	0xA,4
-  01CA    118A    CLRB	0xA,3
-  01CB    3EA0    ADDIA	0xA0
-  01CC    00F8    LD	0x78,A
-  01CD    3E07    ADDIA	0x7
-  01CE    0084    LD	0x4,A
-  01CF    3006    LDIA	0x6
-  01D0    1783    SETB	0x3,7
-  01D1    0180    CLR	0x0
-  01D2    0A84    INCR	0x4
-  01D3    0180    CLR	0x0
-42:               				GSLOT(i)->blinkPhase ^= 1;
-  01D4    027A    SUBA	0x7A
-  01D5    300C    LDIA	0xC
-  01D6    00F0    LD	0x70,A
-  01D7    087A    LD	A,0x7A
-  01D8    1C03    SNZB	0x3,0
-  01D9    29DF    JP	0x1DF
-  01DA    22E9    CALL	0x2E9
-  01DB    120A    CLRB	0xA,4
-  01DC    118A    CLRB	0xA,3
-  01DD    3ED8    ADDIA	0xD8
-  01DE    29E3    JP	0x1E3
-  01DF    22E9    CALL	0x2E9
-  01E0    120A    CLRB	0xA,4
-  01E1    118A    CLRB	0xA,3
-  01E2    3EA0    ADDIA	0xA0
-  01E3    00F9    LD	0x79,A
-  01E4    3E09    ADDIA	0x9
-  01E5    0084    LD	0x4,A
-  01E6    3001    LDIA	0x1
-  01E7    1783    SETB	0x3,7
-  01E8    0680    XORR	0x0
-  01E9    300C    LDIA	0xC
-  01EA    0AFA    INCR	0x7A
-  01EB    027A    SUBA	0x7A
-  01EC    1803    SZB	0x3,0
-  01ED    0008    RET
-  01EE    2973    JP	0x173
-43:               			}
-44:               		}
-45:               	}
-46:               }
-47:               
-48:               void PowerOnLedSequence(void)
-49:               {
-50:               	g_powerOnTimer++;
+55:               	}
+56:               }
+57:               
+58:               /*========================================================================
+59:                 函数: Led_BlinkProcess
+60:                 功能: LED闪烁计时处理
+61:                 说明: 每轮扫描(槽位0的Phase2)调用一次, 处理所有槽位的闪烁
+62:                 闪烁逻辑: 每0.5s切换一次闪烁相位(blinkPhase 0/1交替)
+63:                 实际LED驱动: 在Charging_Control中根据ledState和blinkPhase控制IO
+64:                 - 红灯闪烁: blinkPhase=0时亮, blinkPhase=1时灭(0.5Hz)
+65:               ========================================================================*/
+66:               void Led_BlinkProcess(void)
+67:               {
+68:               	unsigned char i;
+69:               	for(i = 0; i < BATTERY_SLOTS; i++)
+  0171    01FA    CLR	0x7A
+70:               	{
+71:               		/* 仅处理红灯闪烁状态的槽位 */
+72:               		if(GSLOT(i)->ledState == LED_RED_FLASH)
+  0172    2404    CALL	0x404
+  0173    120A    CLRB	0xA,4
+  0174    118A    CLRB	0xA,3
+  0175    1C03    SNZB	0x3,0
+  0176    297C    JP	0x17C
+  0177    22E8    CALL	0x2E8
+  0178    120A    CLRB	0xA,4
+  0179    118A    CLRB	0xA,3
+  017A    3ED8    ADDIA	0xD8
+  017B    2980    JP	0x180
+  017C    22E8    CALL	0x2E8
+  017D    120A    CLRB	0xA,4
+  017E    118A    CLRB	0xA,3
+  017F    3EA0    ADDIA	0xA0
+  0180    00F5    LD	0x75,A
+  0181    3E02    ADDIA	0x2
+  0182    0084    LD	0x4,A
+  0183    3003    LDIA	0x3
+  0184    1783    SETB	0x3,7
+  0185    0600    XORA	0x0
+  0186    1D03    SNZB	0x3,2
+  0187    29E8    JP	0x1E8
+73:               		{
+74:               			GSLOT(i)->blinkTimer++;     /* 闪烁计时器累加 */
+  0188    2404    CALL	0x404
+  0189    120A    CLRB	0xA,4
+  018A    118A    CLRB	0xA,3
+  018B    1C03    SNZB	0x3,0
+  018C    2992    JP	0x192
+  018D    22E8    CALL	0x2E8
+  018E    120A    CLRB	0xA,4
+  018F    118A    CLRB	0xA,3
+  0190    3ED8    ADDIA	0xD8
+  0191    2996    JP	0x196
+  0192    22E8    CALL	0x2E8
+  0193    120A    CLRB	0xA,4
+  0194    118A    CLRB	0xA,3
+  0195    3EA0    ADDIA	0xA0
+  0196    00F6    LD	0x76,A
+  0197    3E07    ADDIA	0x7
+  0198    0084    LD	0x4,A
+  0199    3001    LDIA	0x1
+  019A    1783    SETB	0x3,7
+  019B    0780    ADDR	0x0
+  019C    0A84    INCR	0x4
+  019D    1803    SZB	0x3,0
+  019E    0A80    INCR	0x0
+75:               			/* 每0.5秒切换一次闪烁相位 */
+76:               			if(GSLOT(i)->blinkTimer >= (TICK_PER_SEC / 2))
+  019F    2404    CALL	0x404
+  01A0    120A    CLRB	0xA,4
+  01A1    118A    CLRB	0xA,3
+  01A2    1C03    SNZB	0x3,0
+  01A3    29A9    JP	0x1A9
+  01A4    22E8    CALL	0x2E8
+  01A5    120A    CLRB	0xA,4
+  01A6    118A    CLRB	0xA,3
+  01A7    3ED8    ADDIA	0xD8
+  01A8    29AD    JP	0x1AD
+  01A9    22E8    CALL	0x2E8
+  01AA    120A    CLRB	0xA,4
+  01AB    118A    CLRB	0xA,3
+  01AC    3EA0    ADDIA	0xA0
+  01AD    00F7    LD	0x77,A
+  01AE    3E07    ADDIA	0x7
+  01AF    0084    LD	0x4,A
+  01B0    1783    SETB	0x3,7
+  01B1    0800    LD	A,0x0
+  01B2    00F3    LD	0x73,A
+  01B3    0A84    INCR	0x4
+  01B4    0800    LD	A,0x0
+  01B5    00F4    LD	0x74,A
+  01B6    3000    LDIA	0x0
+  01B7    0274    SUBA	0x74
+  01B8    3037    LDIA	0x37
+  01B9    1903    SZB	0x3,2
+  01BA    0273    SUBA	0x73
+  01BB    1C03    SNZB	0x3,0
+  01BC    29E8    JP	0x1E8
+77:               			{
+78:               				GSLOT(i)->blinkTimer = 0;
+  01BD    2404    CALL	0x404
+  01BE    120A    CLRB	0xA,4
+  01BF    118A    CLRB	0xA,3
+  01C0    1C03    SNZB	0x3,0
+  01C1    29C7    JP	0x1C7
+  01C2    22E8    CALL	0x2E8
+  01C3    120A    CLRB	0xA,4
+  01C4    118A    CLRB	0xA,3
+  01C5    3ED8    ADDIA	0xD8
+  01C6    29CB    JP	0x1CB
+  01C7    22E8    CALL	0x2E8
+  01C8    120A    CLRB	0xA,4
+  01C9    118A    CLRB	0xA,3
+  01CA    3EA0    ADDIA	0xA0
+  01CB    00F8    LD	0x78,A
+  01CC    3E07    ADDIA	0x7
+  01CD    0084    LD	0x4,A
+  01CE    3006    LDIA	0x6
+  01CF    1783    SETB	0x3,7
+  01D0    0180    CLR	0x0
+  01D1    0A84    INCR	0x4
+  01D2    0180    CLR	0x0
+79:               				GSLOT(i)->blinkPhase ^= 1;  /* 0/1交替 */
+  01D3    027A    SUBA	0x7A
+  01D4    300C    LDIA	0xC
+  01D5    00F0    LD	0x70,A
+  01D6    087A    LD	A,0x7A
+  01D7    1C03    SNZB	0x3,0
+  01D8    29DE    JP	0x1DE
+  01D9    22E8    CALL	0x2E8
+  01DA    120A    CLRB	0xA,4
+  01DB    118A    CLRB	0xA,3
+  01DC    3ED8    ADDIA	0xD8
+  01DD    29E2    JP	0x1E2
+  01DE    22E8    CALL	0x2E8
+  01DF    120A    CLRB	0xA,4
+  01E0    118A    CLRB	0xA,3
+  01E1    3EA0    ADDIA	0xA0
+  01E2    00F9    LD	0x79,A
+  01E3    3E09    ADDIA	0x9
+  01E4    0084    LD	0x4,A
+  01E5    3001    LDIA	0x1
+  01E6    1783    SETB	0x3,7
+  01E7    0680    XORR	0x0
+  01E8    300C    LDIA	0xC
+  01E9    0AFA    INCR	0x7A
+  01EA    027A    SUBA	0x7A
+  01EB    1803    SZB	0x3,0
+  01EC    0008    RET
+  01ED    2972    JP	0x172
+80:               			}
+81:               		}
+82:               	}
+83:               }
+84:               
+85:               /*========================================================================
+86:                 函数: PowerOnLedSequence
+87:                 功能: 上电LED自检序列
+88:                 说明: 系统上电后执行, 测试LED是否正常
+89:                 流程:
+90:                   Phase0: 全亮1s(LED IO1=1, LED IO2=1), 红灯和绿灯同时亮
+91:                   Phase1: 保持1s(继续全亮)
+92:                   Phase2: 关闭LED, 进入正常工作模式
+93:                 目的: 检测LED是否正常, 同时给用户视觉反馈系统已启动
+94:               ========================================================================*/
+95:               void PowerOnLedSequence(void)
+96:               {
+97:               	g_powerOnTimer++;                    /* 自检计时器累加 */
   03A0    1683    SETB	0x3,5
   03A1    0AAE    INCR	0x2E
   03A2    1903    SZB	0x3,2
   03A3    0AAF    INCR	0x2F
-51:               
-52:               	if(g_powerOnPhase == 0)
+98:               
+99:               	if(g_powerOnPhase == 0)
   03A4    1283    CLRB	0x3,5
   03A5    0852    LD	A,0x52
   03A6    1D03    SNZB	0x3,2
   03A7    2BBA    JP	0x3BA
-53:               	{
-54:               		PIN_LED_IO1 = 1;
+100:              	{
+101:              		/* Phase 0: 全亮1秒 */
+102:              		PIN_LED_IO1 = 1;                /* 红灯亮 */
   03A8    1703    SETB	0x3,6
   03A9    1686    SETB	0x6,5
-55:               		PIN_LED_IO2 = 1;
+103:              		PIN_LED_IO2 = 1;                /* 绿灯亮 */
   03AA    1606    SETB	0x6,4
-56:               		if(g_powerOnTimer >= TICK_PER_SEC)
-  03AB    300F    LDIA	0xF
+104:              		if(g_powerOnTimer >= TICK_PER_SEC)
+  03AB    3000    LDIA	0x0
   03AC    1683    SETB	0x3,5
   03AD    1303    CLRB	0x3,6
   03AE    022F    SUBA	0x2F
-  03AF    30A0    LDIA	0xA0
+  03AF    306F    LDIA	0x6F
   03B0    1903    SZB	0x3,2
   03B1    022E    SUBA	0x2E
   03B2    1C03    SNZB	0x3,0
   03B3    0008    RET
-57:               		{
-58:               			g_powerOnTimer = 0;
+105:              		{
+106:              			g_powerOnTimer = 0;
   03B4    01AE    CLR	0x2E
   03B5    01AF    CLR	0x2F
-59:               			g_powerOnPhase = 1;
+107:              			g_powerOnPhase = 1;         /* 进入Phase 1 */
   03B6    1283    CLRB	0x3,5
   03B7    01D2    CLR	0x52
   03B8    0AD2    INCR	0x52
   03B9    0008    RET
-60:               		}
-61:               	}
-62:               	else if(g_powerOnPhase == 1)
+108:              		}
+109:              	}
+110:              	else if(g_powerOnPhase == 1)
   03BA    0B52    SZDECA	0x52
   03BB    0008    RET
-63:               	{
-64:               		if(g_powerOnTimer >= TICK_PER_SEC)
-  03BC    300F    LDIA	0xF
+111:              	{
+112:              		/* Phase 1: 保持全亮1秒 */
+113:              		if(g_powerOnTimer >= TICK_PER_SEC)
+  03BC    3000    LDIA	0x0
   03BD    1683    SETB	0x3,5
   03BE    022F    SUBA	0x2F
-  03BF    30A0    LDIA	0xA0
+  03BF    306F    LDIA	0x6F
   03C0    1903    SZB	0x3,2
   03C1    022E    SUBA	0x2E
   03C2    1C03    SNZB	0x3,0
   03C3    0008    RET
   03C4    3002    LDIA	0x2
-65:               		{
-66:               			g_powerOnTimer = 0;
+114:              		{
+115:              			g_powerOnTimer = 0;
   03C5    01AE    CLR	0x2E
   03C6    01AF    CLR	0x2F
-67:               			g_powerOnPhase = 2;
+116:              			g_powerOnPhase = 2;         /* 进入Phase 2 */
   03C7    1283    CLRB	0x3,5
   03C8    00D2    LD	0x52,A
-68:               			PIN_LED_IO1 = 0;
+117:              			PIN_LED_IO1 = 0;            /* 关闭LED */
   03C9    1703    SETB	0x3,6
   03CA    1286    CLRB	0x6,5
-69:               			PIN_LED_IO2 = 0;
+118:              			PIN_LED_IO2 = 0;
   03CB    1206    CLRB	0x6,4
   03CC    0008    RET
-70:               		}
-71:               	}
-72:               }
----- E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\uart_dbg.c ----------------------------------------------------------------------
-1:                #include "config.h"
-2:                
-3:                unsigned char RxTable[10];
-4:                bit RXOK_f;
-5:                
-6:                #if UART_PRINT_EN
-7:                void uart_send_char(unsigned char c)
-  034A    00F0    LD	0x70,A
-8:                {
-9:                	while(TRMT1 == 0);
-  034B    1683    SETB	0x3,5
-  034C    1703    SETB	0x3,6
-  034D    1C85    SNZB	0x5,1
-  034E    2B4B    JP	0x34B
-10:               	TXREG1 = c;
-  034F    0870    LD	A,0x70
-  0350    0087    LD	0x7,A
-  0351    0008    RET
-11:               }
-12:               
-13:               void uart_send_string(const unsigned char *str)
-  02F7    00F1    LD	0x71,A
-14:               {
-15:               	while(*str != '\0')
-  02F8    0871    LD	A,0x71
-  02F9    0084    LD	0x4,A
-  02FA    120A    CLRB	0xA,4
-  02FB    158A    SETB	0xA,3
-  02FC    2000    CALL	0x0
-  02FF    3A00    XORIA	0x0
-  0300    1903    SZB	0x3,2
-  0301    0008    RET
-16:               		uart_send_char(*str++);
-  0302    0871    LD	A,0x71
-  0303    0084    LD	0x4,A
-  0304    120A    CLRB	0xA,4
-  0305    158A    SETB	0xA,3
-  0306    2000    CALL	0x0
-  0309    234A    CALL	0x34A
-  030A    120A    CLRB	0xA,4
-  030B    118A    CLRB	0xA,3
-  030C    0AF1    INCR	0x71
-  030D    2AF8    JP	0x2F8
-17:               }
-18:               
-19:               void uart_send_number(unsigned int num)
-20:               {
-21:               	unsigned char buf[6];
-22:               	unsigned char i = 0;
-  030E    01A6    CLR	0x26
-23:               	unsigned char j;
-24:               
-25:               	if(num == 0)
-  030F    0877    LD	A,0x77
-  0310    0478    ORA	0x78
-  0311    1D03    SNZB	0x3,2
-  0312    2B35    JP	0x335
-26:               	{
-27:               		uart_send_char('0');
-  0313    3030    LDIA	0x30
-  0314    2B4A    JP	0x34A
-28:               		return;
-29:               	}
-30:               
-31:               	while(num > 0)
-32:               	{
-33:               		buf[i++] = '0' + (num % 10);
-  0315    0826    LD	A,0x26
-  0316    3E20    ADDIA	0x20
-  0317    0084    LD	0x4,A
-  0318    300A    LDIA	0xA
-  0319    00F0    LD	0x70,A
-  031A    01F1    CLR	0x71
-  031B    0878    LD	A,0x78
-  031C    00F3    LD	0x73,A
-  031D    0877    LD	A,0x77
-  031E    00F2    LD	0x72,A
-  031F    237C    CALL	0x37C
-  0320    120A    CLRB	0xA,4
-  0321    118A    CLRB	0xA,3
-  0322    0870    LD	A,0x70
-  0323    3E30    ADDIA	0x30
-  0324    1383    CLRB	0x3,7
-  0325    0080    LD	0x0,A
-  0326    300A    LDIA	0xA
-  0327    0AA6    INCR	0x26
-34:               		num /= 10;
-  0328    00F0    LD	0x70,A
-  0329    01F1    CLR	0x71
-  032A    0878    LD	A,0x78
-  032B    00F3    LD	0x73,A
-  032C    0877    LD	A,0x77
-  032D    00F2    LD	0x72,A
-  032E    2352    CALL	0x352
-  032F    120A    CLRB	0xA,4
-  0330    118A    CLRB	0xA,3
-  0331    0871    LD	A,0x71
-  0332    00F8    LD	0x78,A
-  0333    0870    LD	A,0x70
-  0334    00F7    LD	0x77,A
-  0335    0877    LD	A,0x77
-  0336    0478    ORA	0x78
-  0337    1D03    SNZB	0x3,2
-  0338    2B15    JP	0x315
-35:               	}
-36:               
-37:               	for(j = i; j > 0; j--)
-  0339    0826    LD	A,0x26
-  033A    00A7    LD	0x27,A
-  033B    0827    LD	A,0x27
-  033C    1903    SZB	0x3,2
-  033D    0008    RET
-38:               		uart_send_char(buf[j-1]);
-  033E    3EFF    ADDIA	0xFF
-  033F    3E20    ADDIA	0x20
-  0340    0084    LD	0x4,A
-  0341    1383    CLRB	0x3,7
-  0342    0800    LD	A,0x0
-  0343    234A    CALL	0x34A
-  0344    120A    CLRB	0xA,4
-  0345    118A    CLRB	0xA,3
-  0346    1283    CLRB	0x3,5
-  0347    1303    CLRB	0x3,6
-  0348    03A7    DECR	0x27
-  0349    2B3B    JP	0x33B
-39:               }
-40:               
-41:               void Print_Status(void)
-42:               {
-43:               	unsigned char i;
-44:               
-45:               	uart_send_string("T:");
-  01EF    3089    LDIA	0x89
-  01F0    22F7    CALL	0x2F7
-  01F1    120A    CLRB	0xA,4
-  01F2    118A    CLRB	0xA,3
-46:               	uart_send_number(g_temperature);
-  01F3    1283    CLRB	0x3,5
-  01F4    1303    CLRB	0x3,6
-  01F5    085A    LD	A,0x5A
-  01F6    00F7    LD	0x77,A
-  01F7    01F8    CLR	0x78
-  01F8    230E    CALL	0x30E
-  01F9    120A    CLRB	0xA,4
-  01FA    118A    CLRB	0xA,3
-47:               	uart_send_string("C VDD:");
-  01FB    3061    LDIA	0x61
-  01FC    22F7    CALL	0x2F7
-  01FD    120A    CLRB	0xA,4
-  01FE    118A    CLRB	0xA,3
-48:               	uart_send_number(power_ad);
-  01FF    1283    CLRB	0x3,5
-  0200    1303    CLRB	0x3,6
-  0201    0850    LD	A,0x50
-  0202    00F8    LD	0x78,A
-  0203    084F    LD	A,0x4F
-  0204    00F7    LD	0x77,A
-  0205    230E    CALL	0x30E
-  0206    120A    CLRB	0xA,4
-  0207    118A    CLRB	0xA,3
-49:               	uart_send_string("mV\r\n");
-  0208    306E    LDIA	0x6E
-  0209    22F7    CALL	0x2F7
-  020A    120A    CLRB	0xA,4
-  020B    118A    CLRB	0xA,3
-50:               
-51:               	for(i = 0; i < BATTERY_SLOTS; i++)
-  020C    1283    CLRB	0x3,5
-  020D    1303    CLRB	0x3,6
-  020E    01AF    CLR	0x2F
-52:               	{
-53:               		uart_send_string("B");
-  020F    308C    LDIA	0x8C
-  0210    22F7    CALL	0x2F7
-  0211    120A    CLRB	0xA,4
-  0212    118A    CLRB	0xA,3
-54:               		uart_send_number(i + 1);
-  0213    1283    CLRB	0x3,5
-  0214    1303    CLRB	0x3,6
-  0215    082F    LD	A,0x2F
-  0216    00F7    LD	0x77,A
-  0217    01F8    CLR	0x78
-  0218    0AF7    INCR	0x77
-  0219    1903    SZB	0x3,2
-  021A    0AF8    INCR	0x78
-  021B    230E    CALL	0x30E
-  021C    120A    CLRB	0xA,4
-  021D    118A    CLRB	0xA,3
-55:               		uart_send_string(":V=");
-  021E    3085    LDIA	0x85
-  021F    22F7    CALL	0x2F7
-  0220    120A    CLRB	0xA,4
-  0221    118A    CLRB	0xA,3
-56:               		uart_send_number(GSLOT(i)->voltage);
-  0222    23FC    CALL	0x3FC
-  0223    120A    CLRB	0xA,4
-  0224    118A    CLRB	0xA,3
-  0225    1C03    SNZB	0x3,0
-  0226    2A2C    JP	0x22C
-  0227    22E9    CALL	0x2E9
-  0228    120A    CLRB	0xA,4
-  0229    118A    CLRB	0xA,3
-  022A    3ED8    ADDIA	0xD8
-  022B    2A30    JP	0x230
-  022C    22E9    CALL	0x2E9
-  022D    120A    CLRB	0xA,4
-  022E    118A    CLRB	0xA,3
-  022F    3EA0    ADDIA	0xA0
-  0230    1283    CLRB	0x3,5
-  0231    1303    CLRB	0x3,6
-  0232    00A8    LD	0x28,A
-  0233    3E03    ADDIA	0x3
-  0234    0084    LD	0x4,A
-  0235    1783    SETB	0x3,7
-  0236    0800    LD	A,0x0
-  0237    00F7    LD	0x77,A
-  0238    0A84    INCR	0x4
-  0239    0800    LD	A,0x0
-  023A    00F8    LD	0x78,A
-  023B    230E    CALL	0x30E
-  023C    120A    CLRB	0xA,4
-  023D    118A    CLRB	0xA,3
-57:               		uart_send_string(" S=");
-  023E    307D    LDIA	0x7D
-  023F    22F7    CALL	0x2F7
-  0240    120A    CLRB	0xA,4
-  0241    118A    CLRB	0xA,3
-58:               		uart_send_number(GSLOT(i)->state);
-  0242    23FC    CALL	0x3FC
-  0243    120A    CLRB	0xA,4
-  0244    118A    CLRB	0xA,3
-  0245    1C03    SNZB	0x3,0
-  0246    2A4C    JP	0x24C
-  0247    22E9    CALL	0x2E9
-  0248    120A    CLRB	0xA,4
-  0249    118A    CLRB	0xA,3
-  024A    3ED8    ADDIA	0xD8
-  024B    2A50    JP	0x250
-  024C    22E9    CALL	0x2E9
-  024D    120A    CLRB	0xA,4
-  024E    118A    CLRB	0xA,3
-  024F    3EA0    ADDIA	0xA0
-  0250    1283    CLRB	0x3,5
-  0251    1303    CLRB	0x3,6
-  0252    00A9    LD	0x29,A
-  0253    0A29    INCA	0x29
-  0254    2410    CALL	0x410
-  0255    120A    CLRB	0xA,4
-  0256    118A    CLRB	0xA,3
-  0257    230E    CALL	0x30E
-  0258    120A    CLRB	0xA,4
-  0259    118A    CLRB	0xA,3
-59:               		uart_send_string(" T=");
-  025A    3081    LDIA	0x81
-  025B    22F7    CALL	0x2F7
-  025C    120A    CLRB	0xA,4
-  025D    118A    CLRB	0xA,3
-60:               		uart_send_number(GSLOT(i)->type);
-  025E    23FC    CALL	0x3FC
-  025F    120A    CLRB	0xA,4
-  0260    118A    CLRB	0xA,3
-  0261    1C03    SNZB	0x3,0
-  0262    2A68    JP	0x268
-  0263    22E9    CALL	0x2E9
-  0264    120A    CLRB	0xA,4
-  0265    118A    CLRB	0xA,3
-  0266    3ED8    ADDIA	0xD8
-  0267    2A6C    JP	0x26C
-  0268    22E9    CALL	0x2E9
-  0269    120A    CLRB	0xA,4
-  026A    118A    CLRB	0xA,3
-  026B    3EA0    ADDIA	0xA0
-  026C    1283    CLRB	0x3,5
-  026D    1303    CLRB	0x3,6
-  026E    00AA    LD	0x2A,A
-  026F    2410    CALL	0x410
-  0270    120A    CLRB	0xA,4
-  0271    118A    CLRB	0xA,3
-  0272    230E    CALL	0x30E
-  0273    120A    CLRB	0xA,4
-  0274    118A    CLRB	0xA,3
-61:               
-62:               		if(GSLOT(i)->state == CHG_ERROR)
-  0275    23FC    CALL	0x3FC
-  0276    120A    CLRB	0xA,4
-  0277    118A    CLRB	0xA,3
-  0278    1C03    SNZB	0x3,0
-  0279    2A7F    JP	0x27F
-  027A    22E9    CALL	0x2E9
-  027B    120A    CLRB	0xA,4
-  027C    118A    CLRB	0xA,3
-  027D    3ED8    ADDIA	0xD8
-  027E    2A83    JP	0x283
-  027F    22E9    CALL	0x2E9
-  0280    120A    CLRB	0xA,4
-  0281    118A    CLRB	0xA,3
-  0282    3EA0    ADDIA	0xA0
-  0283    1283    CLRB	0x3,5
-  0284    1303    CLRB	0x3,6
-  0285    00AB    LD	0x2B,A
-  0286    0A2B    INCA	0x2B
-  0287    0084    LD	0x4,A
-  0288    3007    LDIA	0x7
-  0289    1783    SETB	0x3,7
-  028A    0600    XORA	0x0
-  028B    1D03    SNZB	0x3,2
-  028C    2A8F    JP	0x28F
-63:               			uart_send_string(" ERR");
-  028D    3078    LDIA	0x78
-  028E    2ADA    JP	0x2DA
-64:               		else if(GSLOT(i)->state == CHG_FULL)
-  028F    240A    CALL	0x40A
-  0290    120A    CLRB	0xA,4
-  0291    118A    CLRB	0xA,3
-  0292    1C03    SNZB	0x3,0
-  0293    2A99    JP	0x299
-  0294    22E9    CALL	0x2E9
-  0295    120A    CLRB	0xA,4
-  0296    118A    CLRB	0xA,3
-  0297    3ED8    ADDIA	0xD8
-  0298    2A9D    JP	0x29D
-  0299    22E9    CALL	0x2E9
-  029A    120A    CLRB	0xA,4
-  029B    118A    CLRB	0xA,3
-  029C    3EA0    ADDIA	0xA0
-  029D    1283    CLRB	0x3,5
-  029E    1303    CLRB	0x3,6
-  029F    00AC    LD	0x2C,A
-  02A0    0A2C    INCA	0x2C
-  02A1    0084    LD	0x4,A
-  02A2    3006    LDIA	0x6
-  02A3    1783    SETB	0x3,7
-  02A4    0600    XORA	0x0
-  02A5    1D03    SNZB	0x3,2
-  02A6    2AA9    JP	0x2A9
-65:               			uart_send_string(" FULL");
-  02A7    3068    LDIA	0x68
-  02A8    2ADA    JP	0x2DA
-66:               		else if(GSLOT(i)->state == CHG_CC_CHARGE || 
-67:               		        GSLOT(i)->state == CHG_CV_CHARGE)
-  02A9    240A    CALL	0x40A
-  02AA    120A    CLRB	0xA,4
-  02AB    118A    CLRB	0xA,3
-  02AC    1C03    SNZB	0x3,0
-  02AD    2AB3    JP	0x2B3
-  02AE    22E9    CALL	0x2E9
-  02AF    120A    CLRB	0xA,4
-  02B0    118A    CLRB	0xA,3
-  02B1    3ED8    ADDIA	0xD8
-  02B2    2AB7    JP	0x2B7
-  02B3    22E9    CALL	0x2E9
-  02B4    120A    CLRB	0xA,4
-  02B5    118A    CLRB	0xA,3
-  02B6    3EA0    ADDIA	0xA0
-  02B7    1283    CLRB	0x3,5
-  02B8    1303    CLRB	0x3,6
-  02B9    00AD    LD	0x2D,A
-  02BA    0A2D    INCA	0x2D
-  02BB    0084    LD	0x4,A
-  02BC    3004    LDIA	0x4
-  02BD    1783    SETB	0x3,7
-  02BE    0600    XORA	0x0
-  02BF    1903    SZB	0x3,2
-  02C0    2AD9    JP	0x2D9
-  02C1    240A    CALL	0x40A
-  02C2    120A    CLRB	0xA,4
-  02C3    118A    CLRB	0xA,3
-  02C4    1C03    SNZB	0x3,0
-  02C5    2ACB    JP	0x2CB
-  02C6    22E9    CALL	0x2E9
-  02C7    120A    CLRB	0xA,4
-  02C8    118A    CLRB	0xA,3
-  02C9    3ED8    ADDIA	0xD8
-  02CA    2ACF    JP	0x2CF
-  02CB    22E9    CALL	0x2E9
-  02CC    120A    CLRB	0xA,4
-  02CD    118A    CLRB	0xA,3
-  02CE    3EA0    ADDIA	0xA0
-  02CF    1283    CLRB	0x3,5
-  02D0    1303    CLRB	0x3,6
-  02D1    00AE    LD	0x2E,A
-  02D2    0A2E    INCA	0x2E
-  02D3    0084    LD	0x4,A
-  02D4    3005    LDIA	0x5
-  02D5    1783    SETB	0x3,7
-  02D6    0600    XORA	0x0
-  02D7    1D03    SNZB	0x3,2
-  02D8    2ADD    JP	0x2DD
-68:               			uart_send_string(" CHG");
-  02D9    3073    LDIA	0x73
-  02DA    22F7    CALL	0x2F7
-  02DB    120A    CLRB	0xA,4
-  02DC    118A    CLRB	0xA,3
-69:               
-70:               		uart_send_string("\r\n");
-  02DD    3070    LDIA	0x70
-  02DE    22F7    CALL	0x2F7
-  02DF    120A    CLRB	0xA,4
-  02E0    118A    CLRB	0xA,3
-  02E1    1283    CLRB	0x3,5
-  02E2    1303    CLRB	0x3,6
-  02E3    300C    LDIA	0xC
-  02E4    0AAF    INCR	0x2F
-  02E5    022F    SUBA	0x2F
-  02E6    1803    SZB	0x3,0
-  02E7    0008    RET
-  02E8    2A0F    JP	0x20F
-71:               	}
-72:               }
-73:               #endif
+119:              		}
+120:              	}
+121:              	/* Phase 2: 自检完成, 进入正常扫描 */
+122:              }
 ---- D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwdiv.c ----------------------------------------------------------------------
 1:                // word unsigned division
 2:                
@@ -1836,80 +2116,114 @@
 25:               	return dividend;
 26:               }
 ---- E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\adc_drv.c ----------------------------------------------------------------------
-1:                #include "config.h"
-2:                
-3:                volatile unsigned int adresult;
-4:                volatile unsigned char test_adc;
-5:                
-6:                void AD_Init(void)
-7:                {
-8:                	CC0CON = 0;
-9:                	CC1CON = 0;
-10:               	ADCON0 = 0X41;
-11:               	ADCON1 = 0;
-12:               }
-13:               
-14:               unsigned char ADC_Sample(unsigned char adch, unsigned char adldo)
+1:                /*-------------------------------------------
+2:                  L1211 12槽充电器 - ADC驱动模块
+3:                  功能: ADC初始化、单次采样(去极值平均)、通道读取
+4:                  ADC特性: 12位分辨率, 参考电压VDD=5V, 右对齐
+5:                  采样算法: 采集10次, 去掉最大值和最小值, 对剩余8次取平均
+6:                  注: 采样结果存放在全局变量adresult中
+7:                -------------------------------------------*/
+8:                #include "config.h"
+9:                
+10:               /*========================================================================
+11:                 全局变量
+12:               ========================================================================*/
+13:               volatile unsigned int adresult;      /* ADC采样结果(去极值平均后的值, 0~4095) */
+14:               volatile unsigned char test_adc;     /* ADC采样状态: 0xA5=成功, 其他=失败 */
+15:               
+16:               /*========================================================================
+17:                 函数: AD_Init
+18:                 功能: ADC模块初始化
+19:                 配置: 通道AN0, ADC使能, 时钟Fosc/8, 右对齐, 参考电压VDD
+20:               ========================================================================*/
+21:               void AD_Init(void)
+22:               {
+23:               	CC0CON = 0;             /* 关闭比较器0 */
+24:               	CC1CON = 0;             /* 关闭比较器1 */
+25:               	ADCON0 = 0X41;          /* AN0通道, ADC使能, 时钟Fosc/8 */
+26:               	ADCON1 = 0;             /* 右对齐, 参考电压=VDD */
+27:               }
+28:               
+29:               /*========================================================================
+30:                 函数: ADC_Sample
+31:                 功能: ADC单通道采样(去极值平均算法)
+32:                 参数:
+33:                   adch  - ADC通道号(0~31), bit4=1表示高通道
+34:                   adldo - LDO配置(用于高通道时使能内部LDO)
+35:                 返回: 0xA5=采样成功, 其他=失败
+36:                 算法:
+37:                   1. 采集10次ADC数据
+38:                   2. 记录最大值和最小值
+39:                   3. 总和去掉最大值和最小值(去极值), 剩余8个取平均
+40:                   4. 结果存入adresult
+41:                 说明: 去极值平均可以有效滤除偶发噪声干扰
+42:               ========================================================================*/
+43:               unsigned char ADC_Sample(unsigned char adch, unsigned char adldo)
   06F7    1303    CLRB	0x3,6
   06F8    00A1    LD	0x21,A
-15:               {
-16:               	volatile unsigned long adsum = 0;
-17:               	volatile unsigned int admin = 0, admax = 0;
+44:               {
+45:               	volatile unsigned long adsum = 0;    /* ADC累加和 */
+46:               	volatile unsigned int admin = 0;     /* 最小值 */
+47:               	volatile unsigned int admax = 0;     /* 最大值 */
   06F9    27E4    CALL	0x7E4
   06FA    120A    CLRB	0xA,4
   06FB    118A    CLRB	0xA,3
-18:               	volatile unsigned int ad_temp = 0;
+48:               	volatile unsigned int ad_temp = 0;   /* 临时值 */
   06FC    01AB    CLR	0x2B
   06FD    01AC    CLR	0x2C
-19:               
-20:               	if ((!LDO_EN) && (adldo & 0x04))
+49:               
+50:               	/* 高通道(bit4=1)需要使能内部LDO */
+51:               	if ((!LDO_EN) && (adldo & 0x04))
   06FE    1683    SETB	0x3,5
   06FF    1D16    SNZB	0x16,2
   0700    1D70    SNZB	0x70,2
   0701    2F09    JP	0x709
-21:               	{
-22:               		ADCON1 = adldo;
+52:               	{
+53:               		ADCON1 = adldo;
   0702    0870    LD	A,0x70
   0703    0096    LD	0x16,A
-23:               		__delay_us(100);
+54:               		__delay_us(100);    /* 等待LDO稳定 */
   0704    3085    LDIA	0x85
   0705    00F1    LD	0x71,A
   0706    0BF1    SZDECR	0x71
   0707    2F06    JP	0x706
-24:               	}
+55:               	}
   0708    2F0B    JP	0x70B
-25:               	else
-26:               		ADCON1 = adldo;
+56:               	else
+57:               		ADCON1 = adldo;
   0709    0870    LD	A,0x70
   070A    0096    LD	0x16,A
-27:               
-28:               	if(adch & 0x10)
+58:               
+59:               	/* 处理高通道标志(bit4) */
+60:               	if(adch & 0x10)
   070B    1283    CLRB	0x3,5
   070C    1303    CLRB	0x3,6
   070D    1E21    SNZB	0x21,4
   070E    2F15    JP	0x715
-29:               	{
-30:               		CHS4 = 1;
+61:               	{
+62:               		CHS4 = 1;           /* 使能高通道选择 */
   070F    1683    SETB	0x3,5
   0710    1716    SETB	0x16,6
-31:               		adch &= 0x0f;
+63:               		adch &= 0x0f;       /* 去掉bit4, 取低4位通道号 */
   0711    300F    LDIA	0xF
   0712    1283    CLRB	0x3,5
   0713    05A1    ANDR	0x21
-32:               	}
+64:               	}
   0714    2F17    JP	0x717
-33:               	else
-34:               		CHS4 = 0;
+65:               	else
+66:               		CHS4 = 0;
   0715    1683    SETB	0x3,5
   0716    1316    CLRB	0x16,6
-35:               
-36:               	unsigned char i = 0;
+67:               
+68:               	unsigned char i = 0;
   0717    1283    CLRB	0x3,5
   0718    01A2    CLR	0x22
-37:               	for (i = 0; i < 10; i++)
+69:               	/* 采集10次, 去掉最高和最低值, 取平均 */
+70:               	for (i = 0; i < 10; i++)
   0719    01A2    CLR	0x22
-38:               	{
-39:               		ADCON0 = (unsigned char)(0X41 | (adch << 2));
+71:               	{
+72:               		/* 设置ADC通道并启动转换 */
+73:               		ADCON0 = (unsigned char)(0X41 | (adch << 2));
   071A    0821    LD	A,0x21
   071B    00F1    LD	0x71,A
   071C    3001    LDIA	0x1
@@ -1927,38 +2241,40 @@
   0728    0000    NOP
   0729    0000    NOP
   072A    0000    NOP
-40:               		asm("nop");
-41:               		asm("nop");
-42:               		asm("nop");
-43:               		asm("nop");
-44:               		GODONE = 1;
+74:               		asm("nop");
+75:               		asm("nop");
+76:               		asm("nop");
+77:               		asm("nop");
+78:               		GODONE = 1;                     /* 启动ADC转换 */
   072B    1683    SETB	0x3,5
   072C    1303    CLRB	0x3,6
   072D    1495    SETB	0x15,1
-45:               
-46:               		unsigned char j = 0;
+79:               
+80:               		/* 等待转换完成, 超时保护 */
+81:               		unsigned char j = 0;
   072E    1283    CLRB	0x3,5
   072F    01A0    CLR	0x20
-47:               		while (GODONE)
+82:               		while (GODONE)
   0730    1683    SETB	0x3,5
   0731    1C95    SNZB	0x15,1
   0732    2F3C    JP	0x73C
-48:               		{
-49:               			__delay_us(2);
+83:               		{
+84:               			__delay_us(2);
   0733    2F34    JP	0x734
   0734    2F35    JP	0x735
   0735    2F36    JP	0x736
   0736    2F37    JP	0x737
-50:               			if (0 == (--j))
+85:               			if (0 == (--j))             /* 超时返回0 */
   0737    1283    CLRB	0x3,5
   0738    1303    CLRB	0x3,6
   0739    0BA0    SZDECR	0x20
   073A    2F30    JP	0x730
-51:               				return 0;
+86:               				return 0;
   073B    3400    RET	0x0
-52:               		}
-53:               
-54:               		ad_temp = (unsigned int)((ADRESH << 4) + (ADRESL >> 4));
+87:               		}
+88:               
+89:               		/* 读取12位ADC结果: ADRESH高8位 + ADRESL高4位 */
+90:               		ad_temp = (unsigned int)((ADRESH << 4) + (ADRESL >> 4));
   073C    0819    LD	A,0x19
   073D    1283    CLRB	0x3,5
   073E    00AB    LD	0x2B,A
@@ -1979,22 +2295,24 @@
   074D    07AB    ADDR	0x2B
   074E    1803    SZB	0x3,0
   074F    0AAC    INCR	0x2C
-55:               
-56:               		if (0 == admax)
+91:               
+92:               		/* 第一次采集: 初始化最大值和最小值 */
+93:               		if (0 == admax)
   0750    0829    LD	A,0x29
   0751    042A    ORA	0x2A
   0752    1D03    SNZB	0x3,2
   0753    2F59    JP	0x759
-57:               		{
-58:               			admax = ad_temp;
+94:               		{
+95:               			admax = ad_temp;
   0754    082C    LD	A,0x2C
   0755    00AA    LD	0x2A,A
   0756    082B    LD	A,0x2B
   0757    00A9    LD	0x29,A
   0758    2F6E    JP	0x76E
-59:               			admin = ad_temp;
-60:               		}
-61:               		else if (ad_temp > admax)
+96:               			admin = ad_temp;
+97:               		}
+98:               		/* 更新最大值 */
+99:               		else if (ad_temp > admax)
   0759    082C    LD	A,0x2C
   075A    022A    SUBA	0x2A
   075B    1D03    SNZB	0x3,2
@@ -2003,13 +2321,14 @@
   075E    0229    SUBA	0x29
   075F    1803    SZB	0x3,0
   0760    2F66    JP	0x766
-62:               			admax = ad_temp;
+100:              			admax = ad_temp;
   0761    082C    LD	A,0x2C
   0762    00AA    LD	0x2A,A
   0763    082B    LD	A,0x2B
   0764    00A9    LD	0x29,A
   0765    2F72    JP	0x772
-63:               		else if (ad_temp < admin)
+101:              		/* 更新最小值 */
+102:              		else if (ad_temp < admin)
   0766    0828    LD	A,0x28
   0767    022C    SUBA	0x2C
   0768    1D03    SNZB	0x3,2
@@ -2018,13 +2337,13 @@
   076B    022B    SUBA	0x2B
   076C    1803    SZB	0x3,0
   076D    2F72    JP	0x772
-64:               			admin = ad_temp;
+103:              			admin = ad_temp;
   076E    082C    LD	A,0x2C
   076F    00A8    LD	0x28,A
   0770    082B    LD	A,0x2B
   0771    00A7    LD	0x27,A
-65:               
-66:               		adsum += ad_temp;
+104:              
+105:              		adsum += ad_temp;               /* 累加 */
   0772    082B    LD	A,0x2B
   0773    00F1    LD	0x71,A
   0774    082C    LD	A,0x2C
@@ -2056,9 +2375,10 @@
   078E    0222    SUBA	0x22
   078F    1C03    SNZB	0x3,0
   0790    2F1A    JP	0x71A
-67:               	}
-68:               
-69:               	adsum -= admax;
+106:              	}
+107:              
+108:              	/* 去掉最大值和最小值, 取平均(除以8) */
+109:              	adsum -= admax;
   0791    0829    LD	A,0x29
   0792    00F1    LD	0x71,A
   0793    082A    LD	A,0x2A
@@ -2068,7 +2388,7 @@
   0797    1C03    SNZB	0x3,0
   0798    0F74    SZINCA	0x74
   0799    02A6    SUBR	0x26
-70:               	if (adsum >= admin)
+110:              	if (adsum >= admin)
   079A    0827    LD	A,0x27
   079B    00F1    LD	0x71,A
   079C    0828    LD	A,0x28
@@ -2091,7 +2411,7 @@
   07AD    0223    SUBA	0x23
   07AE    1C03    SNZB	0x3,0
   07AF    2FBA    JP	0x7BA
-71:               		adsum -= admin;
+111:              		adsum -= admin;
   07B0    0827    LD	A,0x27
   07B1    00F1    LD	0x71,A
   07B2    0828    LD	A,0x28
@@ -2102,14 +2422,14 @@
   07B7    0F74    SZINCA	0x74
   07B8    02A6    SUBR	0x26
   07B9    2FBE    JP	0x7BE
-72:               	else
-73:               		adsum = 0;
+112:              	else
+113:              		adsum = 0;
   07BA    01A3    CLR	0x23
   07BB    01A4    CLR	0x24
   07BC    01A5    CLR	0x25
   07BD    01A6    CLR	0x26
-74:               
-75:               	adresult = adsum >> 3;
+114:              
+115:              	adresult = adsum >> 3;              /* 除以8 = 右移3位 */
   07BE    0823    LD	A,0x23
   07BF    00F1    LD	0x71,A
   07C0    0824    LD	A,0x24
@@ -2131,19 +2451,27 @@
   07D0    00D8    LD	0x58,A
   07D1    0871    LD	A,0x71
   07D2    00D7    LD	0x57,A
-76:               
-77:               	adsum = 0;
-78:               	admin = 0;
-79:               	admax = 0;
+116:              
+117:              	/* 清理变量 */
+118:              	adsum = 0;
+119:              	admin = 0;
+120:              	admax = 0;
   07D3    27E4    CALL	0x7E4
-80:               	return 0xA5;
+121:              	return 0xA5;                        /* 返回成功标志 */
   07D4    34A5    RET	0xA5
-81:               }
-82:               
-83:               unsigned int ADC_ReadChannel(unsigned char ch)
+122:              }
+123:              
+124:              /*========================================================================
+125:                函数: ADC_ReadChannel
+126:                功能: 读取指定ADC通道的采样值
+127:                参数: ch - ADC通道号(0~31)
+128:                返回: 采样结果(0~4095), 失败返回0
+129:                说明: 封装ADC_Sample, 简化调用接口
+130:              ========================================================================*/
+131:              unsigned int ADC_ReadChannel(unsigned char ch)
   03CD    00F8    LD	0x78,A
-84:               {
-85:               	test_adc = ADC_Sample(ch, 7);
+132:              {
+133:              	test_adc = ADC_Sample(ch, 7);       /* 使用LDO=7采样 */
   03CE    3007    LDIA	0x7
   03CF    00F0    LD	0x70,A
   03D0    0878    LD	A,0x78
@@ -2151,33 +2479,34 @@
   03D2    118A    CLRB	0xA,3
   03D3    26F7    CALL	0x6F7
   03D6    00D5    LD	0x55,A
-86:               	if (0xA5 == test_adc)
+134:              	if (0xA5 == test_adc)
   03D7    30A5    LDIA	0xA5
   03D8    0655    XORA	0x55
   03D9    1D03    SNZB	0x3,2
   03DA    2BE0    JP	0x3E0
-87:               		return adresult;
+135:              		return adresult;                /* 成功: 返回采样结果 */
   03DB    0858    LD	A,0x58
   03DC    00F6    LD	0x76,A
   03DD    0857    LD	A,0x57
   03DE    00F5    LD	0x75,A
   03DF    0008    RET
-88:               
-89:               	ADCON0 = 0;
+136:              
+137:              	/* 失败: 复位ADC模块 */
+138:              	ADCON0 = 0;
   03E0    1683    SETB	0x3,5
   03E1    0195    CLR	0x15
-90:               	ADCON1 = 0;
+139:              	ADCON1 = 0;
   03E2    0196    CLR	0x16
-91:               	__delay_us(100);
+140:              	__delay_us(100);
   03E3    3085    LDIA	0x85
   03E4    00F7    LD	0x77,A
   03E5    0BF7    SZDECR	0x77
   03E6    2BE5    JP	0x3E5
-92:               	return 0;
+141:              	return 0;
   03E7    01F5    CLR	0x75
   03E8    01F6    CLR	0x76
   03E9    0008    RET
-93:               }
+142:              }
 ---- D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwtoft.c ----------------------------------------------------------------------
 1:                /*	Floating point routines.
 2:                
@@ -2743,15 +3072,37 @@
 87:               
 88:               #endif
 ---- E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c ----------------------------------------------------------------------
-1:                #include "config.h"
-2:                
-3:                unsigned int  g_ntcAdc = 0;
-4:                unsigned char g_temperature = 25;
-5:                unsigned char g_tempProtect = 0;
-6:                
-7:                unsigned char Read_Temperature(void)
-8:                {
-9:                	unsigned int ntcVal = ADC_ReadChannel(ADC_CH_NTC);
+1:                /*-------------------------------------------
+2:                  L1211 12槽充电器 - 充电管理模块
+3:                  功能: NTC温度检测、电池类型识别、充电状态机、充电使能控制
+4:                  温度保护: >=60C停止充电, <=50C恢复充电(10C回差防抖)
+5:                  电池类型: 通过电压判断锂电池/镍氢/干电池/短路
+6:                  状态机: IDLE->DETECT->ACTIVATE/PRECHARGE/CC_CHARGE->CV_CHARGE->FULL
+7:                  注: 12槽独立控制, 每槽独立MOSFET(AO3401 P沟道)
+8:                -------------------------------------------*/
+9:                #include "config.h"
+10:               
+11:               /*========================================================================
+12:                 全局变量
+13:               ========================================================================*/
+14:               unsigned int  g_ntcAdc = 0;          /* NTC ADC原始值 */
+15:               unsigned char g_temperature = 25;    /* 当前温度(摄氏度), 默认25度 */
+16:               unsigned char g_tempProtect = 0;     /* 温度保护标志: 0=正常, 1=保护中 */
+17:               
+18:               /*========================================================================
+19:                 函数: Read_Temperature
+20:                 功能: 读取NTC热敏电阻并计算温度
+21:                 算法:
+22:                   1. 读取NTC ADC值(通道AN21, RC5引脚)
+23:                   2. 计算NTC电阻值: Rntc = ADC * 10K / (4096 - ADC)
+24:                   3. 查表转换为温度(10K上拉, 10K@25C NTC, B=3950)
+25:                   4. 判断温度保护: >=60C保护, <=50C恢复
+26:                 返回: 温度值(摄氏度, 10~75)
+27:                 说明: NTC型号CMFA103J3950HANT, 与LED IO1共用RC5引脚, 分时复用
+28:               ========================================================================*/
+29:               unsigned char Read_Temperature(void)
+30:               {
+31:               	unsigned int ntcVal = ADC_ReadChannel(ADC_CH_NTC);
   05AB    3015    LDIA	0x15
   05AC    120A    CLRB	0xA,4
   05AD    118A    CLRB	0xA,3
@@ -2762,12 +3113,13 @@
   05B4    00B2    LD	0x32,A
   05B5    0875    LD	A,0x75
   05B6    00B1    LD	0x31,A
-10:               	unsigned int ntcR;
-11:               	unsigned char temp = 25;
-12:               
-13:               	g_ntcAdc = ntcVal;
-14:               
-15:               	if(ntcVal == 0 || ntcVal >= 4095)
+32:               	unsigned int ntcR;
+33:               	unsigned char temp = 25;
+34:               
+35:               	g_ntcAdc = ntcVal;
+36:               
+37:               	/* ADC值异常: 开路或短路, 返回上次温度 */
+38:               	if(ntcVal == 0 || ntcVal >= 4095)
   05B7    0432    ORA	0x32
   05B8    1903    SZB	0x3,2
   05B9    0008    RET
@@ -2778,9 +3130,10 @@
   05BE    0231    SUBA	0x31
   05BF    1803    SZB	0x3,0
   05C0    0008    RET
-16:               		return g_temperature;
-17:               
-18:               	ntcR = (unsigned int)((unsigned long)ntcVal * 10000UL / (4096UL - ntcVal));
+39:               		return g_temperature;
+40:               
+41:               	/* 计算NTC电阻值: 分压公式 Rntc = ADC * 10K / (Vref - ADC) */
+42:               	ntcR = (unsigned int)((unsigned long)ntcVal * 10000UL / (4096UL - ntcVal));
   05C1    3010    LDIA	0x10
   05C2    01A3    CLR	0x23
   05C3    01A2    CLR	0x22
@@ -2836,8 +3189,11 @@
   05F5    00B5    LD	0x35,A
   05F6    0820    LD	A,0x20
   05F7    00B4    LD	0x34,A
-19:               
-20:               	     if(ntcR > 32950) temp = 10;
+43:               
+44:               	/* 查表: 根据NTC电阻值反推温度
+45:               	   CMFA103J3950HANT: 10K@25C, B=3950
+46:               	   电阻值越大温度越低, 电阻值越小温度越高 */
+47:               	     if(ntcR > 32950) temp = 10;  /* <10C, 按10C处理 */
   05F8    3080    LDIA	0x80
   05F9    0235    SUBA	0x35
   05FA    30B7    LDIA	0xB7
@@ -2847,7 +3203,7 @@
   05FE    2E01    JP	0x601
   05FF    300A    LDIA	0xA
   0600    2E6E    JP	0x66E
-21:               	else if(ntcR > 27330) temp = 15;
+48:               	else if(ntcR > 27330) temp = 15;
   0601    306A    LDIA	0x6A
   0602    0235    SUBA	0x35
   0603    30C3    LDIA	0xC3
@@ -2857,7 +3213,7 @@
   0607    2E0A    JP	0x60A
   0608    300F    LDIA	0xF
   0609    2E6E    JP	0x66E
-22:               	else if(ntcR > 22060) temp = 20;
+49:               	else if(ntcR > 22060) temp = 20;
   060A    3056    LDIA	0x56
   060B    0235    SUBA	0x35
   060C    302D    LDIA	0x2D
@@ -2867,7 +3223,7 @@
   0610    2E13    JP	0x613
   0611    3014    LDIA	0x14
   0612    2E6E    JP	0x66E
-23:               	else if(ntcR > 17950) temp = 25;
+50:               	else if(ntcR > 17950) temp = 25;
   0613    3046    LDIA	0x46
   0614    0235    SUBA	0x35
   0615    301F    LDIA	0x1F
@@ -2877,7 +3233,7 @@
   0619    2E1C    JP	0x61C
   061A    3019    LDIA	0x19
   061B    2E6E    JP	0x66E
-24:               	else if(ntcR > 14710) temp = 30;
+51:               	else if(ntcR > 14710) temp = 30;
   061C    3039    LDIA	0x39
   061D    0235    SUBA	0x35
   061E    3077    LDIA	0x77
@@ -2887,7 +3243,7 @@
   0622    2E25    JP	0x625
   0623    301E    LDIA	0x1E
   0624    2E6E    JP	0x66E
-25:               	else if(ntcR > 12120) temp = 35;
+52:               	else if(ntcR > 12120) temp = 35;
   0625    302F    LDIA	0x2F
   0626    0235    SUBA	0x35
   0627    3059    LDIA	0x59
@@ -2897,7 +3253,7 @@
   062B    2E2E    JP	0x62E
   062C    3023    LDIA	0x23
   062D    2E6E    JP	0x66E
-26:               	else if(ntcR > 10000) temp = 40;
+53:               	else if(ntcR > 10000) temp = 40;
   062E    3027    LDIA	0x27
   062F    0235    SUBA	0x35
   0630    3011    LDIA	0x11
@@ -2907,7 +3263,7 @@
   0634    2E37    JP	0x637
   0635    3028    LDIA	0x28
   0636    2E6E    JP	0x66E
-27:               	else if(ntcR > 8330)  temp = 45;
+54:               	else if(ntcR > 8330)  temp = 45;
   0637    3020    LDIA	0x20
   0638    0235    SUBA	0x35
   0639    308B    LDIA	0x8B
@@ -2917,7 +3273,7 @@
   063D    2E40    JP	0x640
   063E    302D    LDIA	0x2D
   063F    2E6E    JP	0x66E
-28:               	else if(ntcR > 6970)  temp = 50;
+55:               	else if(ntcR > 6970)  temp = 50;
   0640    301B    LDIA	0x1B
   0641    0235    SUBA	0x35
   0642    303B    LDIA	0x3B
@@ -2927,7 +3283,7 @@
   0646    2E49    JP	0x649
   0647    3032    LDIA	0x32
   0648    2E6E    JP	0x66E
-29:               	else if(ntcR > 5860)  temp = 55;
+56:               	else if(ntcR > 5860)  temp = 55;
   0649    3016    LDIA	0x16
   064A    0235    SUBA	0x35
   064B    30E5    LDIA	0xE5
@@ -2937,7 +3293,7 @@
   064F    2E52    JP	0x652
   0650    3037    LDIA	0x37
   0651    2E6E    JP	0x66E
-30:               	else if(ntcR > 4950)  temp = 60;
+57:               	else if(ntcR > 4950)  temp = 60;
   0652    3013    LDIA	0x13
   0653    0235    SUBA	0x35
   0654    3057    LDIA	0x57
@@ -2947,7 +3303,7 @@
   0658    2E5B    JP	0x65B
   0659    303C    LDIA	0x3C
   065A    2E6E    JP	0x66E
-31:               	else if(ntcR > 4200)  temp = 65;
+58:               	else if(ntcR > 4200)  temp = 65;
   065B    3010    LDIA	0x10
   065C    0235    SUBA	0x35
   065D    3069    LDIA	0x69
@@ -2957,7 +3313,7 @@
   0661    2E64    JP	0x664
   0662    3041    LDIA	0x41
   0663    2E6E    JP	0x66E
-32:               	else if(ntcR > 3580)  temp = 70;
+59:               	else if(ntcR > 3580)  temp = 70;
   0664    300D    LDIA	0xD
   0665    0235    SUBA	0x35
   0666    30FD    LDIA	0xFD
@@ -2967,56 +3323,74 @@
   066A    2E6D    JP	0x66D
   066B    3046    LDIA	0x46
   066C    2E6E    JP	0x66E
-33:               	else                  temp = 75;
+60:               	else                  temp = 75;  /* >70C, 按75C处理 */
   066D    304B    LDIA	0x4B
   066E    00B3    LD	0x33,A
-34:               
-35:               	g_temperature = temp;
+61:               
+62:               	g_temperature = temp;
   066F    00DA    LD	0x5A,A
-36:               
-37:               	if(temp >= TEMP_STOP)
+63:               
+64:               	/* 温度保护判断: 60C停止, 50C恢复(10C回差防抖) */
+65:               	if(temp >= TEMP_STOP)
   0670    303C    LDIA	0x3C
   0671    0233    SUBA	0x33
   0672    1C03    SNZB	0x3,0
   0673    2E77    JP	0x677
-38:               		g_tempProtect = 1;
+66:               		g_tempProtect = 1;             /* 温度过高, 停止充电 */
   0674    01D6    CLR	0x56
   0675    0AD6    INCR	0x56
   0676    0008    RET
-39:               	else if(temp <= TEMP_RESUME)
+67:               	else if(temp <= TEMP_RESUME)
   0677    3033    LDIA	0x33
   0678    0233    SUBA	0x33
   0679    1C03    SNZB	0x3,0
-40:               		g_tempProtect = 0;
+68:               		g_tempProtect = 0;             /* 温度恢复, 允许充电 */
   067A    01D6    CLR	0x56
   067B    0008    RET
-41:               
-42:               	return temp;
-43:               }
-44:               
-45:               unsigned char Detect_BatteryType(unsigned int voltage)
-46:               {
-47:               	if(voltage <= ADC_V_SHORT)
+69:               
+70:               	return temp;
+71:               }
+72:               
+73:               /*========================================================================
+74:                 函数: Detect_BatteryType
+75:                 功能: 根据ADC电压值判断电池类型
+76:                 参数: voltage - ADC采样值(0~4095)
+77:                 返回: 电池类型(BAT_TYPE_xxx)
+78:                 判断逻辑:
+79:                   电压<=ADC_V_SHORT(5)  -> 短路, 不充电
+80:                   电压<=ADC_V_ACTIVATE(12) -> 锂电池(过放), 需激活
+81:                   电压在NIMH范围(136~161) -> 镍氢电池, 不充电
+82:                   电压在预充范围(62~满电) -> 锂电池, 正常充电
+83:                   电压>满电(188)且<过压(198) -> 锂电池(已充满)
+84:                   其他 -> 未知类型
+85:                 说明: 通过开路电压区分电池类型, 避免充错电池
+86:               ========================================================================*/
+87:               unsigned char Detect_BatteryType(unsigned int voltage)
+88:               {
+89:               	/* 电压极低: 短路 */
+90:               	if(voltage <= ADC_V_SHORT)
   0554    3000    LDIA	0x0
   0555    0271    SUBA	0x71
   0556    3006    LDIA	0x6
   0557    1903    SZB	0x3,2
   0558    0270    SUBA	0x70
   0559    1C03    SNZB	0x3,0
-48:               		return BAT_TYPE_SHORT;
+91:               		return BAT_TYPE_SHORT;
   055A    3404    RET	0x4
-49:               
-50:               	if(voltage <= ADC_V_ACTIVATE)
+92:               
+93:               	/* 电压很低但非短路: 可能是过放锂电池, 需要激活 */
+94:               	if(voltage <= ADC_V_ACTIVATE)
   055B    3000    LDIA	0x0
   055C    0271    SUBA	0x71
   055D    300D    LDIA	0xD
   055E    1903    SZB	0x3,2
   055F    0270    SUBA	0x70
   0560    1C03    SNZB	0x3,0
-51:               		return BAT_TYPE_LI_ION;
+95:               		return BAT_TYPE_LI_ION;
   0561    3401    RET	0x1
-52:               
-53:               	if(voltage >= ADC_V_NIMH_LOW && voltage <= ADC_V_NIMH_HIGH)
+96:               
+97:               	/* 电压在镍氢电池范围: 1.1V~1.3V, 不充电 */
+98:               	if(voltage >= ADC_V_NIMH_LOW && voltage <= ADC_V_NIMH_HIGH)
   0562    3000    LDIA	0x0
   0563    0271    SUBA	0x71
   0564    3088    LDIA	0x88
@@ -3030,10 +3404,11 @@
   056C    1903    SZB	0x3,2
   056D    0270    SUBA	0x70
   056E    1C03    SNZB	0x3,0
-54:               		return BAT_TYPE_NIMH;
+99:               		return BAT_TYPE_NIMH;
   056F    3402    RET	0x2
-55:               
-56:               	if(voltage >= ADC_V_PRE_MIN && voltage <= ADC_V_FULL)
+100:              
+101:              	/* 电压在预充范围: 0.5V~满电, 锂电池 */
+102:              	if(voltage >= ADC_V_PRE_MIN && voltage <= ADC_V_FULL)
   0570    3000    LDIA	0x0
   0571    0271    SUBA	0x71
   0572    303E    LDIA	0x3E
@@ -3048,9 +3423,10 @@
   057B    0270    SUBA	0x70
   057C    1C03    SNZB	0x3,0
   057D    3401    RET	0x1
-57:               		return BAT_TYPE_LI_ION;
-58:               
-59:               	if(voltage > ADC_V_FULL && voltage < ADC_V_OVER)
+103:              		return BAT_TYPE_LI_ION;
+104:              
+105:              	/* 电压略高于满电: 已充满的锂电池 */
+106:              	if(voltage > ADC_V_FULL && voltage < ADC_V_OVER)
   057E    3000    LDIA	0x0
   057F    0271    SUBA	0x71
   0580    30BD    LDIA	0xBD
@@ -3065,19 +3441,46 @@
   0589    0270    SUBA	0x70
   058A    1C03    SNZB	0x3,0
   058B    3401    RET	0x1
-60:               		return BAT_TYPE_LI_ION;
-61:               
-62:               	return BAT_TYPE_UNKNOWN;
+107:              		return BAT_TYPE_LI_ION;
+108:              
+109:              	/* 无法判断: 未知类型 */
+110:              	return BAT_TYPE_UNKNOWN;
   058C    3400    RET	0x0
-63:               }
-64:               
-65:               BatterySlot_t g_slot0[6];
-66:               BatterySlot_t g_slot1[6];
-67:               
-68:               void ChargeProcess_Slot(unsigned char idx)
+111:              }
+112:              
+113:              /*========================================================================
+114:                槽位电池数据(拆分为两个数组, 避免单Bank RAM溢出)
+115:                每数组6个槽位*12字节=72字节, 可放入Bank0(96字节)和Bank1(80字节)
+116:              ========================================================================*/
+117:              BatterySlot_t g_slot0[6];       /* B1-B6 槽位数据 */
+118:              BatterySlot_t g_slot1[6];       /* B7-B12 槽位数据 */
+119:              
+120:              /*========================================================================
+121:                函数: ChargeProcess_Slot
+122:                功能: 单槽充电状态机处理
+123:                参数: idx - 槽位索引(0~11)
+124:                说明: 每个Timer0中断(250us)调用一次, 处理一个槽位
+125:                状态转换逻辑:
+126:                  CHG_IDLE -> CHG_DETECT: 开始检测, 等待2s稳定
+127:                  CHG_DETECT -> CHG_ACTIVATE: 电压<0.1V, 过放电池, 脉冲激活(最多60s)
+128:                  CHG_DETECT -> CHG_PRECHARGE: 电压0.1V~0.5V, 小电流预充(最多5min)
+129:                  CHG_DETECT -> CHG_CC_CHARGE: 电压>0.5V, 直接恒流充电
+130:                  CHG_DETECT -> CHG_ERROR: 短路/镍氢/未知电池
+131:                  CHG_ACTIVATE -> CHG_PRECHARGE: 电压>0.1V, 激活成功, 转为预充
+132:                  CHG_ACTIVATE -> CHG_ERROR: 激活超时60s或电压>=过压
+133:                  CHG_PRECHARGE -> CHG_CC_CHARGE: 电压>1.0V, 转为恒流充电
+134:                  CHG_PRECHARGE -> CHG_ERROR: 预充超时5min或过压
+135:                  CHG_CC_CHARGE -> CHG_CV_CHARGE: 电压>=满电(1.52V), 转为恒压充电
+136:                  CHG_CC_CHARGE -> CHG_ERROR: 充电超时3h或过压
+137:                  CHG_CV_CHARGE -> CHG_FULL: 保持10min后充电完成
+138:                  CHG_CV_CHARGE -> CHG_ERROR: 过压
+139:                  CHG_FULL -> CHG_CC_CHARGE: 电压下降超过0.08V, 重新充电
+140:                  CHG_ERROR -> CHG_DETECT: 电压恢复正常且锂电池, 重新检测
+141:              ========================================================================*/
+142:              void ChargeProcess_Slot(unsigned char idx)
   0416    00F5    LD	0x75,A
-69:               {
-70:               	BatterySlot_t *p = GSLOT(idx);
+143:              {
+144:              	BatterySlot_t *p = GSLOT(idx);
   0417    3006    LDIA	0x6
   0418    0275    SUBA	0x75
   0419    300C    LDIA	0xC
@@ -3087,15 +3490,15 @@
   041D    2C25    JP	0x425
   041E    120A    CLRB	0xA,4
   041F    118A    CLRB	0xA,3
-  0420    22E9    CALL	0x2E9
+  0420    22E8    CALL	0x2E8
   0423    3ED8    ADDIA	0xD8
   0424    2C2B    JP	0x42B
   0425    120A    CLRB	0xA,4
   0426    118A    CLRB	0xA,3
-  0427    22E9    CALL	0x2E9
+  0427    22E8    CALL	0x2E8
   042A    3EA0    ADDIA	0xA0
   042B    00FA    LD	0x7A,A
-71:               	unsigned int v = p->voltage;
+145:              	unsigned int v = p->voltage;        /* 当前ADC电压值 */
   042C    3E03    ADDIA	0x3
   042D    0084    LD	0x4,A
   042E    1783    SETB	0x3,7
@@ -3104,48 +3507,51 @@
   0431    0A84    INCR	0x4
   0432    0800    LD	A,0x0
   0433    00F9    LD	0x79,A
-72:               	unsigned int tick = 1;
-73:               
-74:               	switch(p->state)
+146:              	unsigned int tick = 1;              /* 每次调用算1个tick(9ms/次, 约111tick/秒) */
+147:              
+148:              	switch(p->state)
   0434    2D37    JP	0x537
-75:               	{
-76:               	case CHG_IDLE:
-77:               		p->chargeTimer = 0;
+149:              	{
+150:              	/* --- 空闲状态: 初始状态, 立即进入检测 --- */
+151:              	case CHG_IDLE:
+152:              		p->chargeTimer = 0;             /* 计时器清零 */
   0435    087A    LD	A,0x7A
   0436    3E05    ADDIA	0x5
   0437    0084    LD	0x4,A
   0438    0180    CLR	0x0
   0439    0A84    INCR	0x4
   043A    0180    CLR	0x0
-78:               		p->stableCnt = 0;
+153:              		p->stableCnt = 0;               /* 稳定计数器清零 */
   043B    087A    LD	A,0x7A
   043C    3E0A    ADDIA	0xA
   043D    0084    LD	0x4,A
   043E    0180    CLR	0x0
-79:               		p->state = CHG_DETECT;
+154:              		p->state = CHG_DETECT;          /* 进入检测状态 */
   043F    0A7A    INCA	0x7A
   0440    0084    LD	0x4,A
   0441    0180    CLR	0x0
   0442    0A80    INCR	0x0
-80:               		break;
+155:              		break;
   0443    0008    RET
-81:               
-82:               	case CHG_DETECT:
-83:               		p->chargeTimer += tick;
-84:               		if(p->chargeTimer < TIME_DETECT_WAIT)
+156:              
+157:              	/* --- 检测状态: 等待2s电压稳定后判断电池类型 --- */
+158:              	case CHG_DETECT:
+159:              		p->chargeTimer += tick;
+160:              		if(p->chargeTimer < TIME_DETECT_WAIT)
   0444    258D    CALL	0x58D
   0445    120A    CLRB	0xA,4
   0446    118A    CLRB	0xA,3
-  0447    301F    LDIA	0x1F
+  0447    3000    LDIA	0x0
   0448    0274    SUBA	0x74
-  0449    3040    LDIA	0x40
+  0449    30DE    LDIA	0xDE
   044A    1903    SZB	0x3,2
   044B    0273    SUBA	0x73
   044C    1C03    SNZB	0x3,0
   044D    0008    RET
-85:               			break;
-86:               
-87:               		p->type = Detect_BatteryType(v);
+161:              			break;                      /* 还没到2s, 继续等待 */
+162:              
+163:              		/* 2s后根据电压判断电池类型 */
+164:              		p->type = Detect_BatteryType(v);
   044E    087A    LD	A,0x7A
   044F    0084    LD	0x4,A
   0450    0879    LD	A,0x79
@@ -3156,10 +3562,11 @@
   0455    120A    CLRB	0xA,4
   0456    118A    CLRB	0xA,3
   0457    0080    LD	0x0,A
-88:               
-89:               		if(p->type == BAT_TYPE_SHORT || 
-90:               		   p->type == BAT_TYPE_NIMH || 
-91:               		   p->type == BAT_TYPE_UNKNOWN)
+165:              
+166:              		/* 短路/镍氢/未知: 不能充电, 进入错误状态 */
+167:              		if(p->type == BAT_TYPE_SHORT || 
+168:              		   p->type == BAT_TYPE_NIMH || 
+169:              		   p->type == BAT_TYPE_UNKNOWN)
   0458    087A    LD	A,0x7A
   0459    0084    LD	0x4,A
   045A    3004    LDIA	0x4
@@ -3177,13 +3584,14 @@
   0466    0800    LD	A,0x0
   0467    1D03    SNZB	0x3,2
   0468    2C6A    JP	0x46A
-92:               		{
-93:               			p->state = CHG_ERROR;
-94:               			break;
+170:              		{
+171:              			p->state = CHG_ERROR;
+172:              			break;
   0469    2DA6    JP	0x5A6
-95:               		}
-96:               
-97:               		if(v <= ADC_V_ACTIVATE)
+173:              		}
+174:              
+175:              		/* 电压<=0.1V: 过放电池, 需要脉冲激活 */
+176:              		if(v <= ADC_V_ACTIVATE)
   046A    3000    LDIA	0x0
   046B    0279    SUBA	0x79
   046C    300D    LDIA	0xD
@@ -3191,70 +3599,76 @@
   046E    0278    SUBA	0x78
   046F    1803    SZB	0x3,0
   0470    2C80    JP	0x480
-98:               		{
-99:               			p->state = CHG_ACTIVATE;
+177:              		{
+178:              			p->state = CHG_ACTIVATE;
   0471    0A7A    INCA	0x7A
   0472    0084    LD	0x4,A
   0473    3002    LDIA	0x2
   0474    0080    LD	0x0,A
-100:              			p->chargeTimer = 0;
+179:              			p->chargeTimer = 0;
   0475    087A    LD	A,0x7A
   0476    3E05    ADDIA	0x5
   0477    0084    LD	0x4,A
   0478    0180    CLR	0x0
   0479    0A84    INCR	0x4
   047A    0180    CLR	0x0
-101:              			p->activatePulseCnt = 0;
+180:              			p->activatePulseCnt = 0;
   047B    087A    LD	A,0x7A
   047C    3E0B    ADDIA	0xB
   047D    0084    LD	0x4,A
   047E    0180    CLR	0x0
-102:              		}
+181:              		}
   047F    0008    RET
-103:              		else if(v < ADC_V_PRE_MIN)
+182:              		/* 电压0.1V~0.5V: 预充电 */
+183:              		else if(v < ADC_V_PRE_MIN)
   0480    3000    LDIA	0x0
   0481    0279    SUBA	0x79
   0482    303E    LDIA	0x3E
   0483    1903    SZB	0x3,2
   0484    0278    SUBA	0x78
-104:              		{
-105:              			p->state = CHG_PRECHARGE;
+184:              		{
+185:              			p->state = CHG_PRECHARGE;
   0485    0A7A    INCA	0x7A
   0486    0084    LD	0x4,A
   0487    1803    SZB	0x3,0
   0488    2C8B    JP	0x48B
   0489    3003    LDIA	0x3
-106:              			p->chargeTimer = 0;
-107:              		}
+186:              			p->chargeTimer = 0;
+187:              		}
   048A    2D9E    JP	0x59E
-108:              		else
-109:              		{
-110:              			p->state = CHG_CC_CHARGE;
+188:              		/* 电压>0.5V: 直接进入恒流充电 */
+189:              		else
+190:              		{
+191:              			p->state = CHG_CC_CHARGE;
   048B    3004    LDIA	0x4
-111:              			p->chargeTimer = 0;
+192:              			p->chargeTimer = 0;
   048C    2D9E    JP	0x59E
-112:              		}
-113:              		break;
-114:              
-115:              	case CHG_ACTIVATE:
-116:              		p->chargeTimer += tick;
-117:              		if(p->chargeTimer > TIME_ACTIVATE_MAX)
+193:              		}
+194:              		break;
+195:              
+196:              	/* --- 激活状态: 脉冲激活过放电池(最多60s) ---
+197:              	   注: 激活脉冲由Charging_Control函数控制MOSFET导通/关闭 */
+198:              	case CHG_ACTIVATE:
+199:              		p->chargeTimer += tick;
+200:              		/* 激活超时60s: 进入错误状态 */
+201:              		if(p->chargeTimer > TIME_ACTIVATE_MAX)
   048D    258D    CALL	0x58D
   048E    120A    CLRB	0xA,4
   048F    118A    CLRB	0xA,3
-  0490    30A9    LDIA	0xA9
+  0490    301A    LDIA	0x1A
   0491    0274    SUBA	0x74
-  0492    3081    LDIA	0x81
+  0492    3005    LDIA	0x5
   0493    1903    SZB	0x3,2
   0494    0273    SUBA	0x73
   0495    1C03    SNZB	0x3,0
   0496    2C98    JP	0x498
-118:              		{
-119:              			p->state = CHG_ERROR;
-120:              			break;
+202:              		{
+203:              			p->state = CHG_ERROR;
+204:              			break;
   0497    2DA6    JP	0x5A6
-121:              		}
-122:              		if(v > ADC_V_ACTIVATE)
+205:              		}
+206:              		/* 电压恢复到0.1V以上: 激活成功, 转为预充 */
+207:              		if(v > ADC_V_ACTIVATE)
   0498    3000    LDIA	0x0
   0499    0279    SUBA	0x79
   049A    300D    LDIA	0xD
@@ -3262,16 +3676,17 @@
   049C    0278    SUBA	0x78
   049D    1C03    SNZB	0x3,0
   049E    2CA3    JP	0x4A3
-123:              		{
-124:              			p->state = CHG_PRECHARGE;
+208:              		{
+209:              			p->state = CHG_PRECHARGE;
   049F    0A7A    INCA	0x7A
   04A0    0084    LD	0x4,A
   04A1    3003    LDIA	0x3
-125:              			p->chargeTimer = 0;
-126:              			break;
+210:              			p->chargeTimer = 0;
+211:              			break;
   04A2    2D9E    JP	0x59E
-127:              		}
-128:              		if(v >= ADC_V_OVER)
+212:              		}
+213:              		/* 过压保护 */
+214:              		if(v >= ADC_V_OVER)
   04A3    3000    LDIA	0x0
   04A4    0279    SUBA	0x79
   04A5    30C6    LDIA	0xC6
@@ -3279,32 +3694,35 @@
   04A7    0278    SUBA	0x78
   04A8    1C03    SNZB	0x3,0
   04A9    0008    RET
-129:              		{
-130:              			p->state = CHG_ERROR;
-131:              			break;
+215:              		{
+216:              			p->state = CHG_ERROR;
+217:              			break;
   04AA    2DA6    JP	0x5A6
-132:              		}
-133:              		break;
-134:              
-135:              	case CHG_PRECHARGE:
-136:              		p->chargeTimer += tick;
-137:              		if(p->chargeTimer > TIME_PRECHARGE_MAX)
+218:              		}
+219:              		break;
+220:              
+221:              	/* --- 预充状态: 小电流预充电(最多5min) --- */
+222:              	case CHG_PRECHARGE:
+223:              		p->chargeTimer += tick;
+224:              		/* 预充超时5min: 进入错误状态 */
+225:              		if(p->chargeTimer > TIME_PRECHARGE_MAX)
   04AB    258D    CALL	0x58D
   04AC    120A    CLRB	0xA,4
   04AD    118A    CLRB	0xA,3
-  04AE    304F    LDIA	0x4F
+  04AE    3082    LDIA	0x82
   04AF    0274    SUBA	0x74
-  04B0    3081    LDIA	0x81
+  04B0    3015    LDIA	0x15
   04B1    1903    SZB	0x3,2
   04B2    0273    SUBA	0x73
   04B3    1C03    SNZB	0x3,0
   04B4    2CB6    JP	0x4B6
-138:              		{
-139:              			p->state = CHG_ERROR;
-140:              			break;
+226:              		{
+227:              			p->state = CHG_ERROR;
+228:              			break;
   04B5    2DA6    JP	0x5A6
-141:              		}
-142:              		if(v >= ADC_V_OVER)
+229:              		}
+230:              		/* 过压保护 */
+231:              		if(v >= ADC_V_OVER)
   04B6    3000    LDIA	0x0
   04B7    0279    SUBA	0x79
   04B8    30C6    LDIA	0xC6
@@ -3312,12 +3730,13 @@
   04BA    0278    SUBA	0x78
   04BB    1C03    SNZB	0x3,0
   04BC    2CBE    JP	0x4BE
-143:              		{
-144:              			p->state = CHG_ERROR;
-145:              			break;
+232:              		{
+233:              			p->state = CHG_ERROR;
+234:              			break;
   04BD    2DA6    JP	0x5A6
-146:              		}
-147:              		if(v >= ADC_V_PRE_MAX)
+235:              		}
+236:              		/* 电压达到1.0V: 预充完成, 转为恒流充电 */
+237:              		if(v >= ADC_V_PRE_MAX)
   04BE    3000    LDIA	0x0
   04BF    0279    SUBA	0x79
   04C0    307C    LDIA	0x7C
@@ -3325,35 +3744,38 @@
   04C2    0278    SUBA	0x78
   04C3    1C03    SNZB	0x3,0
   04C4    0008    RET
-148:              		{
-149:              			p->state = CHG_CC_CHARGE;
+238:              		{
+239:              			p->state = CHG_CC_CHARGE;
   04C5    0A7A    INCA	0x7A
   04C6    0084    LD	0x4,A
   04C7    3004    LDIA	0x4
-150:              			p->chargeTimer = 0;
+240:              			p->chargeTimer = 0;
   04C8    2D9E    JP	0x59E
-151:              		}
-152:              		break;
-153:              
-154:              	case CHG_CC_CHARGE:
-155:              		p->chargeTimer += tick;
-156:              		if(p->chargeTimer > TIME_CHARGE_MAX)
+241:              		}
+242:              		break;
+243:              
+244:              	/* --- 恒流充电状态: 主充电阶段(最多3h) --- */
+245:              	case CHG_CC_CHARGE:
+246:              		p->chargeTimer += tick;
+247:              		/* 充电超时3h: 进入错误状态 */
+248:              		if(p->chargeTimer > TIME_CHARGE_MAX)
   04C9    258D    CALL	0x58D
   04CA    120A    CLRB	0xA,4
   04CB    118A    CLRB	0xA,3
-  04CC    302E    LDIA	0x2E
+  04CC    304A    LDIA	0x4A
   04CD    0274    SUBA	0x74
-  04CE    3001    LDIA	0x1
+  04CE    30D1    LDIA	0xD1
   04CF    1903    SZB	0x3,2
   04D0    0273    SUBA	0x73
   04D1    1C03    SNZB	0x3,0
   04D2    2CD4    JP	0x4D4
-157:              		{
-158:              			p->state = CHG_ERROR;
-159:              			break;
+249:              		{
+250:              			p->state = CHG_ERROR;
+251:              			break;
   04D3    2DA6    JP	0x5A6
-160:              		}
-161:              		if(v >= ADC_V_OVER)
+252:              		}
+253:              		/* 过压保护 */
+254:              		if(v >= ADC_V_OVER)
   04D4    3000    LDIA	0x0
   04D5    0279    SUBA	0x79
   04D6    30C6    LDIA	0xC6
@@ -3361,12 +3783,13 @@
   04D8    0278    SUBA	0x78
   04D9    1C03    SNZB	0x3,0
   04DA    2CDC    JP	0x4DC
-162:              		{
-163:              			p->state = CHG_ERROR;
-164:              			break;
+255:              		{
+256:              			p->state = CHG_ERROR;
+257:              			break;
   04DB    2DA6    JP	0x5A6
-165:              		}
-166:              		if(v >= ADC_V_FULL)
+258:              		}
+259:              		/* 电压达到满电(1.52V): 转为恒压充电 */
+260:              		if(v >= ADC_V_FULL)
   04DC    3000    LDIA	0x0
   04DD    0279    SUBA	0x79
   04DE    30BC    LDIA	0xBC
@@ -3374,18 +3797,19 @@
   04E0    0278    SUBA	0x78
   04E1    1C03    SNZB	0x3,0
   04E2    0008    RET
-167:              		{
-168:              			p->state = CHG_CV_CHARGE;
+261:              		{
+262:              			p->state = CHG_CV_CHARGE;
   04E3    0A7A    INCA	0x7A
   04E4    0084    LD	0x4,A
   04E5    3005    LDIA	0x5
-169:              			p->chargeTimer = 0;
+263:              			p->chargeTimer = 0;
   04E6    2D9E    JP	0x59E
-170:              		}
-171:              		break;
-172:              
-173:              	case CHG_CV_CHARGE:
-174:              		p->chargeTimer += tick;
+264:              		}
+265:              		break;
+266:              
+267:              	/* --- 恒压充电状态: 保持满电电压10min --- */
+268:              	case CHG_CV_CHARGE:
+269:              		p->chargeTimer += tick;
   04E7    087A    LD	A,0x7A
   04E8    3E05    ADDIA	0x5
   04E9    0084    LD	0x4,A
@@ -3394,7 +3818,8 @@
   04EC    0A84    INCR	0x4
   04ED    1803    SZB	0x3,0
   04EE    0A80    INCR	0x0
-175:              		if(v >= ADC_V_OVER)
+270:              		/* 过压保护 */
+271:              		if(v >= ADC_V_OVER)
   04EF    3000    LDIA	0x0
   04F0    0279    SUBA	0x79
   04F1    30C6    LDIA	0xC6
@@ -3402,12 +3827,13 @@
   04F3    0278    SUBA	0x78
   04F4    1C03    SNZB	0x3,0
   04F5    2CF7    JP	0x4F7
-176:              		{
-177:              			p->state = CHG_ERROR;
-178:              			break;
+272:              		{
+273:              			p->state = CHG_ERROR;
+274:              			break;
   04F6    2DA6    JP	0x5A6
-179:              		}
-180:              		if(p->chargeTimer > TIME_CV_HOLD)
+275:              		}
+276:              		/* 保持10min: 充电完成 */
+277:              		if(p->chargeTimer > TIME_CV_HOLD)
   04F7    087A    LD	A,0x7A
   04F8    3E05    ADDIA	0x5
   04F9    0084    LD	0x4,A
@@ -3416,25 +3842,27 @@
   04FC    0A84    INCR	0x4
   04FD    0800    LD	A,0x0
   04FE    00F4    LD	0x74,A
-  04FF    309F    LDIA	0x9F
+  04FF    3004    LDIA	0x4
   0500    0274    SUBA	0x74
-  0501    3001    LDIA	0x1
+  0501    3029    LDIA	0x29
   0502    1903    SZB	0x3,2
   0503    0273    SUBA	0x73
   0504    1C03    SNZB	0x3,0
   0505    0008    RET
-181:              		{
-182:              			p->state = CHG_FULL;
+278:              		{
+279:              			p->state = CHG_FULL;
   0506    0A7A    INCA	0x7A
   0507    0084    LD	0x4,A
   0508    3006    LDIA	0x6
   0509    0080    LD	0x0,A
   050A    0008    RET
-183:              		}
-184:              		break;
-185:              
-186:              	case CHG_FULL:
-187:              		if(v < (ADC_V_FULL - 10))
+280:              		}
+281:              		break;
+282:              
+283:              	/* --- 充满状态: 绿灯常亮, 监控电压下降 --- */
+284:              	case CHG_FULL:
+285:              		/* 电压下降到满电-0.08V以下: 电池可能自放电, 重新充电 */
+286:              		if(v < (ADC_V_FULL - 10))
   050B    3000    LDIA	0x0
   050C    0279    SUBA	0x79
   050D    30B2    LDIA	0xB2
@@ -3442,19 +3870,21 @@
   050F    0278    SUBA	0x78
   0510    1803    SZB	0x3,0
   0511    0008    RET
-188:              		{
-189:              			p->state = CHG_CC_CHARGE;
+287:              		{
+288:              			p->state = CHG_CC_CHARGE;
   0512    0A7A    INCA	0x7A
   0513    0084    LD	0x4,A
   0514    3004    LDIA	0x4
-190:              			p->chargeTimer = 0;
+289:              			p->chargeTimer = 0;
   0515    2D9E    JP	0x59E
-191:              		}
-192:              		break;
-193:              
-194:              	case CHG_ERROR:
-195:              		if(v > ADC_V_ACTIVATE && v < ADC_V_OVER && 
-196:              		   p->type == BAT_TYPE_LI_ION)
+290:              		}
+291:              		break;
+292:              
+293:              	/* --- 错误状态: 红灯闪烁, 等待电池移除后恢复正常 --- */
+294:              	case CHG_ERROR:
+295:              		/* 电压恢复正常且是锂电池: 重新检测 */
+296:              		if(v > ADC_V_ACTIVATE && v < ADC_V_OVER && 
+297:              		   p->type == BAT_TYPE_LI_ION)
   0516    3000    LDIA	0x0
   0517    0279    SUBA	0x79
   0518    300D    LDIA	0xD
@@ -3473,13 +3903,13 @@
   0525    0084    LD	0x4,A
   0526    0B00    SZDECA	0x0
   0527    0008    RET
-197:              		{
-198:              			p->state = CHG_DETECT;
+298:              		{
+299:              			p->state = CHG_DETECT;
   0528    0A7A    INCA	0x7A
   0529    0084    LD	0x4,A
   052A    0180    CLR	0x0
   052B    0A80    INCR	0x0
-199:              			p->chargeTimer = 0;
+300:              			p->chargeTimer = 0;
   052C    087A    LD	A,0x7A
   052D    3E05    ADDIA	0x5
   052E    0084    LD	0x4,A
@@ -3487,15 +3917,15 @@
   0530    0A84    INCR	0x4
   0531    0180    CLR	0x0
   0532    0008    RET
-200:              		}
-201:              		break;
-202:              
-203:              	default:
-204:              		p->state = CHG_IDLE;
+301:              		}
+302:              		break;
+303:              
+304:              	default:
+305:              		p->state = CHG_IDLE;
   0533    0A7A    INCA	0x7A
   0534    0084    LD	0x4,A
   0535    0180    CLR	0x0
-205:              		break;
+306:              		break;
   0536    0008    RET
   0537    0A7A    INCA	0x7A
   0538    0084    LD	0x4,A
@@ -3526,25 +3956,38 @@
   0551    2D16    JP	0x516
   0552    2D33    JP	0x533
   0553    0008    RET
-206:              	}
-207:              }
-208:              
-209:              void Charging_Control(void)
-210:              {
-211:              	unsigned char i;
-212:              	unsigned char chargeB1_6 = 0;
+307:              	}
+308:              }
+309:              
+310:              /*========================================================================
+311:                函数: Charging_Control
+312:                功能: 12路充电使能控制(含温度保护)
+313:                说明: 每轮扫描结束后调用一次(在槽位0的Phase2中)
+314:                流程:
+315:                  1. 温度保护检查: 温度>=60C则关闭所有充电
+316:                  2. 遍历12个槽位, 根据状态决定是否充电
+317:                  3. 充电状态(ACTIVATE/PRECHARGE/CC_CHARGE/CV_CHARGE): 打开MOSFET
+318:                  4. 其他状态: 关闭MOSFET
+319:                  5. 有充电则置位组控制(CD1/CD2)和PWM, 无充电则关闭
+320:                MOSFET控制: AO3401 P沟道, Gate=Low导通, Gate=High关闭
+321:              ========================================================================*/
+322:              void Charging_Control(void)
+323:              {
+324:              	unsigned char i;
+325:              	unsigned char chargeB1_6 = 0;    /* B1-B6组是否有充电: 0=无, 1=有 */
   0DD3    01F4    CLR	0x74
-213:              	unsigned char chargeB7_12 = 0;
+326:              	unsigned char chargeB7_12 = 0;   /* B7-B12组是否有充电: 0=无, 1=有 */
   0DD4    01F5    CLR	0x75
-214:              
-215:              	if(g_tempProtect)
+327:              
+328:              	/* 温度保护: 温度过高, 关闭所有充电 */
+329:              	if(g_tempProtect)
   0DD5    1283    CLRB	0x3,5
   0DD6    1303    CLRB	0x3,6
   0DD7    0856    LD	A,0x56
   0DD8    1903    SZB	0x3,2
-  0DD9    2DF3    JP	0x5F3
-216:              	{
-217:              		SLOT_ALL_OFF();
+  0DD9    2DF2    JP	0x5F2
+330:              	{
+331:              		SLOT_ALL_OFF();             /* 关闭所有MOSFET(Gate=High) */
   0DDA    1683    SETB	0x3,5
   0DDB    1406    SETB	0x6,0
   0DDC    1486    SETB	0x6,1
@@ -3564,283 +4007,289 @@
   0DEA    1703    SETB	0x3,6
   0DEB    1507    SETB	0x7,2
   0DEC    1407    SETB	0x7,0
-218:              		PIN_CD1 = 0;
-  0DED    1683    SETB	0x3,5
-  0DEE    1303    CLRB	0x3,6
-  0DEF    1206    CLRB	0x6,4
-219:              		PIN_CD2 = 0;
-  0DF0    1286    CLRB	0x6,5
-220:              		PIN_PWM = 0;
-  0DF1    1306    CLRB	0x6,6
-221:              		return;
-  0DF2    0008    RET
-222:              	}
-223:              
-224:              	for(i = 0; i < BATTERY_SLOTS; i++)
-  0DF3    01F7    CLR	0x77
-225:              	{
-226:              		unsigned char s = GSLOT(i)->state;
-  0DF4    3006    LDIA	0x6
-  0DF5    0277    SUBA	0x77
-  0DF6    300C    LDIA	0xC
-  0DF7    00F0    LD	0x70,A
-  0DF8    0877    LD	A,0x77
-  0DF9    1C03    SNZB	0x3,0
-  0DFA    2E02    JP	0x602
-  0DFB    120A    CLRB	0xA,4
-  0DFC    118A    CLRB	0xA,3
-  0DFD    22E9    CALL	0x2E9
-  0E00    3ED8    ADDIA	0xD8
-  0E01    2E08    JP	0x608
-  0E02    120A    CLRB	0xA,4
-  0E03    118A    CLRB	0xA,3
-  0E04    22E9    CALL	0x2E9
-  0E07    3EA0    ADDIA	0xA0
-  0E08    00F3    LD	0x73,A
-  0E09    0A73    INCA	0x73
-  0E0A    0084    LD	0x4,A
-  0E0B    1783    SETB	0x3,7
-  0E0C    0800    LD	A,0x0
-  0E0D    00F6    LD	0x76,A
-227:              
-228:              		if(s == CHG_ACTIVATE || s == CHG_PRECHARGE ||
-229:              		   s == CHG_CC_CHARGE || s == CHG_CV_CHARGE)
-  0E0E    3A02    XORIA	0x2
-  0E0F    1903    SZB	0x3,2
-  0E10    2E46    JP	0x646
-  0E11    3003    LDIA	0x3
-  0E12    0676    XORA	0x76
-  0E13    1903    SZB	0x3,2
-  0E14    2E46    JP	0x646
-  0E15    3004    LDIA	0x4
-  0E16    0676    XORA	0x76
-  0E17    1903    SZB	0x3,2
-  0E18    2E46    JP	0x646
-  0E19    3005    LDIA	0x5
-  0E1A    0676    XORA	0x76
-  0E1B    1903    SZB	0x3,2
-  0E1C    2E46    JP	0x646
-  0E1D    2E9E    JP	0x69E
-  0E1E    1683    SETB	0x3,5
-  0E1F    2E37    JP	0x637
-  0E20    1683    SETB	0x3,5
-  0E21    2E3B    JP	0x63B
-  0E22    1283    CLRB	0x3,5
-  0E23    2E27    JP	0x627
-  0E24    1283    CLRB	0x3,5
-  0E25    2E2B    JP	0x62B
-  0E26    1683    SETB	0x3,5
-  0E27    1303    CLRB	0x3,6
-  0E28    1186    CLRB	0x6,3
-  0E29    2E6C    JP	0x66C
-  0E2A    1683    SETB	0x3,5
-  0E2B    1303    CLRB	0x3,6
-  0E2C    1106    CLRB	0x6,2
-  0E2D    2E6C    JP	0x66C
-  0E2E    1283    CLRB	0x3,5
-  0E2F    1703    SETB	0x3,6
-  0E30    1087    CLRB	0x7,1
-  0E31    2E6C    JP	0x66C
-  0E32    1283    CLRB	0x3,5
-  0E33    1703    SETB	0x3,6
-  0E34    1187    CLRB	0x7,3
-  0E35    2E6C    JP	0x66C
-  0E36    1283    CLRB	0x3,5
-  0E37    1303    CLRB	0x3,6
-  0E38    1006    CLRB	0x6,0
-  0E39    2E6C    JP	0x66C
-  0E3A    1283    CLRB	0x3,5
-  0E3B    1303    CLRB	0x3,6
-  0E3C    1086    CLRB	0x6,1
-  0E3D    2E6C    JP	0x66C
-  0E3E    1283    CLRB	0x3,5
-  0E3F    1703    SETB	0x3,6
-  0E40    1107    CLRB	0x7,2
-  0E41    2E6C    JP	0x66C
-  0E42    1283    CLRB	0x3,5
-  0E43    1703    SETB	0x3,6
-  0E44    1007    CLRB	0x7,0
-  0E45    2E6C    JP	0x66C
-  0E46    0877    LD	A,0x77
-  0E47    3A00    XORIA	0x0
-  0E48    1903    SZB	0x3,2
-  0E49    2E1E    JP	0x61E
-  0E4A    3A01    XORIA	0x1
-  0E4B    1903    SZB	0x3,2
-  0E4C    2E20    JP	0x620
-  0E4D    3A03    XORIA	0x3
-  0E4E    1903    SZB	0x3,2
-  0E4F    2E22    JP	0x622
-  0E50    3A01    XORIA	0x1
-  0E51    1903    SZB	0x3,2
-  0E52    2E24    JP	0x624
-  0E53    3A07    XORIA	0x7
-  0E54    1903    SZB	0x3,2
-  0E55    2E26    JP	0x626
-  0E56    3A01    XORIA	0x1
-  0E57    1903    SZB	0x3,2
-  0E58    2E2A    JP	0x62A
-  0E59    3A03    XORIA	0x3
-  0E5A    1903    SZB	0x3,2
-  0E5B    2E2E    JP	0x62E
-  0E5C    3A01    XORIA	0x1
-  0E5D    1903    SZB	0x3,2
-  0E5E    2E32    JP	0x632
-  0E5F    3A0F    XORIA	0xF
-  0E60    1903    SZB	0x3,2
-  0E61    2E36    JP	0x636
-  0E62    3A01    XORIA	0x1
-  0E63    1903    SZB	0x3,2
-  0E64    2E3A    JP	0x63A
-  0E65    3A03    XORIA	0x3
-  0E66    1903    SZB	0x3,2
-  0E67    2E3E    JP	0x63E
-  0E68    3A01    XORIA	0x1
-  0E69    1903    SZB	0x3,2
-  0E6A    2E42    JP	0x642
-  0E6B    2E6C    JP	0x66C
-230:              		{
-231:              			SLOT_CHARGE_ON(i);
-232:              
-233:              			if(i < 6)
-  0E6C    3006    LDIA	0x6
-  0E6D    0277    SUBA	0x77
-  0E6E    1803    SZB	0x3,0
-  0E6F    2E73    JP	0x673
-234:              				chargeB1_6 = 1;
-  0E70    01F4    CLR	0x74
-  0E71    0AF4    INCR	0x74
-  0E72    2EC4    JP	0x6C4
-235:              			else
-236:              				chargeB7_12 = 1;
-  0E73    01F5    CLR	0x75
-  0E74    0AF5    INCR	0x75
-  0E75    2EC4    JP	0x6C4
-  0E76    1683    SETB	0x3,5
-  0E77    2E8F    JP	0x68F
-  0E78    1683    SETB	0x3,5
-  0E79    2E93    JP	0x693
-  0E7A    1283    CLRB	0x3,5
-  0E7B    2E7F    JP	0x67F
-  0E7C    1283    CLRB	0x3,5
-  0E7D    2E83    JP	0x683
-  0E7E    1683    SETB	0x3,5
-  0E7F    1303    CLRB	0x3,6
-  0E80    1586    SETB	0x6,3
-  0E81    2EC4    JP	0x6C4
-  0E82    1683    SETB	0x3,5
-  0E83    1303    CLRB	0x3,6
-  0E84    1506    SETB	0x6,2
-  0E85    2EC4    JP	0x6C4
-  0E86    1283    CLRB	0x3,5
-  0E87    1703    SETB	0x3,6
-  0E88    1487    SETB	0x7,1
-  0E89    2EC4    JP	0x6C4
-  0E8A    1283    CLRB	0x3,5
-  0E8B    1703    SETB	0x3,6
-  0E8C    1587    SETB	0x7,3
-  0E8D    2EC4    JP	0x6C4
-  0E8E    1283    CLRB	0x3,5
-  0E8F    1303    CLRB	0x3,6
-  0E90    1406    SETB	0x6,0
-  0E91    2EC4    JP	0x6C4
-  0E92    1283    CLRB	0x3,5
-  0E93    1303    CLRB	0x3,6
-  0E94    1486    SETB	0x6,1
-  0E95    2EC4    JP	0x6C4
-  0E96    1283    CLRB	0x3,5
-  0E97    1703    SETB	0x3,6
-  0E98    1507    SETB	0x7,2
-  0E99    2EC4    JP	0x6C4
-  0E9A    1283    CLRB	0x3,5
-  0E9B    1703    SETB	0x3,6
-  0E9C    1407    SETB	0x7,0
-  0E9D    2EC4    JP	0x6C4
-  0E9E    0877    LD	A,0x77
-  0E9F    3A00    XORIA	0x0
-  0EA0    1903    SZB	0x3,2
-  0EA1    2E76    JP	0x676
-  0EA2    3A01    XORIA	0x1
-  0EA3    1903    SZB	0x3,2
-  0EA4    2E78    JP	0x678
-  0EA5    3A03    XORIA	0x3
-  0EA6    1903    SZB	0x3,2
-  0EA7    2E7A    JP	0x67A
-  0EA8    3A01    XORIA	0x1
-  0EA9    1903    SZB	0x3,2
-  0EAA    2E7C    JP	0x67C
-  0EAB    3A07    XORIA	0x7
-  0EAC    1903    SZB	0x3,2
-  0EAD    2E7E    JP	0x67E
-  0EAE    3A01    XORIA	0x1
-  0EAF    1903    SZB	0x3,2
-  0EB0    2E82    JP	0x682
-  0EB1    3A03    XORIA	0x3
-  0EB2    1903    SZB	0x3,2
-  0EB3    2E86    JP	0x686
-  0EB4    3A01    XORIA	0x1
-  0EB5    1903    SZB	0x3,2
-  0EB6    2E8A    JP	0x68A
-  0EB7    3A0F    XORIA	0xF
-  0EB8    1903    SZB	0x3,2
-  0EB9    2E8E    JP	0x68E
-  0EBA    3A01    XORIA	0x1
-  0EBB    1903    SZB	0x3,2
-  0EBC    2E92    JP	0x692
-  0EBD    3A03    XORIA	0x3
-  0EBE    1903    SZB	0x3,2
-  0EBF    2E96    JP	0x696
-  0EC0    3A01    XORIA	0x1
-  0EC1    1903    SZB	0x3,2
-  0EC2    2E9A    JP	0x69A
-  0EC3    2EC4    JP	0x6C4
-  0EC4    300C    LDIA	0xC
-  0EC5    0AF7    INCR	0x77
-  0EC6    0277    SUBA	0x77
-  0EC7    1C03    SNZB	0x3,0
-  0EC8    2DF4    JP	0x5F4
-237:              		}
-238:              		else
-239:              		{
-240:              			SLOT_CHARGE_OFF(i);
-241:              		}
-242:              	}
-243:              
-244:              	PIN_CD1 = chargeB1_6;
-  0EC9    1C74    SNZB	0x74,0
-  0ECA    2ECF    JP	0x6CF
-  0ECB    1683    SETB	0x3,5
-  0ECC    1303    CLRB	0x3,6
-  0ECD    1606    SETB	0x6,4
-  0ECE    2ED2    JP	0x6D2
-  0ECF    1683    SETB	0x3,5
-  0ED0    1303    CLRB	0x3,6
-  0ED1    1206    CLRB	0x6,4
-245:              	PIN_CD2 = chargeB7_12;
-  0ED2    1C75    SNZB	0x75,0
-  0ED3    2ED8    JP	0x6D8
-  0ED4    1683    SETB	0x3,5
-  0ED5    1303    CLRB	0x3,6
-  0ED6    1686    SETB	0x6,5
-  0ED7    2EDB    JP	0x6DB
-  0ED8    1683    SETB	0x3,5
-  0ED9    1303    CLRB	0x3,6
-  0EDA    1286    CLRB	0x6,5
-246:              
-247:              	if(chargeB1_6 || chargeB7_12)
-  0EDB    0874    LD	A,0x74
-  0EDC    1903    SZB	0x3,2
-  0EDD    0875    LD	A,0x75
-  0EDE    1903    SZB	0x3,2
-  0EDF    2EE2    JP	0x6E2
-248:              		PIN_PWM = 1;
-  0EE0    1706    SETB	0x6,6
+332:              		PIN_CD1 = 0;                /* 关闭组1充电 */
+  0DED    1186    CLRB	0x6,3
+333:              		PIN_CD2 = 0;                /* 关闭组2充电 */
+  0DEE    1106    CLRB	0x6,2
+334:              		PIN_PWM = 0;                /* 关闭PWM */
+  0DEF    1303    CLRB	0x3,6
+  0DF0    1386    CLRB	0x6,7
+335:              		return;
+  0DF1    0008    RET
+336:              	}
+337:              
+338:              	/* 遍历12个槽位, 根据状态控制MOSFET */
+339:              	for(i = 0; i < BATTERY_SLOTS; i++)
+  0DF2    01F7    CLR	0x77
+340:              	{
+341:              		unsigned char s = GSLOT(i)->state;
+  0DF3    3006    LDIA	0x6
+  0DF4    0277    SUBA	0x77
+  0DF5    300C    LDIA	0xC
+  0DF6    00F0    LD	0x70,A
+  0DF7    0877    LD	A,0x77
+  0DF8    1C03    SNZB	0x3,0
+  0DF9    2E01    JP	0x601
+  0DFA    120A    CLRB	0xA,4
+  0DFB    118A    CLRB	0xA,3
+  0DFC    22E8    CALL	0x2E8
+  0DFF    3ED8    ADDIA	0xD8
+  0E00    2E07    JP	0x607
+  0E01    120A    CLRB	0xA,4
+  0E02    118A    CLRB	0xA,3
+  0E03    22E8    CALL	0x2E8
+  0E06    3EA0    ADDIA	0xA0
+  0E07    00F3    LD	0x73,A
+  0E08    0A73    INCA	0x73
+  0E09    0084    LD	0x4,A
+  0E0A    1783    SETB	0x3,7
+  0E0B    0800    LD	A,0x0
+  0E0C    00F6    LD	0x76,A
+342:              
+343:              		/* 充电状态: 激活/预充/恒流/恒压 -> 打开MOSFET充电 */
+344:              		if(s == CHG_ACTIVATE || s == CHG_PRECHARGE ||
+345:              		   s == CHG_CC_CHARGE || s == CHG_CV_CHARGE)
+  0E0D    3A02    XORIA	0x2
+  0E0E    1903    SZB	0x3,2
+  0E0F    2E45    JP	0x645
+  0E10    3003    LDIA	0x3
+  0E11    0676    XORA	0x76
+  0E12    1903    SZB	0x3,2
+  0E13    2E45    JP	0x645
+  0E14    3004    LDIA	0x4
+  0E15    0676    XORA	0x76
+  0E16    1903    SZB	0x3,2
+  0E17    2E45    JP	0x645
+  0E18    3005    LDIA	0x5
+  0E19    0676    XORA	0x76
+  0E1A    1903    SZB	0x3,2
+  0E1B    2E45    JP	0x645
+  0E1C    2E9D    JP	0x69D
+  0E1D    1683    SETB	0x3,5
+  0E1E    2E36    JP	0x636
+  0E1F    1683    SETB	0x3,5
+  0E20    2E3A    JP	0x63A
+  0E21    1283    CLRB	0x3,5
+  0E22    2E26    JP	0x626
+  0E23    1283    CLRB	0x3,5
+  0E24    2E2A    JP	0x62A
+  0E25    1683    SETB	0x3,5
+  0E26    1303    CLRB	0x3,6
+  0E27    1186    CLRB	0x6,3
+  0E28    2E6B    JP	0x66B
+  0E29    1683    SETB	0x3,5
+  0E2A    1303    CLRB	0x3,6
+  0E2B    1106    CLRB	0x6,2
+  0E2C    2E6B    JP	0x66B
+  0E2D    1283    CLRB	0x3,5
+  0E2E    1703    SETB	0x3,6
+  0E2F    1087    CLRB	0x7,1
+  0E30    2E6B    JP	0x66B
+  0E31    1283    CLRB	0x3,5
+  0E32    1703    SETB	0x3,6
+  0E33    1187    CLRB	0x7,3
+  0E34    2E6B    JP	0x66B
+  0E35    1283    CLRB	0x3,5
+  0E36    1303    CLRB	0x3,6
+  0E37    1006    CLRB	0x6,0
+  0E38    2E6B    JP	0x66B
+  0E39    1283    CLRB	0x3,5
+  0E3A    1303    CLRB	0x3,6
+  0E3B    1086    CLRB	0x6,1
+  0E3C    2E6B    JP	0x66B
+  0E3D    1283    CLRB	0x3,5
+  0E3E    1703    SETB	0x3,6
+  0E3F    1107    CLRB	0x7,2
+  0E40    2E6B    JP	0x66B
+  0E41    1283    CLRB	0x3,5
+  0E42    1703    SETB	0x3,6
+  0E43    1007    CLRB	0x7,0
+  0E44    2E6B    JP	0x66B
+  0E45    0877    LD	A,0x77
+  0E46    3A00    XORIA	0x0
+  0E47    1903    SZB	0x3,2
+  0E48    2E1D    JP	0x61D
+  0E49    3A01    XORIA	0x1
+  0E4A    1903    SZB	0x3,2
+  0E4B    2E1F    JP	0x61F
+  0E4C    3A03    XORIA	0x3
+  0E4D    1903    SZB	0x3,2
+  0E4E    2E21    JP	0x621
+  0E4F    3A01    XORIA	0x1
+  0E50    1903    SZB	0x3,2
+  0E51    2E23    JP	0x623
+  0E52    3A07    XORIA	0x7
+  0E53    1903    SZB	0x3,2
+  0E54    2E25    JP	0x625
+  0E55    3A01    XORIA	0x1
+  0E56    1903    SZB	0x3,2
+  0E57    2E29    JP	0x629
+  0E58    3A03    XORIA	0x3
+  0E59    1903    SZB	0x3,2
+  0E5A    2E2D    JP	0x62D
+  0E5B    3A01    XORIA	0x1
+  0E5C    1903    SZB	0x3,2
+  0E5D    2E31    JP	0x631
+  0E5E    3A0F    XORIA	0xF
+  0E5F    1903    SZB	0x3,2
+  0E60    2E35    JP	0x635
+  0E61    3A01    XORIA	0x1
+  0E62    1903    SZB	0x3,2
+  0E63    2E39    JP	0x639
+  0E64    3A03    XORIA	0x3
+  0E65    1903    SZB	0x3,2
+  0E66    2E3D    JP	0x63D
+  0E67    3A01    XORIA	0x1
+  0E68    1903    SZB	0x3,2
+  0E69    2E41    JP	0x641
+  0E6A    2E6B    JP	0x66B
+346:              		{
+347:              			SLOT_CHARGE_ON(i);       /* Gate=Low, MOSFET导通 */
+348:              
+349:              			/* 标记所属组有充电 */
+350:              			if(i < 6)
+  0E6B    3006    LDIA	0x6
+  0E6C    0277    SUBA	0x77
+  0E6D    1803    SZB	0x3,0
+  0E6E    2E72    JP	0x672
+351:              				chargeB1_6 = 1;
+  0E6F    01F4    CLR	0x74
+  0E70    0AF4    INCR	0x74
+  0E71    2EC3    JP	0x6C3
+352:              			else
+353:              				chargeB7_12 = 1;
+  0E72    01F5    CLR	0x75
+  0E73    0AF5    INCR	0x75
+  0E74    2EC3    JP	0x6C3
+  0E75    1683    SETB	0x3,5
+  0E76    2E8E    JP	0x68E
+  0E77    1683    SETB	0x3,5
+  0E78    2E92    JP	0x692
+  0E79    1283    CLRB	0x3,5
+  0E7A    2E7E    JP	0x67E
+  0E7B    1283    CLRB	0x3,5
+  0E7C    2E82    JP	0x682
+  0E7D    1683    SETB	0x3,5
+  0E7E    1303    CLRB	0x3,6
+  0E7F    1586    SETB	0x6,3
+  0E80    2EC3    JP	0x6C3
+  0E81    1683    SETB	0x3,5
+  0E82    1303    CLRB	0x3,6
+  0E83    1506    SETB	0x6,2
+  0E84    2EC3    JP	0x6C3
+  0E85    1283    CLRB	0x3,5
+  0E86    1703    SETB	0x3,6
+  0E87    1487    SETB	0x7,1
+  0E88    2EC3    JP	0x6C3
+  0E89    1283    CLRB	0x3,5
+  0E8A    1703    SETB	0x3,6
+  0E8B    1587    SETB	0x7,3
+  0E8C    2EC3    JP	0x6C3
+  0E8D    1283    CLRB	0x3,5
+  0E8E    1303    CLRB	0x3,6
+  0E8F    1406    SETB	0x6,0
+  0E90    2EC3    JP	0x6C3
+  0E91    1283    CLRB	0x3,5
+  0E92    1303    CLRB	0x3,6
+  0E93    1486    SETB	0x6,1
+  0E94    2EC3    JP	0x6C3
+  0E95    1283    CLRB	0x3,5
+  0E96    1703    SETB	0x3,6
+  0E97    1507    SETB	0x7,2
+  0E98    2EC3    JP	0x6C3
+  0E99    1283    CLRB	0x3,5
+  0E9A    1703    SETB	0x3,6
+  0E9B    1407    SETB	0x7,0
+  0E9C    2EC3    JP	0x6C3
+  0E9D    0877    LD	A,0x77
+  0E9E    3A00    XORIA	0x0
+  0E9F    1903    SZB	0x3,2
+  0EA0    2E75    JP	0x675
+  0EA1    3A01    XORIA	0x1
+  0EA2    1903    SZB	0x3,2
+  0EA3    2E77    JP	0x677
+  0EA4    3A03    XORIA	0x3
+  0EA5    1903    SZB	0x3,2
+  0EA6    2E79    JP	0x679
+  0EA7    3A01    XORIA	0x1
+  0EA8    1903    SZB	0x3,2
+  0EA9    2E7B    JP	0x67B
+  0EAA    3A07    XORIA	0x7
+  0EAB    1903    SZB	0x3,2
+  0EAC    2E7D    JP	0x67D
+  0EAD    3A01    XORIA	0x1
+  0EAE    1903    SZB	0x3,2
+  0EAF    2E81    JP	0x681
+  0EB0    3A03    XORIA	0x3
+  0EB1    1903    SZB	0x3,2
+  0EB2    2E85    JP	0x685
+  0EB3    3A01    XORIA	0x1
+  0EB4    1903    SZB	0x3,2
+  0EB5    2E89    JP	0x689
+  0EB6    3A0F    XORIA	0xF
+  0EB7    1903    SZB	0x3,2
+  0EB8    2E8D    JP	0x68D
+  0EB9    3A01    XORIA	0x1
+  0EBA    1903    SZB	0x3,2
+  0EBB    2E91    JP	0x691
+  0EBC    3A03    XORIA	0x3
+  0EBD    1903    SZB	0x3,2
+  0EBE    2E95    JP	0x695
+  0EBF    3A01    XORIA	0x1
+  0EC0    1903    SZB	0x3,2
+  0EC1    2E99    JP	0x699
+  0EC2    2EC3    JP	0x6C3
+  0EC3    300C    LDIA	0xC
+  0EC4    0AF7    INCR	0x77
+  0EC5    0277    SUBA	0x77
+  0EC6    1C03    SNZB	0x3,0
+  0EC7    2DF3    JP	0x5F3
+354:              		}
+355:              		else
+356:              		{
+357:              			SLOT_CHARGE_OFF(i);      /* Gate=High, MOSFET关闭 */
+358:              		}
+359:              	}
+360:              
+361:              	/* 组控制输出: 控制CD1(B1-B6组)和CD2(B7-B12组) */
+362:              	PIN_CD1 = chargeB1_6;
+  0EC8    1C74    SNZB	0x74,0
+  0EC9    2ECE    JP	0x6CE
+  0ECA    1283    CLRB	0x3,5
+  0ECB    1703    SETB	0x3,6
+  0ECC    1586    SETB	0x6,3
+  0ECD    2ED1    JP	0x6D1
+  0ECE    1283    CLRB	0x3,5
+  0ECF    1703    SETB	0x3,6
+  0ED0    1186    CLRB	0x6,3
+363:              	PIN_CD2 = chargeB7_12;
+  0ED1    1C75    SNZB	0x75,0
+  0ED2    2ED7    JP	0x6D7
+  0ED3    1283    CLRB	0x3,5
+  0ED4    1703    SETB	0x3,6
+  0ED5    1506    SETB	0x6,2
+  0ED6    2EDA    JP	0x6DA
+  0ED7    1283    CLRB	0x3,5
+  0ED8    1703    SETB	0x3,6
+  0ED9    1106    CLRB	0x6,2
+364:              
+365:              	/* PWM输出: 只要有任一槽位充电就打开PWM */
+366:              	if(chargeB1_6 || chargeB7_12)
+  0EDA    0874    LD	A,0x74
+  0EDB    1903    SZB	0x3,2
+  0EDC    0875    LD	A,0x75
+  0EDD    1903    SZB	0x3,2
+  0EDE    2EE2    JP	0x6E2
+367:              		PIN_PWM = 1;
+  0EDF    1303    CLRB	0x3,6
+  0EE0    1786    SETB	0x6,7
   0EE1    0008    RET
-249:              	else
-250:              		PIN_PWM = 0;
-  0EE2    1306    CLRB	0x6,6
-  0EE3    0008    RET
-251:              }
+368:              	else
+369:              		PIN_PWM = 0;
+  0EE2    1303    CLRB	0x3,6
+  0EE3    1386    CLRB	0x6,7
+  0EE4    0008    RET
+370:              }
 ---- D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lldiv.c ----------------------------------------------------------------------
 1:                // long unsigned unsigned division
 2:                
@@ -4187,7 +4636,7 @@
   0034    0183    CLR	0x3
   0035    120A    CLRB	0xA,4
   0036    158A    SETB	0xA,3
-  0037    2C14    JP	0x414
+  0037    2C18    JP	0x418
   03FC    3006    LDIA	0x6
   03FD    1283    CLRB	0x3,5
   03FE    1303    CLRB	0x3,6
@@ -4372,51 +4821,62 @@
   0863    3401    RET	0x1
   0864    348C    RET	0x8C
   0865    3401    RET	0x1
-  0866    3443    RET	0x43
-  0867    3420    RET	0x20
-  0868    3456    RET	0x56
-  0869    3444    RET	0x44
-  086A    3444    RET	0x44
-  086B    343A    RET	0x3A
-  086C    3400    RET	0x0
-  086D    3420    RET	0x20
-  086E    3446    RET	0x46
-  086F    3455    RET	0x55
-  0870    344C    RET	0x4C
-  0871    344C    RET	0x4C
-  0872    3400    RET	0x0
-  0873    346D    RET	0x6D
-  0874    3456    RET	0x56
-  0875    340D    RET	0xD
-  0876    340A    RET	0xA
+  0866    3473    RET	0x73
+  0867    3474    RET	0x74
+  0868    3461    RET	0x61
+  0869    3472    RET	0x72
+  086A    3474    RET	0x74
+  086B    342E    RET	0x2E
+  086C    342E    RET	0x2E
+  086D    342E    RET	0x2E
+  086E    340D    RET	0xD
+  086F    340A    RET	0xA
+  0870    3400    RET	0x0
+  0871    3443    RET	0x43
+  0872    3420    RET	0x20
+  0873    3456    RET	0x56
+  0874    3444    RET	0x44
+  0875    3444    RET	0x44
+  0876    343A    RET	0x3A
   0877    3400    RET	0x0
   0878    3420    RET	0x20
-  0879    3443    RET	0x43
-  087A    3448    RET	0x48
-  087B    3447    RET	0x47
-  087C    3400    RET	0x0
-  087D    3420    RET	0x20
-  087E    3445    RET	0x45
-  087F    3452    RET	0x52
-  0880    3452    RET	0x52
-  0881    3400    RET	0x0
-  0882    3420    RET	0x20
-  0883    3453    RET	0x53
-  0884    343D    RET	0x3D
-  0885    3400    RET	0x0
-  0886    3420    RET	0x20
-  0887    3454    RET	0x54
-  0888    343D    RET	0x3D
-  0889    3400    RET	0x0
-  088A    343A    RET	0x3A
-  088B    3456    RET	0x56
-  088C    343D    RET	0x3D
-  088D    3400    RET	0x0
-  088E    3454    RET	0x54
-  088F    343A    RET	0x3A
+  0879    3446    RET	0x46
+  087A    3455    RET	0x55
+  087B    344C    RET	0x4C
+  087C    344C    RET	0x4C
+  087D    3400    RET	0x0
+  087E    346D    RET	0x6D
+  087F    3456    RET	0x56
+  0880    340D    RET	0xD
+  0881    340A    RET	0xA
+  0882    3400    RET	0x0
+  0883    3420    RET	0x20
+  0884    3443    RET	0x43
+  0885    3448    RET	0x48
+  0886    3447    RET	0x47
+  0887    3400    RET	0x0
+  0888    3420    RET	0x20
+  0889    3445    RET	0x45
+  088A    3452    RET	0x52
+  088B    3452    RET	0x52
+  088C    3400    RET	0x0
+  088D    3420    RET	0x20
+  088E    3453    RET	0x53
+  088F    343D    RET	0x3D
   0890    3400    RET	0x0
-  0891    3442    RET	0x42
-  0892    3400    RET	0x0
+  0891    3420    RET	0x20
+  0892    3454    RET	0x54
+  0893    343D    RET	0x3D
+  0894    3400    RET	0x0
+  0895    343A    RET	0x3A
+  0896    3456    RET	0x56
+  0897    343D    RET	0x3D
+  0898    3400    RET	0x0
+  0899    3454    RET	0x54
+  089A    343A    RET	0x3A
+  089B    3400    RET	0x0
+  089C    3442    RET	0x42
+  089D    3400    RET	0x0
   0CC2    0874    LD	A,0x74
   0CC3    3E02    ADDIA	0x2
   0CC4    0084    LD	0x4,A

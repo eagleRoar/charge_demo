@@ -143,7 +143,7 @@ void ChargeProcess_Slot(unsigned char idx)
 {
 	BatterySlot_t *p = GSLOT(idx);
 	unsigned int v = p->voltage;        /* 当前ADC电压值 */
-	unsigned int tick = 1;              /* 每次调用算1个tick(250us) */
+	unsigned int tick = 1;              /* 每次调用算1个tick(9ms/次, 约111tick/秒) */
 
 	switch(p->state)
 	{

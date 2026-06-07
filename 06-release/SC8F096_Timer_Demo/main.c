@@ -113,34 +113,40 @@ void System_Init(void)
 
 	/* --- PORTA初始化 ---
 	   RA0=B1, RA1=B2, RA2=B6, RA3=B5: 输出高(关闭充电)
-	   RA4=CD1, RA5=CD2: 输出低(关闭组充电)
-	   RA6=PWM: 输出低(关闭PWM)
-	   RA7=EN: 输出高(使能主电源Q3)
-	   初始值: 0B10001111 = RA7=1, RA6=0, RA5=0, RA4=0, RA3=1, RA2=1, RA1=1, RA0=1 */
-	TRISA = 0B00000000;     /* 全部设为输出 */
-	PORTA = 0B10001111;     /* EN=1使能, MOSFET全部关闭(高电平) */
+	   RA4=AN4(B6AD): 模拟输入(ADC采样)
+	   RA5=AN5(B5AD): 模拟输入(ADC采样)
+	   RA6=AN6(B12AD): 模拟输入(ADC采样)
+	   RA7=AN7(B11AD): 模拟输入(ADC采样)
+	   初始值: TRISA=0B11110000(RA4-7输入), PORTA=0B00001111 */
+	TRISA = 0B11110000;     /* RA4-7输入(ADC采样), RA0-3输出 */
+	PORTA = 0B00001111;     /* B1-B6 MOSFET全部关闭(高), RA4-7输入 */
 	WPUA = 0B00000000;      /* 关闭弱上拉 */
 	WPDA = 0B00000000;      /* 关闭弱下拉 */
 	IOCA = 0B00000000;      /* 关闭电平变化中断 */
 
 	/* --- PORTB初始化 ---
 	   RB0=B9, RB1=B10, RB2=B4, RB3=B3: 输出高(关闭充电)
-	   RB4=UART RX: 输入(外部上拉)
-	   RB5/6/7: 输入(外部上拉)
-	   初始值: 0B00001111 = RB3=1, RB2=1, RB1=1, RB0=1 */
-	TRISB = 0B11110000;     /* RB0~3输出, RB4~7输入 */
-	PORTB = 0B00001111;     /* MOSFET全部关闭(高电平) */
+	   RB4=UART RX: 输入
+	   RB5=AN13(B4AD): 模拟输入(ADC采样)
+	   RB6=EN: 输出高(使能主电源Q3)
+	   RB7=PWM(VT_PWM1): 输出低(关闭PWM)
+	   初始值: TRISB=0B00110000(RB4-5输入), PORTB=0B01001111 */
+	TRISB = 0B00110000;     /* RB4-5输入, RB6(EN)/RB7(PWM)/RB0-3输出 */
+	PORTB = 0B01001111;     /* EN=1(RB6), PWM关(RB7=0), B9-B3 MOSFET全部关闭(高) */
 	WPUB = 0B00000000;      /* 关闭弱上拉 */
 	WPDB = 0B00000000;      /* 关闭弱下拉 */
 	IOCB = 0B00000000;      /* 关闭电平变化中断 */
 
 	/* --- PORTC初始化 ---
 	   RC0=VCC_SW: 输出高(电源切换, 先切到USB供电)
-	   RC3=CLK, RC4=LED IO2: 输出低(LED关闭)
-	   RC5=LED IO1/NTC: 输出低
+	   RC1=AN17(B1AD): 模拟输入(ADC采样)
+	   RC2=CD IO2: 输出低(关闭充电组2 B7-B12)
+	   RC3=CD IO1: 输出低(关闭充电组1 B1-B6)
+	   RC4=LED IO2/CLK: 输出低(LED关闭)
+	   RC5=LED IO1/DAT/NTC: 输出低(LED关闭)
 	   初始值: 0B00000001 = VCC_SW=1 */
-	TRISC = 0B00001000;     /* RC3输入(ICSP), RC0/4/5输出 */
-	PORTC = 0B00000001;     /* VCC_SW=1 */
+	TRISC = 0B00000010;     /* RC1输入(B1AD), RC0/2/3/4/5输出 */
+	PORTC = 0B00000001;     /* VCC_SW=1, CD1/CD2=0关闭, LED全部关闭 */
 	WPUC = 0B00000000;      /* 关闭弱上拉 */
 	/* SC8F096只有WPDA/WPDB, 无WPDC/WPDD */
 
@@ -239,11 +245,11 @@ void main(void)
 	System_Init();
 
 	/* 发送调试标记: 0x55 0xAA, 表示系统启动完成 */
-	TXREG1 = 0x55;
-	while(TRMT1 == 0);      /* 等待发送完成 */
-	TXREG1 = 0xAA;
-	while(TRMT1 == 0);
-
+	//TXREG1 = 0x55;
+	//while(TRMT1 == 0);      /* 等待发送完成 */
+	//TXREG1 = 0xAA;
+	//while(TRMT1 == 0);
+	uart_send_string("start...\r\n");
 	/* 主循环: 持续运行, 实际逻辑在中断中执行 */
 	while(1)
 	{
@@ -348,8 +354,9 @@ void interrupt Interrupt_Isr(void)
 				}
 				g_scanPhase = 0;            /* 回到Phase 0开始下一槽 */
 
-				/* 每秒任务: 4000 * 250us = 1秒 */
-				if(g_systemTick >= 4000)
+				/* 每秒任务: 12槽×3阶段=36次中断/g_systemTick, 36×250us=9ms/次
+				   1000ms/9ms≈111次/秒 */
+				if(g_systemTick >= 111)
 				{
 					g_systemTick = 0;
 

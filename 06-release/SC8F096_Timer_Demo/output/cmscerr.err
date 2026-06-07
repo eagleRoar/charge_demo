@@ -1,18 +1,18 @@
+Advisory[1510]	non-reentrant function "_uart_send_char" appears in multiple call graphs and has been duplicated by the compiler
+Advisory[1510]	non-reentrant function "_uart_send_string" appears in multiple call graphs and has been duplicated by the compiler
 Advisory[1510]	non-reentrant function "___wmul" appears in multiple call graphs and has been duplicated by the compiler
-Warning[520]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\adc_drv.c	第6行	function "_AD_Init" is never called
+Warning[520]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\adc_drv.c	第21行	function "_AD_Init" is never called
 Advisory[1510]	non-reentrant function "___bmul" appears in multiple call graphs and has been duplicated by the compiler
-Warning[1090]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c	第3行	variable "_g_ntcAdc" is not used
-Warning[1090]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c	第7行	variable "_g_timerTick" is not used
-Warning[759]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c	第125行	expression generates no code
-Warning[759]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c	第168行	expression generates no code
-Warning[759]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c	第13行	expression generates no code
-Warning[751]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c	第117行	arithmetic overflow in constant expression
-Warning[751]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c	第137行	arithmetic overflow in constant expression
-Warning[751]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c	第156行	arithmetic overflow in constant expression
-Warning[751]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c	第180行	arithmetic overflow in constant expression
+Warning[1090]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c	第14行	variable "_g_ntcAdc" is not used
+Warning[1090]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c	第17行	variable "_g_timerTick" is not used
+Warning[759]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c	第226行	expression generates no code
+Warning[759]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c	第291行	expression generates no code
+Warning[759]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c	第35行	expression generates no code
+Warning[751]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c	第248行	arithmetic overflow in constant expression
+Warning[751]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\charge_mgr.c	第277行	arithmetic overflow in constant expression
 
 Memory Summary:
-    Program space        used   C70h (  3184) of  2000h words   ( 38.9%)
+    Program space        used   C99h (  3225) of  2000h words   ( 39.4%)
     Data space           used    EBh (   235) of   140h bytes   ( 73.4%)
     EEPROM space         None available
     Data stack space     used     0h (     0) of    40h bytes   (  0.0%)

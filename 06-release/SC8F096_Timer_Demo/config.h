@@ -22,17 +22,17 @@
     B10 = RB1/AN9  /PWMD1  (pin14)
     B11 = RD2/AN24 /PWMD2  (pin21)
     B12 = RD0/AN22 /PWMD0  (pin23)
-    NTC        : AN21(RC5)    温度检测(CMFA103J3950HANT,10K上拉)
-    LED IO1    : RC5           LED电源控制1(与NTC分时复用)
-    LED IO2    : RC4           LED电源控制2
-    PWM        : RA6           PWM总控输出
-    CD IO1     : RA4           充电组控制1(B1-B6组)
-    CD IO2     : RA5           充电组控制2(B7-B12组)
-    EN         : RA7           主电源使能(Q3 4435)
+    NTC        : RC5/AN21      温度检测(CMFA103J3950HANT,10K上拉)
+    LED IO1    : RC5/AN21      LED电源控制1(与NTC分时复用,与DAT共用)
+    LED IO2    : RC4/AN20      LED电源控制2(与CLK共用)
+    PWM        : RB7/AN15      PWM总控输出(pin8)
+    CD IO1     : RC3/AN19      充电组控制1(B1-B6组)
+    CD IO2     : RC2/AN18      充电组控制2(B7-B12组)
+    EN         : RB6/AN14      主电源使能(Q3 4435)
     VCC_SW     : RC0           电源切换(Q19 SS8050->Q17 9435A)
     UART TX    : RB3           UART发送(调试用,与B3共用RB3)
     UART RX    : RB4           UART接收
-    CLK/DAT    : RC3/RC4       ICSP调试接口(与LED IO2共用RC4)
+    CLK/DAT    : RC4/RC5       ICSP调试接口(与LED IO2/LED IO1共用RC4/RC5)
 -------------------------------------------*/
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
@@ -102,9 +102,10 @@
 
 /*========================================================================
   充电时间阈值
-  Timer0每250us触发一次, 4000次=1秒(tick)
+  说明: chargeTimer在ChargeProcess_Slot中每次+1, 每轮扫描(12槽×3阶段=36次Timer0)调用一次
+  Timer0周期250us, 每轮扫描=36×250us=9ms, 1秒≈1000/9≈111个tick
 ========================================================================*/
-#define TICK_PER_SEC        4000                          /* 1秒对应的tick数 */
+#define TICK_PER_SEC        111                           /* 1秒对应的扫描tick数 */
 #define TIME_ACTIVATE_MAX   (60 * TICK_PER_SEC)            /* 激活超时: 60秒 */
 #define TIME_PRECHARGE_MAX  (300 * TICK_PER_SEC)           /* 预充超时: 300秒(5分钟) */
 #define TIME_CHARGE_MAX     (10800 * TICK_PER_SEC)         /* 充电超时: 10800秒(3小时) */
@@ -143,12 +144,12 @@
   GPIO引脚宏定义
 ========================================================================*/
 /* 总控引脚 */
-#define PIN_PWM             RA6     /* PWM总控输出 */
-#define PIN_CD1             RA4     /* 充电组控制1(B1-B6) */
-#define PIN_CD2             RA5     /* 充电组控制2(B7-B12) */
+#define PIN_PWM             RB7     /* PWM总控输出(VT_PWM1, pin8=RB7/AN15) */
+#define PIN_CD1             RC3     /* 充电组控制1(B1-B6) */
+#define PIN_CD2             RC2     /* 充电组控制2(B7-B12) */
 #define PIN_LED_IO1         RC5     /* LED电源控制1(与NTC分时复用RC5) */
 #define PIN_LED_IO2         RC4     /* LED电源控制2 */
-#define PIN_EN              RA7     /* 主电源使能(Q3 4435) */
+#define PIN_EN              RB6     /* 主电源使能(Q3 4435) */
 #define PIN_VCC_SW          RC0     /* 电源切换控制 */
 
 /* B1-B12 独立MOSFET栅极控制引脚
