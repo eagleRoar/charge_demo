@@ -316,7 +316,7 @@ void ChargeProcess_Slot(unsigned char idx)
     2. 遍历12个槽位, 根据状态决定是否充电
     3. 充电状态(ACTIVATE/PRECHARGE/CC_CHARGE/CV_CHARGE): 打开MOSFET
     4. 其他状态: 关闭MOSFET
-    5. 有充电则置位组控制(CD1/CD2)和PWM, 无充电则关闭
+    5. 有充电则置位组控制(CD1/CD2), PWM占空比由CCCV_Control单独计算
   MOSFET控制: AO3401 P沟道, Gate=Low导通, Gate=High关闭
 ========================================================================*/
 void Charging_Control(void)
@@ -331,7 +331,7 @@ void Charging_Control(void)
 		SLOT_ALL_OFF();             /* 关闭所有MOSFET(Gate=High) */
 		PIN_CD1 = 0;                /* 关闭组1充电 */
 		PIN_CD2 = 0;                /* 关闭组2充电 */
-		PIN_PWM = 0;                /* 关闭PWM */
+		g_pwmDuty = 0;              /* ISR中自动输出PWM=0 */
 		return;
 	}
 
@@ -362,9 +362,103 @@ void Charging_Control(void)
 	PIN_CD1 = chargeB1_6;
 	PIN_CD2 = chargeB7_12;
 
-	/* PWM输出: 只要有任一槽位充电就打开PWM */
-	if(chargeB1_6 || chargeB7_12)
-		PIN_PWM = 1;
-	else
-		PIN_PWM = 0;
+	/* PWM占空比由CCCV_Control()计算, ISR中自动生成波形, 此处不直接操作PIN_PWM */
+}
+
+/*========================================================================
+  函数: CCCV_Control
+  功能: CC-CV恒流恒压PWM占空比自动调节
+  说明: 每轮扫描结束后调用(在Charging_Control之后)
+  控制策略:
+    CC恒流阶段(ACTIVATE/PRECHARGE/CC_CHARGE):
+      - 使用固定占空比(CC_DUTY_TARGET=25/32≈78%)
+      - 软启动: 每次+CC_DUTY_RAMP_STEP逐步增加到目标值
+      - 无电流检测硬件, 通过固定占空比近似恒流效果
+    CV恒压阶段(CV_CHARGE):
+      - PI闭环控制, 以ADC_V_FULL为目标电压
+      - 根据电压误差动态调节PWM占空比
+      - 带积分限幅防饱和
+  输出: 更新全局变量 g_pwmDuty (0~PWM_MAX),
+        ISR中根据g_pwmDuty自动生成PWM波形
+========================================================================*/
+void CCCV_Control(void)
+{
+	unsigned char i;
+	unsigned char hasCharging = 0;
+	unsigned int  maxV = 0;
+	unsigned char cvCount = 0;
+
+	/* 遍历12槽位, 找出充电状态和最高电压 */
+	for(i = 0; i < BATTERY_SLOTS; i++)
+	{
+		unsigned char s = GSLOT(i)->state;
+		if(s == CHG_ACTIVATE || s == CHG_PRECHARGE ||
+		   s == CHG_CC_CHARGE || s == CHG_CV_CHARGE)
+		{
+			hasCharging = 1;
+			if(GSLOT(i)->voltage > maxV)
+				maxV = GSLOT(i)->voltage;
+			if(s == CHG_CV_CHARGE)
+				cvCount++;
+		}
+	}
+
+	/* 无充电槽位: 关闭PWM, 复位积分 */
+	if(!hasCharging)
+	{
+		g_pwmDuty = 0;
+		g_cvIntegral = 0;
+		return;
+	}
+
+	/* --- CC恒流阶段: 固定占空比 + 软启动 ---
+	   激活/预充/恒流充电都使用固定占空比,
+	   逐步增加占空比避免上电瞬间电流冲击 */
+	if(cvCount == 0)
+	{
+		if(g_pwmDuty < CC_DUTY_INITIAL)
+		{
+			/* 首次充电: 软启动 */
+			g_pwmDuty += CC_DUTY_RAMP_STEP;
+			if(g_pwmDuty > CC_DUTY_INITIAL)
+				g_pwmDuty = CC_DUTY_INITIAL;
+		}
+		else if(g_pwmDuty > CC_DUTY_TARGET)
+		{
+			/* 从CV回退到CC: 直接使用CC目标占空比 */
+			g_pwmDuty = CC_DUTY_TARGET;
+		}
+		else
+		{
+			/* 维持CC目标占空比 */
+			g_pwmDuty = CC_DUTY_TARGET;
+		}
+		return;
+	}
+
+	/* --- CV恒压阶段: PI闭环控制 ---
+	   目标: 维持电池电压在ADC_V_FULL(1.52V)
+	   error > 0: 电压偏低, 需加大占空比
+	   error < 0: 电压偏高, 需减小占空比
+	   积分项累加稳态误差, 消除静差 */
+	{
+		int error = (int)(ADC_V_FULL) - (int)(maxV);
+
+		/* 积分累加(带限幅防积分饱和) */
+		g_cvIntegral += error * CV_KI;
+		if(g_cvIntegral > CV_KI_LIMIT)
+			g_cvIntegral = CV_KI_LIMIT;
+		else if(g_cvIntegral < -CV_KI_LIMIT)
+			g_cvIntegral = -CV_KI_LIMIT;
+
+		/* PI计算: duty = current_duty + (Kp*error + Ki*integral)/8 */
+		int adjust = (error * CV_KP + g_cvIntegral) / 8;
+		int duty = (int)g_pwmDuty + adjust;
+
+		/* 占空比限幅 */
+		if(duty > PWM_MAX) duty = PWM_MAX;
+		if(duty < 0)      duty = 0;
+
+		g_pwmDuty = (unsigned char)duty;
+	}
 }

@@ -21,69 +21,30 @@ unsigned char g_scanPhase = 0;           /* 当前扫描阶段: 0=ADC采样, 1=�
 unsigned int  g_powerOnTimer = 0;        /* 上电自检计时器 */
 unsigned char g_powerOnPhase = 0;        /* 上电自检阶段: 0=全亮, 1=保持, 2=正常 */
 
+/* PWM/CC-CV 控制变量 */
+volatile unsigned char g_pwmDuty = 0;       /* 当前PWM占空比(0~PWM_MAX) */
+volatile unsigned char g_pwmCounter = 0;    /* PWM计数器, ISR中0~31循环 */
+signed int g_cvIntegral = 0;                /* CV PI积分累加器 */
+
 /*========================================================================
   ROM只读配置表
 ========================================================================*/
-/* 12槽ADC通道映射表
-   每个槽位对应一个ADC通道号, 用于电压采样 */
+/* 12槽BxAD ADC通道映射表
+   每个槽位对应一个独立的ADC采样通道, BxAD引脚为纯模拟输入 */
 const unsigned char s_adcChannels[BATTERY_SLOTS] = {
-	ADC_CH_B1,  /* B1: AN0  */
-	ADC_CH_B2,  /* B2: AN1  */
-	ADC_CH_B3,  /* B3: AN11 */
-	ADC_CH_B4,  /* B4: AN10 */
-	ADC_CH_B5,  /* B5: AN3  */
-	ADC_CH_B6,  /* B6: AN2  */
-	ADC_CH_B7,  /* B7: AN23 */
-	ADC_CH_B8,  /* B8: AN25 */
-	ADC_CH_B9,  /* B9: AN8  */
-	ADC_CH_B10, /* B10: AN9 */
-	ADC_CH_B11, /* B11: AN24 */
-	ADC_CH_B12  /* B12: AN22 */
+	ADC_CH_B1AD,  /* B1 电压采样: AN17 */
+	ADC_CH_B2AD,  /* B2 电压采样: AN16 */
+	ADC_CH_B3AD,  /* B3 电压采样: AN12 */
+	ADC_CH_B4AD,  /* B4 电压采样: AN13 */
+	ADC_CH_B5AD,  /* B5 电压采样: AN5  */
+	ADC_CH_B6AD,  /* B6 电压采样: AN4  */
+	ADC_CH_B7AD,  /* B7 电压采样: AN28 */
+	ADC_CH_B8AD,  /* B8 电压采样: AN29 */
+	ADC_CH_B9AD,  /* B9 电压采样: AN27 */
+	ADC_CH_B10AD, /* B10 电压采样: AN26 */
+	ADC_CH_B11AD, /* B11 电压采样: AN7  */
+	ADC_CH_B12AD  /* B12 电压采样: AN6  */
 };
-
-/* 12槽引脚配置表(ROM)
-   每个槽位包含: TRIS寄存器、PORT寄存器、引脚掩码、ANSEL寄存器、模拟选择掩码
-   用于分时复用: 同一引脚在ADC测量时切换为模拟, 在MOSFET控制时切换为数字 */
-const SlotPinConfig_t s_slotPins[BATTERY_SLOTS] = {
-	/* B1: RA0/AN0 */ { &TRISA, &PORTA, 0x01, &ANSEL0, 0x01 },
-	/* B2: RA1/AN1 */ { &TRISA, &PORTA, 0x02, &ANSEL0, 0x02 },
-	/* B3: RB3/AN11*/ { &TRISB, &PORTB, 0x08, &ANSEL1, 0x08 },
-	/* B4: RB2/AN10*/ { &TRISB, &PORTB, 0x04, &ANSEL1, 0x04 },
-	/* B5: RA3/AN3 */ { &TRISA, &PORTA, 0x08, &ANSEL0, 0x08 },
-	/* B6: RA2/AN2 */ { &TRISA, &PORTA, 0x04, &ANSEL0, 0x04 },
-	/* B7: RD1/AN23*/ { &TRISD, &PORTD, 0x02, &ANSEL3, 0x02 },
-	/* B8: RD3/AN25*/ { &TRISD, &PORTD, 0x08, &ANSEL3, 0x08 },
-	/* B9: RB0/AN8 */ { &TRISB, &PORTB, 0x01, &ANSEL1, 0x01 },
-	/* B10:RB1/AN9 */ { &TRISB, &PORTB, 0x02, &ANSEL1, 0x02 },
-	/* B11:RD2/AN24*/ { &TRISD, &PORTD, 0x04, &ANSEL3, 0x04 },
-	/* B12:RD0/AN22*/ { &TRISD, &PORTD, 0x01, &ANSEL3, 0x01 }
-};
-
-/*========================================================================
-  函数: SlotPin_ToAnalog
-  功能: 将指定槽位的引脚切换为模拟输入模式(用于ADC电压采样)
-  参数: idx - 槽位索引(0~11)
-  说明: 置位ANSEL(使能模拟)和TRIS(设为输入)
-========================================================================*/
-void SlotPin_ToAnalog(unsigned char idx)
-{
-	const SlotPinConfig_t *cfg = &s_slotPins[idx];
-	*cfg->ansel_reg |= cfg->ansel_mask;   /* 使能模拟功能 */
-	*cfg->tris_reg |= cfg->pin_mask;      /* 设为输入模式 */
-}
-
-/*========================================================================
-  函数: SlotPin_ToDigital
-  功能: 将指定槽位的引脚切换为数字输出模式(用于MOSFET栅极控制)
-  参数: idx - 槽位索引(0~11)
-  说明: 清除ANSEL(关闭模拟)和TRIS(设为输出), 引脚恢复为数字IO
-========================================================================*/
-void SlotPin_ToDigital(unsigned char idx)
-{
-	const SlotPinConfig_t *cfg = &s_slotPins[idx];
-	*cfg->ansel_reg &= ~cfg->ansel_mask;  /* 关闭模拟功能 */
-	*cfg->tris_reg &= ~cfg->pin_mask;     /* 设为输出模式 */
-}
 
 /*========================================================================
   函数: System_Init
@@ -138,15 +99,15 @@ void System_Init(void)
 	IOCB = 0B00000000;      /* 关闭电平变化中断 */
 
 	/* --- PORTC初始化 ---
-	   RC0=VCC_SW: 输出高(电源切换, 先切到USB供电)
+	   RC0=AN16(B2AD): 模拟输入(ADC采样)
 	   RC1=AN17(B1AD): 模拟输入(ADC采样)
 	   RC2=CD IO2: 输出低(关闭充电组2 B7-B12)
 	   RC3=CD IO1: 输出低(关闭充电组1 B1-B6)
 	   RC4=LED IO2/CLK: 输出低(LED关闭)
 	   RC5=LED IO1/DAT/NTC: 输出低(LED关闭)
-	   初始值: 0B00000001 = VCC_SW=1 */
-	TRISC = 0B00000010;     /* RC1输入(B1AD), RC0/2/3/4/5输出 */
-	PORTC = 0B00000001;     /* VCC_SW=1, CD1/CD2=0关闭, LED全部关闭 */
+	   初始值: 0B00000000 = 全部输出低 */
+	TRISC = 0B00000011;     /* RC0-1输入(B2AD/B1AD), RC2-5输出 */
+	PORTC = 0B00000000;     /* CD1/CD2=0关闭, LED全部关闭 */
 	WPUC = 0B00000000;      /* 关闭弱上拉 */
 	/* SC8F096只有WPDA/WPDB, 无WPDC/WPDD */
 
@@ -157,10 +118,14 @@ void System_Init(void)
 	PORTD = 0B00001111;     /* MOSFET全部关闭(高电平) */
 	WPUD = 0B00000000;      /* 关闭弱上拉 */
 
-	/* --- 关闭所有模拟功能(需要时动态切换) --- */
-	ANSEL0 = 0x00;
-	ANSEL1 = 0x00;
-	ANSEL2 = 0x00;
+	/* --- 配置BxAD模拟输入引脚 ---
+	   ANSEL0: RA4(B6AD), RA5(B5AD), RA6(B12AD), RA7(B11AD)
+	   ANSEL1: RB4(B3AD), RB5(B4AD)
+	   ANSEL2: RC0(B2AD), RC1(B1AD)
+	   ANSEL3: 全部关闭(未使用) */
+	ANSEL0 = 0xF0;      /* RA4-7: B6AD/B5AD/B12AD/B11AD */
+	ANSEL1 = 0x30;      /* RB4-5: B3AD/B4AD */
+	ANSEL2 = 0x03;      /* RC0-1: B2AD/B1AD */
 	ANSEL3 = 0x00;
 
 	/* --- 比较器关闭 --- */
@@ -198,12 +163,11 @@ void System_Init(void)
 
 	/* --- 控制引脚初始状态 --- */
 	PIN_EN = 1;             /* 主电源使能(高电平使能Q3) */
-	PIN_PWM = 0;            /* PWM关闭 */
+	PIN_PWM = 0;            /* PWM初始=0, ISR中软件生成125Hz/32级PWM波形 */
 	PIN_CD1 = 0;            /* 充电组1关闭 */
 	PIN_CD2 = 0;            /* 充电组2关闭 */
 	PIN_LED_IO1 = 0;        /* LED电源1关闭 */
 	PIN_LED_IO2 = 0;        /* LED电源2关闭 */
-	PIN_VCC_SW = 1;         /* 电源切换: 先切到USB(高电平=USB供电) */
 
 	/* --- 初始化所有槽位数据 --- */
 	for(i = 0; i < BATTERY_SLOTS; i++)
@@ -290,6 +254,14 @@ void interrupt Interrupt_Isr(void)
 		T0IF = 0;                   /* 清除中断标志 */
 		g_timerTick++;              /* 中断计数+1 */
 
+		/* === 软件PWM生成(RB7/VT_PWM1, 125Hz, 32级占空比) ===
+		   每Timer0中断递增PWM计数器, 0~31循环
+		   计数器 < 占空比 → 输出高(PIN_PWM=1), 否则输出低 */
+		g_pwmCounter++;
+		if(g_pwmCounter >= PWM_RESOLUTION)
+			g_pwmCounter = 0;
+		PIN_PWM = (g_pwmCounter < g_pwmDuty) ? 1 : 0;
+
 		/* 上电自检阶段: 执行LED自检序列 */
 		if(g_powerOnPhase < 2)
 		{
@@ -300,15 +272,10 @@ void interrupt Interrupt_Isr(void)
 		{
 			switch(g_scanPhase)
 			{
-			/* --- Phase 0: ADC电压采样 ---
-			   1. 将当前槽位引脚切换为模拟输入
-			   2. 读取ADC电压值
-			   3. 恢复引脚为数字输出(MOSFET控制) */
+			/* --- Phase 0: ADC电压采样(BxAD专用模拟引脚, 无需模式切换) --- */
 			case 0:
-				SlotPin_ToAnalog(g_scanIndex);
 				GSLOT(g_scanIndex)->voltage = 
 					ADC_ReadChannel(s_adcChannels[g_scanIndex]);
-				SlotPin_ToDigital(g_scanIndex);
 				g_scanPhase = 1;
 				break;
 
@@ -324,7 +291,7 @@ void interrupt Interrupt_Isr(void)
 			/* --- Phase 2: 扫描收尾(仅在槽位0时执行) ---
 			   1. 读取NTC温度(与LED IO1共用RC5, 分时复用)
 			   2. LED闪烁处理
-			   3. 充电组控制输出
+			   3. 充电组控制输出(Charging_Control + CCCV_Control)
 			   4. 槽位索引+1, 循环到下一个槽位
 			   5. 每1秒: 读取电源电压 + 打印状态 */
 			case 2:
@@ -343,6 +310,8 @@ void interrupt Interrupt_Isr(void)
 					Led_BlinkProcess();
 					/* 充电组控制输出(含温度保护判断) */
 					Charging_Control();
+					/* CC-CV恒流恒压PWM占空比调节 */
+					CCCV_Control();
 				}
 
 				/* 切换到下一个槽位 */

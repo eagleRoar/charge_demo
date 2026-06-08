@@ -22,14 +22,26 @@
     B10 = RB1/AN9  /PWMD1  (pin14)
     B11 = RD2/AN24 /PWMD2  (pin21)
     B12 = RD0/AN22 /PWMD0  (pin23)
-    NTC        : RC5/AN21      温度检测(CMFA103J3950HANT,10K上拉)
+    注: B1~B12为纯数字输出(仅控制MOSFET开关), ADC采样由独立BxAD引脚完成
+    B1AD    : RC1/AN17      B1电压采样(独立ADC通道, 不受MOSFET状态影响)
+    B2AD    : RC0/AN16      B2电压采样
+    B3AD    : RB4/AN12      B3电压采样(与UART RX共用, 调试时注意)
+    B4AD    : RB5/AN13      B4电压采样
+    B5AD    : RA5/AN5       B5电压采样
+    B6AD    : RA4/AN4       B6电压采样
+    B7AD    : AN28          B7电压采样(高通道, 模拟专用)
+    B8AD    : AN29          B8电压采样(高通道, 模拟专用)
+    B9AD    : AN27          B9电压采样(高通道, 模拟专用)
+    B10AD   : AN26          B10电压采样(高通道, 模拟专用)
+    B11AD   : RA7/AN7       B11电压采样
+    B12AD   : RA6/AN6       B12电压采样
+    NTC     : RC5/AN21      温度检测(CMFA103J3950HANT,10K上拉)
     LED IO1    : RC5/AN21      LED电源控制1(与NTC分时复用,与DAT共用)
     LED IO2    : RC4/AN20      LED电源控制2(与CLK共用)
     PWM        : RB7/AN15      PWM总控输出(pin8)
     CD IO1     : RC3/AN19      充电组控制1(B1-B6组)
     CD IO2     : RC2/AN18      充电组控制2(B7-B12组)
     EN         : RB6/AN14      主电源使能(Q3 4435)
-    VCC_SW     : RC0           电源切换(Q19 SS8050->Q17 9435A)
     UART TX    : RB3           UART发送(调试用,与B3共用RB3)
     UART RX    : RB4           UART接收
     CLK/DAT    : RC4/RC5       ICSP调试接口(与LED IO2/LED IO1共用RC4/RC5)
@@ -113,6 +125,27 @@
 #define TIME_CV_HOLD        (600 * TICK_PER_SEC)           /* CV恒压保持: 600秒(10分钟) */
 
 /*========================================================================
+  CC-CV 充电控制参数
+========================================================================*/
+/* 软件PWM参数 (RB7/VT_PWM1, 基于Timer0 ISR生成)
+   PWM频率 = 1/(32 × 250us) = 125Hz, 占空比分辨率: 3.125%/step */
+#define PWM_RESOLUTION      32     /* PWM分辨率(32级) */
+#define PWM_MAX             32     /* 100%占空比 */
+
+/* CC恒流阶段: 固定占空比(无电流检测时用电压监控替代闭环) */
+#define CC_DUTY_INITIAL     25     /* CC初始占空比(25/32≈78%), 软启动起点 */
+#define CC_DUTY_TARGET      25     /* CC目标占空比(25/32≈78%) */
+#define CC_DUTY_RAMP_STEP   3      /* 软启动每步增量 */
+
+/* CV恒压阶段: PI闭环控制参数
+   error = ADC_V_FULL - 当前电压
+   duty += error * CV_KP / CV_DIV
+   CV_KI用于慢速积分修正 */
+#define CV_KP               4      /* 比例系数 */
+#define CV_KI               1      /* 积分系数 */
+#define CV_KI_LIMIT         200    /* 积分限幅, 防止积分饱和 */
+
+/*========================================================================
   温度保护阈值
   NTC型号: CMFA103J3950HANT (10K@25C, B=3950)
   温度>=60C停止充电, 温度<=50C恢复充电(10C回差防抖)
@@ -122,23 +155,23 @@
 
 /*========================================================================
   ADC通道定义
-  注: B1-B12的ADC通道与MOSFET控制引脚共用同一物理引脚,
-  需在扫描时切换模拟/数字模式(分时复用)
+  B1AD~B12AD: 独立ADC采样引脚(纯模拟输入), 与B1~B12 MOSFET控制引脚分离
+  注: B1~B12为纯数字输出，无需分时复用切换模拟/数字模式
 ========================================================================*/
-#define ADC_CH_B1           0       /* B1: RA0/AN0 */
-#define ADC_CH_B2           1       /* B2: RA1/AN1 */
-#define ADC_CH_B3           11      /* B3: RB3/AN11 */
-#define ADC_CH_B4           10      /* B4: RB2/AN10 */
-#define ADC_CH_B5           3       /* B5: RA3/AN3 */
-#define ADC_CH_B6           2       /* B6: RA2/AN2 */
-#define ADC_CH_B7           23      /* B7: RD1/AN23 */
-#define ADC_CH_B8           25      /* B8: RD3/AN25 */
-#define ADC_CH_B9           8       /* B9: RB0/AN8 */
-#define ADC_CH_B10          9       /* B10: RB1/AN9 */
-#define ADC_CH_B11          24      /* B11: RD2/AN24 */
-#define ADC_CH_B12          22      /* B12: RD0/AN22 */
-#define ADC_CH_NTC          21      /* NTC: RC5/AN21 */
-#define ADC_CH_VREF         31      /* 内部1.2V参考电压(用于计算VDD) */
+#define ADC_CH_B1AD         17    /* B1AD: RC1/AN17 */
+#define ADC_CH_B2AD         16    /* B2AD: RC0/AN16 */
+#define ADC_CH_B3AD         12    /* B3AD: RB4/AN12(与UART RX共用) */
+#define ADC_CH_B4AD         13    /* B4AD: RB5/AN13 */
+#define ADC_CH_B5AD         5     /* B5AD: RA5/AN5 */
+#define ADC_CH_B6AD         4     /* B6AD: RA4/AN4 */
+#define ADC_CH_B7AD         28    /* B7AD: AN28(高通道, 模拟专用) */
+#define ADC_CH_B8AD         29    /* B8AD: AN29(高通道, 模拟专用) */
+#define ADC_CH_B9AD         27    /* B9AD: AN27(高通道, 模拟专用) */
+#define ADC_CH_B10AD        26    /* B10AD: AN26(高通道, 模拟专用) */
+#define ADC_CH_B11AD        7     /* B11AD: RA7/AN7 */
+#define ADC_CH_B12AD        6     /* B12AD: RA6/AN6 */
+#define ADC_CH_NTC          21    /* NTC: RC5/AN21 */
+#define ADC_CH_VREF         31    /* 内部1.2V参考电压(用于计算VDD) */
 
 /*========================================================================
   GPIO引脚宏定义
@@ -150,7 +183,6 @@
 #define PIN_LED_IO1         RC5     /* LED电源控制1(与NTC分时复用RC5) */
 #define PIN_LED_IO2         RC4     /* LED电源控制2 */
 #define PIN_EN              RB6     /* 主电源使能(Q3 4435) */
-#define PIN_VCC_SW          RC0     /* 电源切换控制 */
 
 /* B1-B12 独立MOSFET栅极控制引脚
    AO3401 P沟道MOSFET: Gate=Low(0)时导通充电, Gate=High(1)时关闭
@@ -222,17 +254,6 @@ typedef struct {
 	unsigned char activatePulseCnt; /* 激活脉冲计数 */
 } BatterySlot_t;
 
-/* 槽位引脚配置表结构体
-   用于分时复用: 同一引脚在ADC测量时设为模拟输入,
-   在MOSFET控制时设为数字输出 */
-typedef struct {
-	volatile unsigned char *tris_reg;  /* TRIS寄存器地址 */
-	volatile unsigned char *port_reg;  /* PORT寄存器地址 */
-	unsigned char pin_mask;            /* 引脚位掩码 */
-	volatile unsigned char *ansel_reg; /* ANSEL寄存器地址 */
-	unsigned char ansel_mask;          /* 模拟选择位掩码 */
-} SlotPinConfig_t;
-
 /*========================================================================
   全局变量声明(extern)
   定义分散在各模块.c文件中, 避免单Bank内存不足
@@ -260,21 +281,23 @@ extern unsigned char g_scanPhase;           /* 当前扫描阶段(0/1/2) */
 extern unsigned int  g_powerOnTimer;        /* 上电自检计时器 */
 extern unsigned char g_powerOnPhase;        /* 上电自检阶段(0/1/2) */
 
+/* PWM/CC-CV 控制变量 */
+extern volatile unsigned char g_pwmDuty;       /* 当前PWM占空比(0~PWM_MAX) */
+extern volatile unsigned char g_pwmCounter;    /* PWM计数器(ISR中递增, 0~31循环) */
+extern signed int g_cvIntegral;                /* CV PI积分累加器 */
+
 /* UART通信变量 */
 extern unsigned char RxTable[10];           /* 接收缓冲区 */
 extern bit RXOK_f;                          /* 接收完成标志 */
 
 /* 只读配置表(存放于ROM) */
-extern const unsigned char s_adcChannels[BATTERY_SLOTS];   /* 12槽ADC通道映射表 */
-extern const SlotPinConfig_t s_slotPins[BATTERY_SLOTS];    /* 12槽引脚配置表 */
+extern const unsigned char s_adcChannels[BATTERY_SLOTS];   /* 12槽BxAD ADC通道映射表 */
 
 /*========================================================================
   函数声明
 ========================================================================*/
 /* 系统初始化与引脚控制 */
 void System_Init(void);                     /* 系统初始化(时钟/IO/ADC/UART/Timer) */
-void SlotPin_ToAnalog(unsigned char idx);   /* 槽位引脚切换为模拟输入(ADC测量) */
-void SlotPin_ToDigital(unsigned char idx);  /* 槽位引脚切换为数字输出(MOSFET控制) */
 
 /* ADC驱动 */
 void AD_Init(void);                         /* ADC模块初始化 */
@@ -286,6 +309,7 @@ unsigned char Read_Temperature(void);       /* 读取NTC温度(摄氏度) */
 unsigned char Detect_BatteryType(unsigned int voltage); /* 根据电压判断电池类型 */
 void ChargeProcess_Slot(unsigned char idx); /* 单槽充电状态机处理 */
 void Charging_Control(void);                /* 12路充电使能控制(含温度保护) */
+void CCCV_Control(void);                    /* CC-CV恒流恒压PWM占空比调节 */
 
 /* LED控制 */
 void Update_LED_Slot(unsigned char idx);    /* 根据槽位状态更新LED显示 */
