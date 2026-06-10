@@ -14,12 +14,15 @@
 volatile unsigned int power_ad;          /* 电源电压(mV), 每1s更新一次 */
 
 /* 系统计时变量 */
-unsigned int  g_timerTick = 0;           /* Timer0中断计数器(250us/tick), 4000tick=1秒 */
-unsigned int  g_systemTick = 0;          /* 系统秒计数器(每秒+1) */
+unsigned int  g_timerTick = 0;           /* Timer0中断计数器(125us/tick) */
+unsigned int  g_systemTick = 0;          /* 扫描轮次计数器(每轮+1, 222轮=1秒) */
 unsigned char g_scanIndex = 0;           /* 当前扫描槽位索引(0~11循环) */
 unsigned char g_scanPhase = 0;           /* 当前扫描阶段: 0=ADC采样, 1=充电处理, 2=扫描完成/收尾 */
 unsigned int  g_powerOnTimer = 0;        /* 上电自检计时器 */
 unsigned char g_powerOnPhase = 0;        /* 上电自检阶段: 0=全亮, 1=保持, 2=正常 */
+#if UART_PRINT_EN
+volatile bit   g_printFlag = 0;          /* 打印标志: ISR置1, 主循环清0并调用Print_Status */
+#endif
 
 /* PWM/CC-CV 控制变量 */
 volatile unsigned char g_pwmDuty = 0;       /* 当前PWM占空比(0~PWM_MAX) */
@@ -69,7 +72,7 @@ void System_Init(void)
 
 	/* --- 系统时钟配置: 16MHz内部RC --- */
 	OSCCON = 0x72;          /* 内部16MHz, 软件模式 */
-	OPTION_REG = 0x00;      /* 关闭弱上拉, Timer0预分频=1:2(实际1:1因为TMR0+6) */
+	OPTION_REG = 0x00;      /* PSA=0(Timer0), PS2:PS0=000 → 1:2分频 */
 	asm("clrwdt");
 
 	/* --- PORTA初始化 ---
@@ -113,28 +116,34 @@ void System_Init(void)
 
 	/* --- PORTD初始化 ---
 	   RD0=B12, RD1=B7, RD2=B11, RD3=B8: 输出高(关闭充电)
-	   初始值: 0B00001111 = 全部高电平 */
-	TRISD = 0B00000000;     /* 全部设为输出 */
-	PORTD = 0B00001111;     /* MOSFET全部关闭(高电平) */
+	   RD4=AN26(B10AD), RD5=AN27(B9AD): 模拟输入
+	   RD6=AN28(B7AD),  RD7=AN29(B8AD): 模拟输入
+	   初始值: TRISD=0B11110000(RD4-7输入), PORTD=0B00001111 */
+	TRISD = 0B11110000;     /* RD4-7输入(ADC采样), RD0-3输出 */
+	PORTD = 0B00001111;     /* RD0-3 MOSFET全部关闭(高电平) */
 	WPUD = 0B00000000;      /* 关闭弱上拉 */
 
 	/* --- 配置BxAD模拟输入引脚 ---
 	   ANSEL0: RA4(B6AD), RA5(B5AD), RA6(B12AD), RA7(B11AD)
-	   ANSEL1: RB4(B3AD), RB5(B4AD)
+	   ANSEL1: RB4(B3AD)-UART时关闭, RB5(B4AD)
 	   ANSEL2: RC0(B2AD), RC1(B1AD)
-	   ANSEL3: 全部关闭(未使用) */
+	   ANSEL3: RD4(B10AD), RD5(B9AD), RD6(B7AD), RD7(B8AD) */
 	ANSEL0 = 0xF0;      /* RA4-7: B6AD/B5AD/B12AD/B11AD */
+#if UART_PRINT_EN
+	ANSEL1 = 0x20;      /* RB5: B4AD (RB4=UART RX, 不使能模拟) */
+#else
 	ANSEL1 = 0x30;      /* RB4-5: B3AD/B4AD */
+#endif
 	ANSEL2 = 0x03;      /* RC0-1: B2AD/B1AD */
-	ANSEL3 = 0x00;
+	ANSEL3 = 0xF0;      /* RD4-7: B10AD/B9AD/B7AD/B8AD(AN26-AN29) */
 
 	/* --- 比较器关闭 --- */
 	CC0CON = 0;
 	CC1CON = 0;
 
 	/* --- ADC模块配置 ---
-	   ADCON0=0x41: 通道AN0, ADC使能, 时钟Fosc/8
-	   ADCON1=0: 右对齐, 参考电压=VDD=5V, 时钟Fosc/8 */
+	   ADCON0=0x41: ADCS<1:0>=01→FHSI/32(500kHz), CHS=AN0, ADON=1
+	   ADCON1=0: 右对齐, 参考电压=VDD=5V */
 	ADCON0 = 0X41;
 	ADCON1 = 0;
 
@@ -147,12 +156,14 @@ void System_Init(void)
 	SPBRG1 = 103;           /* 9600bps @ 16MHz */
 
 	/* --- Timer0配置 ---
-	   周期: TMR0从6计数到256溢出 = 250个指令周期
-	   250 * 4/16MHz = 62.5us? 实际: 250/16μs ≈ 250us? 
-	   注: 预分频器1:1, 250个计数周期 = 250*(4/16MHz) = 62.5us
-	   实际需要250us, 所以TMR0预装值 = 256-(250us*4MHz) = 256-1000 = -744
-	   需要重新计算... 实际使用预分频1:2, TMR0=6 */
-	TMR0 = 6;               /* 预装值, 250个计数后溢出 */
+	   OPTION_REG=0x00:
+	     T0CS=0 → 内部指令周期时钟(FCPU), FCPU=FSYS/4(4T模式)
+	     PSA=0 → 预分频分配给Timer0, PS2:PS0=000 → 1:2分频
+	   时钟推导:
+	     FSYS=16MHz, FCPU=FSYS/4=4MHz, 指令周期=0.25us
+	     TMR0时钟=FCPU/2(分频)=2MHz, 每tick=0.5us
+	     TMR0预装6→计数至256溢出=250tick, 中断周期=250×0.5us=125us */
+	TMR0 = 6;               /* 预装值, 250tick后溢出(250×0.5us=125us) */
 	T0IF = 0;               /* 清除Timer0中断标志 */
 	T0IE = 1;               /* 使能Timer0中断 */
 
@@ -219,6 +230,15 @@ void main(void)
 	{
 		asm("clrwdt");       /* 喂狗 */
 
+#if UART_PRINT_EN
+		/* ISR每秒置位, 在主循环中打印(不在ISR中阻塞, 避免WDT复位) */
+		if(g_printFlag)
+		{
+			g_printFlag = 0;
+			Print_Status();
+		}
+#endif
+
 		/* UART接收数据回环测试(调试用) */
 		if(RXOK_f == 1)
 		{
@@ -238,24 +258,28 @@ void main(void)
 /*========================================================================
   函数: Interrupt_Isr (中断服务程序)
   功能: 处理Timer0定时中断和UART接收中断
-  Timer0中断(250us):
+  Timer0中断(125us):
     扫描12个槽位, 每中断处理一个槽位的一个阶段
     三阶段扫描: Phase0=ADC采样 -> Phase1=充电处理+LED -> Phase2=温度/充电控制
-    12槽*3阶段=36次中断*250us=9ms完成一轮完整扫描
+    12槽*3阶段=36次中断*125us=4.5ms完成一轮完整扫描
   UART中断:
     接收10字节数据放入RxTable, 完成后置RXOK_f标志
 ========================================================================*/
 void interrupt Interrupt_Isr(void)
 {
-	/* Timer0中断: 250us周期, 核心扫描驱动 */
+	/* Timer0中断: 125us周期, 核心扫描驱动
+	   注意: ISR耗时可能超过125us周期, 主循环可能被持续抢占,
+	   因此在ISR中也需要喂狗防止WDT复位 */
 	if(T0IF)
 	{
-		TMR0 += 6;                  /* 重装Timer0, 保持250us周期 */
+		TMR0 += 6;                  /* 重装Timer0, 保持125us周期(250tick×0.5us) */
 		T0IF = 0;                   /* 清除中断标志 */
 		g_timerTick++;              /* 中断计数+1 */
+		asm("clrwdt");              /* ISR内喂狗(ADC耗时可能>125us周期) */
 
-		/* === 软件PWM生成(RB7/VT_PWM1, 125Hz, 32级占空比) ===
-		   每Timer0中断递增PWM计数器, 0~31循环
+		/* === 软件PWM生成(RB7/VT_PWM1, 250Hz, 32级占空比) ===
+		   PWM周期=32×125us=4ms, 频率=250Hz
+		   每Timer0中断递增计数器, 0~31循环
 		   计数器 < 占空比 → 输出高(PIN_PWM=1), 否则输出低 */
 		g_pwmCounter++;
 		if(g_pwmCounter >= PWM_RESOLUTION)
@@ -323,9 +347,9 @@ void interrupt Interrupt_Isr(void)
 				}
 				g_scanPhase = 0;            /* 回到Phase 0开始下一槽 */
 
-				/* 每秒任务: 12槽×3阶段=36次中断/g_systemTick, 36×250us=9ms/次
-				   1000ms/9ms≈111次/秒 */
-				if(g_systemTick >= 111)
+				/* 每秒任务: 12槽×3阶段=36次中断/轮, 36×125us=4.5ms/轮
+				   1000ms/4.5ms≈222轮/秒 */
+				if(g_systemTick >= TICK_PER_SEC)
 				{
 					g_systemTick = 0;
 
@@ -340,15 +364,14 @@ void interrupt Interrupt_Isr(void)
 					}
 					else
 					{
-						/* ADC采样失败, 复位ADC模块 */
+						/* ADC参考电压采样失败, 复位ADC(下次启动自动重新初始化) */
 						ADCON0 = 0;
 						ADCON1 = 0;
-						__delay_us(100);
 					}
 
 #if UART_PRINT_EN
-					/* 每秒打印一次系统状态(温度/电压/各槽位状态) */
-					Print_Status();
+					/* 通知主循环打印(不在ISR中调用, 避免UART阻塞导致WDT复位) */
+					g_printFlag = 1;
 #endif
 				}
 				break;

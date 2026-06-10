@@ -115,9 +115,9 @@
 /*========================================================================
   充电时间阈值
   说明: chargeTimer在ChargeProcess_Slot中每次+1, 每轮扫描(12槽×3阶段=36次Timer0)调用一次
-  Timer0周期250us, 每轮扫描=36×250us=9ms, 1秒≈1000/9≈111个tick
+  Timer0周期125us, 每轮扫描=36×125us=4.5ms, 1秒≈1000/4.5≈222个tick
 ========================================================================*/
-#define TICK_PER_SEC        111                           /* 1秒对应的扫描tick数 */
+#define TICK_PER_SEC        222                           /* 1秒对应的扫描tick数 */
 #define TIME_ACTIVATE_MAX   (60 * TICK_PER_SEC)            /* 激活超时: 60秒 */
 #define TIME_PRECHARGE_MAX  (300 * TICK_PER_SEC)           /* 预充超时: 300秒(5分钟) */
 #define TIME_CHARGE_MAX     (10800 * TICK_PER_SEC)         /* 充电超时: 10800秒(3小时) */
@@ -128,7 +128,7 @@
   CC-CV 充电控制参数
 ========================================================================*/
 /* 软件PWM参数 (RB7/VT_PWM1, 基于Timer0 ISR生成)
-   PWM频率 = 1/(32 × 250us) = 125Hz, 占空比分辨率: 3.125%/step */
+   PWM周期 = 32 × 125us = 4ms, 频率 = 250Hz, 占空比分辨率: 3.125%/step */
 #define PWM_RESOLUTION      32     /* PWM分辨率(32级) */
 #define PWM_MAX             32     /* 100%占空比 */
 
@@ -289,6 +289,7 @@ extern signed int g_cvIntegral;                /* CV PI积分累加器 */
 /* UART通信变量 */
 extern unsigned char RxTable[10];           /* 接收缓冲区 */
 extern bit RXOK_f;                          /* 接收完成标志 */
+extern volatile bit g_printFlag;            /* 打印标志: ISR置1, 主循环检查 */
 
 /* 只读配置表(存放于ROM) */
 extern const unsigned char s_adcChannels[BATTERY_SLOTS];   /* 12槽BxAD ADC通道映射表 */

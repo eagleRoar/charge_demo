@@ -142,6 +142,16 @@ BatterySlot_t g_slot1[6];       /* B7-B12 槽位数据 */
 void ChargeProcess_Slot(unsigned char idx)
 {
 	BatterySlot_t *p = GSLOT(idx);
+
+#if UART_PRINT_EN
+	/* B3(RB3=UART TX, RB4=UART RX)与UART共用引脚, 调试期间不处理B3状态机 */
+	if(idx == 2)
+	{
+		p->state = CHG_IDLE;
+		return;
+	}
+#endif
+
 	unsigned int v = p->voltage;        /* 当前ADC电压值 */
 	unsigned int tick = 1;              /* 每次调用算1个tick(9ms/次, 约111tick/秒) */
 
@@ -340,6 +350,15 @@ void Charging_Control(void)
 	{
 		unsigned char s = GSLOT(i)->state;
 
+#if UART_PRINT_EN
+		/* B3(RB3)与UART TX共用, 调试期间禁止B3充电 */
+		if(i == 2)  /* B3 = index 2 */
+		{
+			SLOT_CHARGE_OFF(i);
+			continue;
+		}
+#endif
+
 		/* 充电状态: 激活/预充/恒流/恒压 -> 打开MOSFET充电 */
 		if(s == CHG_ACTIVATE || s == CHG_PRECHARGE ||
 		   s == CHG_CC_CHARGE || s == CHG_CV_CHARGE)
@@ -392,6 +411,12 @@ void CCCV_Control(void)
 	for(i = 0; i < BATTERY_SLOTS; i++)
 	{
 		unsigned char s = GSLOT(i)->state;
+
+#if UART_PRINT_EN
+		/* B3(B3AD/RB4)与UART RX共用, 调试期间电压采样无效, 跳过 */
+		if(i == 2) continue;
+#endif
+
 		if(s == CHG_ACTIVATE || s == CHG_PRECHARGE ||
 		   s == CHG_CC_CHARGE || s == CHG_CV_CHARGE)
 		{
