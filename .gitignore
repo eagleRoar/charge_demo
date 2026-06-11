@@ -1,0 +1,26 @@
+# SC8F096 编译输出
+output/
+*.lst
+*.map
+*.obj
+*.sym
+*.bin
+*.hex
+*.hxl
+*.cmf
+*.rlf
+*.sdb
+*.as
+*.d
+*.p1
+*.pre
+*.ram
+*.scw
+*.scx
+*.err
+
+# IDE/编辑器
+.vscode/
+*.swp
+*.swo
+*~
