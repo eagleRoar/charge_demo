@@ -59,12 +59,18 @@ const unsigned char s_adcChannels[BATTERY_SLOTS] = {
     4. 配置ADC模块(参考电压/时钟)
     5. 配置UART(9600bps, 8N1)
     6. 配置Timer0(250us周期, 16MHz/4/250=16, 256-16=240→预装TMR0=6)
-    7. 使能中断(GIE/PEIE/T0IE/RC1IE)
+    7. 使能中断(GIE/PEIE/T0IE)
     8. 初始化控制引脚和槽位数据
 ========================================================================*/
 void System_Init(void)
 {
 	unsigned char i;
+
+	/* --- ICSP烧录保护延时 ---
+	   RC4/RC5复用为ICSP DAT/CLK和LED IO2/IO1, 上电时若MCU抢先初始化GPIO
+	   会驱动RC4/RC5输出低电平, 与烧录器信号冲突导致编程失败
+	   延时100ms确保烧录器有足够时间拉高VPP进入编程模式 */
+	__delay_ms(100);
 
 	/* --- 看门狗复位 --- */
 	asm("nop");
@@ -169,7 +175,7 @@ void System_Init(void)
 
 	/* --- 中断使能 --- */
 	PEIE = 1;               /* 外设中断使能 */
-	RC1IE = 1;              /* UART1接收中断使能 */
+
 	GIE = 1;                /* 全局中断使能 */
 
 	/* --- 控制引脚初始状态 --- */
@@ -203,7 +209,6 @@ void System_Init(void)
 	g_powerOnPhase = 0;     /* 上电阶段: 0=全亮自检 */
 	g_tempProtect = 0;      /* 温度保护关闭 */
 	g_temperature = 25;     /* 默认温度25度 */
-	RXOK_f = 0;             /* UART接收标志清零 */
 }
 
 /*========================================================================
@@ -239,31 +244,16 @@ void main(void)
 		}
 #endif
 
-		/* UART接收数据回环测试(调试用) */
-		if(RXOK_f == 1)
-		{
-#if UART_PRINT_EN
-			unsigned char i;
-			for(i = 0; i < 10; i++)
-			{
-				while(TRMT1 == 0);
-				TXREG1 = RxTable[i];
-			}
-#endif
-			RXOK_f = 0;
-		}
 	}
 }
 
 /*========================================================================
   函数: Interrupt_Isr (中断服务程序)
-  功能: 处理Timer0定时中断和UART接收中断
+  功能: 处理Timer0定时中断
   Timer0中断(125us):
     扫描12个槽位, 每中断处理一个槽位的一个阶段
     三阶段扫描: Phase0=ADC采样 -> Phase1=充电处理+LED -> Phase2=温度/充电控制
     12槽*3阶段=36次中断*125us=4.5ms完成一轮完整扫描
-  UART中断:
-    接收10字节数据放入RxTable, 完成后置RXOK_f标志
 ========================================================================*/
 void interrupt Interrupt_Isr(void)
 {
@@ -383,28 +373,7 @@ void interrupt Interrupt_Isr(void)
 		}
 	}
 
-	/* UART1接收中断 */
-	if(RC1IF == 1)
-	{
-		static unsigned char RxNum = 0, TEMP;
-		RC1IF = 0;
 
-		/* 如果上一条数据还未处理, 则丢弃新数据 */
-		if(RXOK_f == 0)
-		{
-			RxTable[RxNum] = RCREG1;    /* 存入接收缓冲区 */
-			RxNum++;
-			if(RxNum > 9)               /* 收满10字节 */
-			{
-				RxNum = 0;
-				RXOK_f = 1;             /* 通知主循环处理 */
-			}
-		}
-		else
-		{
-			TEMP = RCREG1;              /* 丢弃数据 */
-		}
-	}
 }
 
 /* 包含其他模块文件(编译时合并到同一个翻译单元) */

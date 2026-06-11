@@ -48,17 +48,17 @@
 [v _PowerOnLedSequence PowerOnLedSequence `(v  1 e 1 0 ]
 "65 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c
 [v _System_Init System_Init `(v  1 e 1 0 ]
-"218
+"223
 [v _main main `(v  1 e 1 0 ]
-"268
+"258
 [v _Interrupt_Isr Interrupt_Isr `II(v  1 e 1 0 ]
-"28 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\uart_dbg.c
+"22 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\uart_dbg.c
 [v _uart_send_char uart_send_char `(v  1 e 1 0 ]
-"40
+"34
 [v _uart_send_string uart_send_string `(v  1 e 1 0 ]
-"53
+"47
 [v _uart_send_number uart_send_number `(v  1 e 1 0 ]
-"92
+"86
 [v _Print_Status Print_Status `(v  1 e 1 0 ]
 "18 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h
 [v _OPTION_REG OPTION_REG `VEuc  1 e 1 @1 ]
@@ -120,8 +120,6 @@
 [v _RCSTA1 RCSTA1 `VEuc  1 e 1 @390 ]
 "606
 [v _TXREG1 TXREG1 `VEuc  1 e 1 @391 ]
-"613
-[v _RCREG1 RCREG1 `VEuc  1 e 1 @392 ]
 "620
 [v _SPBRG1 SPBRG1 `VEuc  1 e 1 @393 ]
 "690
@@ -178,10 +176,6 @@
 [v _RD1 RD1 `VEb  1 e 0 @2105 ]
 "1155
 [v _RD0 RD0 `VEb  1 e 0 @2104 ]
-"1191
-[v _RC1IF RC1IF `VEb  1 e 0 @2168 ]
-"1201
-[v _RC1IE RC1IE `VEb  1 e 0 @2176 ]
 "1310
 [v _TRMT1 TRMT1 `VEb  1 e 0 @3113 ]
 "13 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\adc_drv.c
@@ -192,11 +186,11 @@
 [v _g_temperature g_temperature `uc  1 e 1 0 ]
 "16
 [v _g_tempProtect g_tempProtect `uc  1 e 1 0 ]
-[s S30 . 12 `uc 1 type 1 0 `uc 1 state 1 1 `uc 1 ledState 1 2 `ui 1 voltage 2 3 `ui 1 chargeTimer 2 5 `ui 1 blinkTimer 2 7 `uc 1 blinkPhase 1 9 `uc 1 stableCnt 1 10 `uc 1 activatePulseCnt 1 11 ]
+[s S35 . 12 `uc 1 type 1 0 `uc 1 state 1 1 `uc 1 ledState 1 2 `ui 1 voltage 2 3 `ui 1 chargeTimer 2 5 `ui 1 blinkTimer 2 7 `uc 1 blinkPhase 1 9 `uc 1 stableCnt 1 10 `uc 1 activatePulseCnt 1 11 ]
 "117
-[v _g_slot0 g_slot0 `[6]S30  1 e 72 0 ]
+[v _g_slot0 g_slot0 `[6]S35  1 e 72 0 ]
 "118
-[v _g_slot1 g_slot1 `[6]S30  1 e 72 0 ]
+[v _g_slot1 g_slot1 `[6]S35  1 e 72 0 ]
 "14 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c
 [v _power_ad power_ad `VEui  1 e 2 0 ]
 "18
@@ -219,59 +213,53 @@
 [v _g_cvIntegral g_cvIntegral `i  1 e 2 0 ]
 "37
 [v _s_adcChannels s_adcChannels `DC[12]uc  1 e 12 0 ]
-"17 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\uart_dbg.c
-[v _RxTable RxTable `[10]uc  1 e 10 0 ]
-"18
-[v _RXOK_f RXOK_f `b  1 e 0 0 ]
-"218 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c
+"223
 [v _main main `(v  1 e 1 0 ]
 {
-"246
-[v main@i i `uc  1 a 1 25 ]
-"256
+"248
 } 0
 "65
 [v _System_Init System_Init `(v  1 e 1 0 ]
 {
 "67
-[v System_Init@i i `uc  1 a 1 12 ]
-"207
+[v System_Init@i i `uc  1 a 1 15 ]
+"212
 } 0
-"92 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\uart_dbg.c
+"86 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\uart_dbg.c
 [v _Print_Status Print_Status `(v  1 e 1 0 ]
 {
-"94
+"88
 [v Print_Status@i i `uc  1 a 1 24 ]
-"126
+"120
 } 0
-"40
+"34
 [v _uart_send_string uart_send_string `(v  1 e 1 0 ]
 {
 [v uart_send_string@str str `*.24DCuc  1 a 1 wreg ]
 [v uart_send_string@str str `*.24DCuc  1 a 1 wreg ]
 [v uart_send_string@str str `*.24DCuc  1 a 1 1 ]
-"44
+"38
 } 0
-"53
+"47
 [v _uart_send_number uart_send_number `(v  1 e 1 0 ]
 {
-"55
+"49
 [v uart_send_number@buf buf `[6]uc  1 a 6 9 ]
-"57
+"51
 [v uart_send_number@j j `uc  1 a 1 16 ]
-"56
+"50
 [v uart_send_number@i i `uc  1 a 1 15 ]
-"53
+"47
 [v uart_send_number@num num `ui  1 p 2 7 ]
-"76
+"70
 } 0
-"28
+"22
 [v _uart_send_char uart_send_char `(v  1 e 1 0 ]
 {
 [v uart_send_char@c c `uc  1 a 1 wreg ]
 [v uart_send_char@c c `uc  1 a 1 wreg ]
 [v uart_send_char@c c `uc  1 a 1 0 ]
-"32
+"26
 } 0
 "6 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwmod.c
 [v ___lwmod __lwmod `(ui  1 e 2 0 ]
@@ -308,14 +296,12 @@
 [v ___bmul@multiplier multiplier `uc  1 a 1 2 ]
 "51
 } 0
-"268 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c
+"258 E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\main.c
 [v _Interrupt_Isr Interrupt_Isr `II(v  1 e 1 0 ]
 {
-"360
+"350
 [v Interrupt_Isr@power_temp power_temp `VEul  1 a 4 30 ]
-"389
-[v Interrupt_Isr@RxNum RxNum `uc  1 s 1 RxNum ]
-"408
+"377
 } 0
 "28 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwtoft.c
 [v ___lwtoft __lwtoft `(f  1 e 3 0 ]
@@ -361,9 +347,9 @@
 [v _Update_LED_Slot Update_LED_Slot `(v  1 e 1 0 ]
 {
 [v Update_LED_Slot@idx idx `uc  1 a 1 wreg ]
-[s S30 . 12 `uc 1 type 1 0 `uc 1 state 1 1 `uc 1 ledState 1 2 `ui 1 voltage 2 3 `ui 1 chargeTimer 2 5 `ui 1 blinkTimer 2 7 `uc 1 blinkPhase 1 9 `uc 1 stableCnt 1 10 `uc 1 activatePulseCnt 1 11 ]
+[s S35 . 12 `uc 1 type 1 0 `uc 1 state 1 1 `uc 1 ledState 1 2 `ui 1 voltage 2 3 `ui 1 chargeTimer 2 5 `ui 1 blinkTimer 2 7 `uc 1 blinkPhase 1 9 `uc 1 stableCnt 1 10 `uc 1 activatePulseCnt 1 11 ]
 "32
-[v Update_LED_Slot@p p `*.5S30  1 a 1 4 ]
+[v Update_LED_Slot@p p `*.5S35  1 a 1 4 ]
 "30
 [v Update_LED_Slot@idx idx `uc  1 a 1 wreg ]
 "32
@@ -466,9 +452,9 @@
 [v ChargeProcess_Slot@idx idx `uc  1 a 1 wreg ]
 "155
 [v ChargeProcess_Slot@v v `ui  1 a 2 8 ]
-[s S30 . 12 `uc 1 type 1 0 `uc 1 state 1 1 `uc 1 ledState 1 2 `ui 1 voltage 2 3 `ui 1 chargeTimer 2 5 `ui 1 blinkTimer 2 7 `uc 1 blinkPhase 1 9 `uc 1 stableCnt 1 10 `uc 1 activatePulseCnt 1 11 ]
+[s S35 . 12 `uc 1 type 1 0 `uc 1 state 1 1 `uc 1 ledState 1 2 `ui 1 voltage 2 3 `ui 1 chargeTimer 2 5 `ui 1 blinkTimer 2 7 `uc 1 blinkPhase 1 9 `uc 1 stableCnt 1 10 `uc 1 activatePulseCnt 1 11 ]
 "144
-[v ChargeProcess_Slot@p p `*.5S30  1 a 1 10 ]
+[v ChargeProcess_Slot@p p `*.5S35  1 a 1 10 ]
 "142
 [v ChargeProcess_Slot@idx idx `uc  1 a 1 wreg ]
 "144

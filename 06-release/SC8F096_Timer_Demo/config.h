@@ -287,8 +287,6 @@ extern volatile unsigned char g_pwmCounter;    /* PWM计数器(ISR中递增, 0~3
 extern signed int g_cvIntegral;                /* CV PI积分累加器 */
 
 /* UART通信变量 */
-extern unsigned char RxTable[10];           /* 接收缓冲区 */
-extern bit RXOK_f;                          /* 接收完成标志 */
 extern volatile bit g_printFlag;            /* 打印标志: ISR置1, 主循环检查 */
 
 /* 只读配置表(存放于ROM) */

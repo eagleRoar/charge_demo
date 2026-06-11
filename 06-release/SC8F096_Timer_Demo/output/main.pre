@@ -1564,14 +1564,12 @@ extern volatile unsigned char g_pwmCounter;
 extern signed int g_cvIntegral;
 
 
-extern unsigned char RxTable[10];
-extern bit RXOK_f;
 extern volatile bit g_printFlag;
 
 
 extern const unsigned char s_adcChannels[12];
 
-# 301
+# 299
 void System_Init(void);
 
 
@@ -1643,6 +1641,9 @@ void System_Init(void)
 {
 unsigned char i;
 
+# 73
+_delay((unsigned long)((100)*(16000000/4000.0)));
+
 
 asm("nop");
 asm("clrwdt");
@@ -1652,36 +1653,36 @@ OSCCON = 0x72;
 OPTION_REG = 0x00;
 asm("clrwdt");
 
-# 85
+# 91
 TRISA = 0B11110000;
 PORTA = 0B00001111;
 WPUA = 0B00000000;
 WPDA = 0B00000000;
 IOCA = 0B00000000;
 
-# 98
+# 104
 TRISB = 0B00110000;
 PORTB = 0B01001111;
 WPUB = 0B00000000;
 WPDB = 0B00000000;
 IOCB = 0B00000000;
 
-# 112
+# 118
 TRISC = 0B00000011;
 PORTC = 0B00000000;
 WPUC = 0B00000000;
 
-# 122
+# 128
 TRISD = 0B11110000;
 PORTD = 0B00001111;
 WPUD = 0B00000000;
 
-# 131
+# 137
 ANSEL0 = 0xF0;
 
 ANSEL1 = 0x20;
 
-# 137
+# 143
 ANSEL2 = 0x03;
 ANSEL3 = 0xF0;
 
@@ -1689,23 +1690,23 @@ ANSEL3 = 0xF0;
 CC0CON = 0;
 CC1CON = 0;
 
-# 147
+# 153
 ADCON0 = 0X41;
 ADCON1 = 0;
 
-# 154
+# 160
 TXSTA1 = 0B10100000;
 RCSTA1 = 0B10010000;
 SPBRG1 = 103;
 
-# 166
+# 172
 TMR0 = 6;
 T0IF = 0;
 T0IE = 1;
 
 
 PEIE = 1;
-RC1IE = 1;
+
 GIE = 1;
 
 
@@ -1739,15 +1740,14 @@ g_powerOnTimer = 0;
 g_powerOnPhase = 0;
 g_tempProtect = 0;
 g_temperature = 25;
-RXOK_f = 0;
 }
 
-# 218
+# 223
 void main(void)
 {
 System_Init();
 
-# 227
+# 232
 uart_send_string("start...\r\n");
 
 while(1)
@@ -1763,27 +1763,14 @@ Print_Status();
 }
 
 
-
-if(RXOK_f == 1)
-{
-
-unsigned char i;
-for(i = 0; i < 10; i++)
-{
-while(TRMT1 == 0);
-TXREG1 = RxTable[i];
-}
-
-RXOK_f = 0;
-}
 }
 }
 
-# 268
+# 258
 void interrupt Interrupt_Isr(void)
 {
 
-# 273
+# 263
 if(T0IF)
 {
 TMR0 += 6;
@@ -1791,7 +1778,7 @@ T0IF = 0;
 g_timerTick++;
 asm("clrwdt");
 
-# 284
+# 274
 g_pwmCounter++;
 if(g_pwmCounter >= 32)
 g_pwmCounter = 0;
@@ -1814,14 +1801,14 @@ ADC_ReadChannel(s_adcChannels[g_scanIndex]);
 g_scanPhase = 1;
 break;
 
-# 309
+# 299
 case 1:
 ChargeProcess_Slot(g_scanIndex);
 Update_LED_Slot(g_scanIndex);
 g_scanPhase = 2;
 break;
 
-# 321
+# 311
 case 2:
 
 if(g_scanIndex == 0)
@@ -1851,7 +1838,7 @@ g_systemTick++;
 }
 g_scanPhase = 0;
 
-# 352
+# 342
 if(g_systemTick >= 222)
 {
 g_systemTick = 0;
@@ -1887,27 +1874,6 @@ break;
 }
 
 
-if(RC1IF == 1)
-{
-static unsigned char RxNum = 0, TEMP;
-RC1IF = 0;
-
-
-if(RXOK_f == 0)
-{
-RxTable[RxNum] = RCREG1;
-RxNum++;
-if(RxNum > 9)
-{
-RxNum = 0;
-RXOK_f = 1;
-}
-}
-else
-{
-TEMP = RCREG1;
-}
-}
 }
 
 # 13 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\adc_drv.c"
@@ -2494,25 +2460,21 @@ RC4 = 0;
 
 }
 
-# 17 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\uart_dbg.c"
-unsigned char RxTable[10];
-bit RXOK_f;
-
-# 28
+# 22 "E:\1.workspace\7.other\17.charge_demo\charge_demo\06-release\SC8F096_Timer_Demo\uart_dbg.c"
 void uart_send_char(unsigned char c)
 {
 while(TRMT1 == 0);
 TXREG1 = c;
 }
 
-# 40
+# 34
 void uart_send_string(const unsigned char *str)
 {
 while(*str != '\0')
 uart_send_char(*str++);
 }
 
-# 53
+# 47
 void uart_send_number(unsigned int num)
 {
 unsigned char buf[6];
@@ -2538,7 +2500,7 @@ for(j = i; j > 0; j--)
 uart_send_char(buf[j-1]);
 }
 
-# 92
+# 86
 void Print_Status(void)
 {
 unsigned char i;

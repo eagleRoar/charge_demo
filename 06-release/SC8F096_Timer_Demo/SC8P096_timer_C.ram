@@ -29,32 +29,28 @@ WPUD=07,0115,01,00
 TXSTA1=07,0185,01,00
 RCSTA1=07,0186,01,00
 TXREG1=07,0187,01,00
-RCREG1=07,0188,01,00
 SPBRG1=07,0189,01,00
 CC0CON=07,0195,01,00
 CC1CON=07,0196,01,00
-adresult=09,0058,02,00
-test_adc=07,0056,01,00
-g_temperature=07,005B,01,00
-g_tempProtect=07,0057,01,00
+adresult=09,004D,02,00
+test_adc=07,004B,01,00
+g_temperature=07,0050,01,00
+g_tempProtect=07,004C,01,00
 g_slot0=14,01A0,48,00
 g_slot1=14,0120,48,01
-power_ad=09,00BC,02,00
-g_systemTick=09,004E,02,00
-g_scanIndex=07,0055,01,00
-g_scanPhase=07,0054,01,00
-g_powerOnTimer=09,00BA,02,00
-g_powerOnPhase=07,0053,01,00
-g_printFlag=0E,02D0,00,00
-g_pwmDuty=07,0052,01,00
-g_pwmCounter=07,0051,01,00
-g_cvIntegral=03,004C,02,00
-RxTable=14,0042,0A,02
-RXOK_f=0E,02D1,00,00
-main@i=07,00B9,01,00
-System_Init@i=07,00AC,01,00
+power_ad=09,00BB,02,00
+g_systemTick=09,0044,02,00
+g_scanIndex=07,004A,01,00
+g_scanPhase=07,0049,01,00
+g_powerOnTimer=09,00B9,02,00
+g_powerOnPhase=07,0048,01,00
+g_printFlag=0E,0278,00,00
+g_pwmDuty=07,0047,01,00
+g_pwmCounter=07,0046,01,00
+g_cvIntegral=03,0042,02,00
+System_Init@i=07,00AF,01,00
 Print_Status@i=07,00B8,01,00
-uart_send_number@buf=14,00A9,06,03
+uart_send_number@buf=14,00A9,06,02
 uart_send_number@j=07,00B0,01,00
 uart_send_number@i=07,00AF,01,00
 uart_send_number@num=09,00A7,02,00
@@ -70,7 +66,6 @@ __bmul@multiplier=07,00A2,01,00
 __bmul@product=07,00A1,01,00
 __bmul@multiplicand=07,00A0,01,00
 Interrupt_Isr@power_temp=0A,003E,04,00
-Interrupt_Isr@RxNum=07,0050,01,00
 __lwtoft@c=09,0078,02,00
 __fttol@lval=0A,0034,04,00
 __fttol@exp1=07,0038,01,00
@@ -131,8 +126,7 @@ __awdiv@divisor=03,0070,02,00
 __awdiv@dividend=03,0072,02,00
 [A 00,0C,01,06,00,
 [A 00,0C,01,06,00,
-[A 07,01,01,0A
 [A 07,01,01,06
-[S S30|type:07,01,00|state:07,01,01|ledState:07,01,02|voltage:09,02,03|chargeTimer:09,02,05|blinkTimer:09,02,07|blinkPhase:07,01,09|stableCnt:07,01,0A|activatePulseCnt:07,01,0B|
-[S S30|type:07,01,00|state:07,01,01|ledState:07,01,02|voltage:09,02,03|chargeTimer:09,02,05|blinkTimer:09,02,07|blinkPhase:07,01,09|stableCnt:07,01,0A|activatePulseCnt:07,01,0B|
-[S S30|type:07,01,00|state:07,01,01|ledState:07,01,02|voltage:09,02,03|chargeTimer:09,02,05|blinkTimer:09,02,07|blinkPhase:07,01,09|stableCnt:07,01,0A|activatePulseCnt:07,01,0B|
+[S S35|type:07,01,00|state:07,01,01|ledState:07,01,02|voltage:09,02,03|chargeTimer:09,02,05|blinkTimer:09,02,07|blinkPhase:07,01,09|stableCnt:07,01,0A|activatePulseCnt:07,01,0B|
+[S S35|type:07,01,00|state:07,01,01|ledState:07,01,02|voltage:09,02,03|chargeTimer:09,02,05|blinkTimer:09,02,07|blinkPhase:07,01,09|stableCnt:07,01,0A|activatePulseCnt:07,01,0B|
+[S S35|type:07,01,00|state:07,01,01|ledState:07,01,02|voltage:09,02,03|chargeTimer:09,02,05|blinkTimer:09,02,07|blinkPhase:07,01,09|stableCnt:07,01,0A|activatePulseCnt:07,01,0B|
