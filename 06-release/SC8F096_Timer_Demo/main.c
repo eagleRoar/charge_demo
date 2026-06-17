@@ -70,7 +70,7 @@ void System_Init(void)
 	   RC4/RC5复用为ICSP DAT/CLK和LED IO2/IO1, 上电时若MCU抢先初始化GPIO
 	   会驱动RC4/RC5输出低电平, 与烧录器信号冲突导致编程失败
 	   延时100ms确保烧录器有足够时间拉高VPP进入编程模式 */
-	__delay_ms(100);
+	//__delay_ms(100);
 
 	/* --- 看门狗复位 --- */
 	asm("nop");
