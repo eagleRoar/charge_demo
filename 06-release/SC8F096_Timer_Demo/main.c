@@ -29,6 +29,19 @@ volatile unsigned char g_pwmDuty = 0;       /* 当前PWM占空比(0~PWM_MAX) */
 volatile unsigned char g_pwmCounter = 0;    /* PWM计数器, ISR中0~31循环 */
 signed int g_cvIntegral = 0;                /* CV PI积分累加器 */
 
+/* NTC读温状态机变量 (解决C12=22uF导致RC5建立时间过长的问题) */
+unsigned char g_tempPhase = 0;              /* NTC读温状态: 0=等待间隔, 1=RC5建立中 */
+unsigned int  g_tempSettleCnt = 0;          /* NTC建立等待计数器(扫描轮数) */
+unsigned int  g_tempReadRoundCnt = 0;       /* 温度读取间隔计数器(扫描轮数) */
+
+/* NTC 调试变量 */
+unsigned int  g_ntcDebugAdc = 0;            /* ISR状态机NTC读取快照 */
+unsigned char g_ntcDebugPhase = 0;          /* NTC调试阶段快照 */
+unsigned int  g_ntcDebugSettleCnt = 0;      /* NTC建立计数器快照 */
+unsigned int  g_ntcDiagAdc = 0;             /* 阻塞式NTC读(LDO参考,600ms延时) */
+unsigned int  g_ntcDiagVdd = 0;             /* 阻塞式NTC读(VDD参考,对比LDO) */
+unsigned int  g_ntcDiagChk = 0;             /* 阻塞式高通道AN28读(验证CHS4) */
+
 /*========================================================================
   ROM只读配置表
 ========================================================================*/
@@ -66,20 +79,22 @@ void System_Init(void)
 {
 	unsigned char i;
 
-	/* --- ICSP烧录保护延时 ---
-	   RC4/RC5复用为ICSP DAT/CLK和LED IO2/IO1, 上电时若MCU抢先初始化GPIO
-	   会驱动RC4/RC5输出低电平, 与烧录器信号冲突导致编程失败
-	   延时100ms确保烧录器有足够时间拉高VPP进入编程模式 */
-	//__delay_ms(100);
-
-	/* --- 看门狗复位 --- */
+	/* --- 看门狗复位 ---
+	   WDT默认使能(配置字设定), 需第一时间喂狗防止后续延时导致复位 */
 	asm("nop");
 	asm("clrwdt");
 
-	/* --- 系统时钟配置: 16MHz内部RC --- */
+	/* --- 系统时钟配置: 16MHz内部RC ---
+	   延时依赖准确的系统时钟, 必须先配置OSCCON */
 	OSCCON = 0x72;          /* 内部16MHz, 软件模式 */
 	OPTION_REG = 0x00;      /* PSA=0(Timer0), PS2:PS0=000 → 1:2分频 */
 	asm("clrwdt");
+
+	/* --- ICSP烧录保护延时 ---
+	   RC4/RC5复用为ICSP DAT/CLK和LED IO2/IO1, 上电时若MCU抢先初始化GPIO
+	   会驱动RC4/RC5输出低电平, 与烧录器信号冲突导致编程失败
+	   延时10ms确保烧录器有足够时间拉高VPP(WDT超时短, 100ms会触发复位) */
+	__delay_ms(10);
 
 	/* --- PORTA初始化 ---
 	   RA0=B1, RA1=B2, RA2=B6, RA3=B5: 输出高(关闭充电)
@@ -209,6 +224,9 @@ void System_Init(void)
 	g_powerOnPhase = 0;     /* 上电阶段: 0=全亮自检 */
 	g_tempProtect = 0;      /* 温度保护关闭 */
 	g_temperature = 25;     /* 默认温度25度 */
+	g_tempPhase = 0;        /* NTC读温状态机: 空闲 */
+	g_tempSettleCnt = 0;    /* 建立计数器清零 */
+	g_tempReadRoundCnt = 0; /* 读取间隔计数器清零 */
 }
 
 /*========================================================================
@@ -230,6 +248,67 @@ void main(void)
 	//TXREG1 = 0xAA;
 	//while(TRMT1 == 0);
 	uart_send_string("start...\r\n");
+
+	/* --- NTC 阻塞式诊断读取 (仅执行一次) ---
+	   等待上电LED自检完成后, 用长延时(600ms)直接读NTC
+	   与ISR状态机读取结果对比, 判断是建立时间不足还是其他问题
+	   关中断避免ISR同时操作RC5造成冲突
+	   注意: WDT超时很短, 必须每 ~5ms 喂一次狗, 禁用 __delay_ms(100) */
+	{
+		unsigned char ntcDiagDone = 0;
+		while(!ntcDiagDone)
+		{
+			asm("clrwdt");
+#if UART_PRINT_EN
+			if(g_printFlag)
+			{
+				g_printFlag = 0;
+				Print_Status();
+			}
+#endif
+			/* 等待上电自检完成后再做诊断 */
+			if(g_powerOnPhase >= 2)
+			{
+				unsigned char k;
+				ntcDiagDone = 1;
+				GIE = 0;            /* 关中断, 避免ISR冲突 */
+				/* 切换 RC5 为模拟输入 */
+				ANSEL2 |= 0x20;     /* RC5/AN21 使能模拟 */
+				TRISC |= 0x20;      /* RC5 设为输入(高阻) */
+				/* 阻塞等待 C12 充电: 120次×5ms=600ms, 每5ms喂狗 */
+				for(k = 0; k < 120; k++)
+				{
+					__delay_ms(5);
+					asm("clrwdt");
+				}
+				/* 测试1: 读NTC(LDO=3V参考) */
+				test_adc = ADC_Sample(ADC_CH_NTC, 7);
+				if(0xA5 == test_adc)
+					g_ntcDiagAdc = adresult;
+				else
+					g_ntcDiagAdc = 0xFFFF;
+				/* 测试2: 读NTC(VDD参考, 无LDO) */
+				test_adc = ADC_Sample(ADC_CH_NTC, 0);
+				if(0xA5 == test_adc)
+					g_ntcDiagVdd = adresult;
+				else
+					g_ntcDiagVdd = 0xFFFF;
+				/* 测试3: 读AN28(B7AD高通道, 验证CHS4) */
+				test_adc = ADC_Sample(ADC_CH_B7AD, 7);
+				if(0xA5 == test_adc)
+					g_ntcDiagChk = adresult;
+				else
+					g_ntcDiagChk = 0xFFFF;
+				/* 恢复 RC5 为数字输出 */
+				ANSEL2 &= ~0x20;
+				TRISC &= ~0x20;
+				PIN_LED_IO1 = 0;
+				GIE = 1;            /* 重开中断 */
+				uart_send_string("NTC diag done\r\n");
+			}
+		}
+	}
+
 	/* 主循环: 持续运行, 实际逻辑在中断中执行 */
 	while(1)
 	{
@@ -303,22 +382,54 @@ void interrupt Interrupt_Isr(void)
 				break;
 
 			/* --- Phase 2: 扫描收尾(仅在槽位0时执行) ---
-			   1. 读取NTC温度(与LED IO1共用RC5, 分时复用)
+			   1. 读取NTC温度(与LED IO1共用RC5, 分时复用, 状态机控制)
 			   2. LED闪烁处理
 			   3. 充电组控制输出(Charging_Control + CCCV_Control)
 			   4. 槽位索引+1, 循环到下一个槽位
 			   5. 每1秒: 读取电源电压 + 打印状态 */
 			case 2:
-				/* 在槽位0扫描完成后读取温度(每轮一次, 避免频繁切换RC5) */
+				/* 在槽位0扫描完成后处理温度(每轮一次) */
 				if(g_scanIndex == 0)
 				{
-					/* 将RC5切换为模拟输入读NTC */
-					ANSEL2 |= 0x20;     /* RC5/AN21使能模拟 */
-					TRISC |= 0x20;      /* RC5设为输入 */
-					Read_Temperature();
-					/* 恢复RC5为数字输出(LED控制) */
-					ANSEL2 &= ~0x20;
-					TRISC &= ~0x20;
+					/* NTC 读温状态机:
+					   RC5 平时作为数字输出驱低(LED IO1), C12 放电至 ~0V
+					   切换为模拟输入后, C12(22uF) 需通过 R48||R_ntc 充电:
+					   τ=5KΩ×22uF=110ms, 5τ≈550ms → 需要 ~60 轮建立
+					   状态 0: 等待 TEMP_READ_INTERVAL 轮后再启动测温
+					   状态 1: RC5 已切换为模拟, 计数器递增, 满 NTC_SETTLE_ROUNDS 后读温 */
+					switch(g_tempPhase)
+					{
+					case 0:  /* 等待间隔: RC5 正常作为 LED IO1 数字输出 */
+						g_tempReadRoundCnt++;
+						if(g_tempReadRoundCnt >= TEMP_READ_INTERVAL)
+						{
+							g_tempReadRoundCnt = 0;
+							/* 切换 RC5 为模拟输入, 开始建立等待 */
+							ANSEL2 |= 0x20;     /* RC5/AN21 使能模拟 */
+							TRISC |= 0x20;      /* RC5 设为输入(高阻) */
+							g_tempPhase = 1;
+							g_tempSettleCnt = 0;
+						}
+						break;
+
+					case 1:  /* 建立中: 等待 C12 充电到 NTC 分压值 */
+						g_tempSettleCnt++;
+						if(g_tempSettleCnt >= NTC_SETTLE_ROUNDS)
+						{
+							/* 建立完成, 读取温度 */
+							Read_Temperature();
+							/* 保存调试快照 */
+							g_ntcDebugAdc = g_ntcAdc;
+							g_ntcDebugPhase = g_tempPhase;
+							g_ntcDebugSettleCnt = g_tempSettleCnt;
+							/* 恢复 RC5 为数字输出(LED 控制) */
+							ANSEL2 &= ~0x20;
+							TRISC &= ~0x20;
+							PIN_LED_IO1 = 0;    /* 恢复 LED 关闭状态 */
+							g_tempPhase = 0;    /* 回到等待间隔状态 */
+						}
+						break;
+					}
 
 					/* LED闪烁计时处理 */
 					Led_BlinkProcess();

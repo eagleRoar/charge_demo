@@ -155,6 +155,22 @@
 #define TEMP_RESUME         50      /* 恢复充电温度 */
 
 /*========================================================================
+  NTC ADC 建立时间配置 (C12 = 22uF 并接在 RC5 与 GND 之间)
+  RC5 引脚分时复用: LED IO1(数字输出, 平时驱低) / NTC(模拟输入, 测温时切换)
+  拓扑: VDD → R48(10K) → RC5/AN21 → NTC1(CMFA103J3950HANT, 10K@25C) → GND
+                                        └── C12(22uF) → GND
+  当 RC5 从数字输出(驱低)切换到模拟输入(高阻)后, C12 需要通过 R48||R_ntc 充电:
+    - 室温下 R48||R_ntc ≈ 5KΩ,  τ = 5KΩ × 22uF = 110ms
+    - 充电到 96% 需要 ~3.3τ ≈ 360ms
+    - 充电到 99% 需要 ~5τ ≈ 550ms
+  扫描轮周期: 12槽 × 3阶段 × 125us ≈ 4.5ms/轮 → 取整约 9ms/轮(ISR耗时拉长)
+  NTC_SETTLE_ROUNDS = 60 → 60 × 9ms = 540ms > 5τ, 保证 ADC 采样精度
+  TEMP_READ_INTERVAL = 200 → 约 1.8s 读一次温度(温度变化缓慢, 无需高频读取)
+========================================================================*/
+#define NTC_SETTLE_ROUNDS    60      /* NTC建立等待轮数(60轮≈540ms>5τ) */
+#define TEMP_READ_INTERVAL   200     /* 温度读取间隔(200轮≈1.8s) */
+
+/*========================================================================
   ADC通道定义
   B1AD~B12AD: 独立ADC采样引脚(纯模拟输入), 与B1~B12 MOSFET控制引脚分离
   注: B1~B12为纯数字输出，无需分时复用切换模拟/数字模式
@@ -281,6 +297,19 @@ extern unsigned char g_scanIndex;           /* 当前扫描槽位索引(0-11) */
 extern unsigned char g_scanPhase;           /* 当前扫描阶段(0/1/2) */
 extern unsigned int  g_powerOnTimer;        /* 上电自检计时器 */
 extern unsigned char g_powerOnPhase;        /* 上电自检阶段(0/1/2) */
+
+/* NTC读温状态机变量 */
+extern unsigned char g_tempPhase;           /* NTC读温状态: 0=等待间隔, 1=建立中 */
+extern unsigned int  g_tempSettleCnt;       /* NTC建立等待计数器(轮) */
+extern unsigned int  g_tempReadRoundCnt;    /* 温度读取间隔计数器(轮) */
+
+/* NTC调试变量 */
+extern unsigned int  g_ntcDebugAdc;         /* ISR状态机NTC读取快照 */
+extern unsigned char g_ntcDebugPhase;       /* NTC调试阶段快照 */
+extern unsigned int  g_ntcDebugSettleCnt;   /* NTC建立计数器快照 */
+extern unsigned int  g_ntcDiagAdc;          /* 阻塞式NTC读(LDO参考,600ms延时) */
+extern unsigned int  g_ntcDiagVdd;          /* 阻塞式NTC读(VDD参考,对比LDO) */
+extern unsigned int  g_ntcDiagChk;          /* 阻塞式高通道AN28读(验证CHS4) */
 
 /* PWM/CC-CV 控制变量 */
 extern volatile unsigned char g_pwmDuty;       /* 当前PWM占空比(0~PWM_MAX) */

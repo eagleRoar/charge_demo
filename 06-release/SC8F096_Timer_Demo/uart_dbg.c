@@ -90,9 +90,26 @@ void Print_Status(void)
 	/* 打印温度和电源电压 */
 	uart_send_string("T:");
 	uart_send_number(g_temperature);
-	uart_send_string("C VDD:");
+	uart_send_string("C NTC:");
+	uart_send_number(g_ntcAdc);
+	uart_send_string(" VDD:");
 	uart_send_number(power_ad);
 	uart_send_string("mV\r\n");
+
+	/* 打印 NTC 调试信息 */
+	uart_send_string("DBG: phase=");
+	uart_send_number(g_tempPhase);
+	uart_send_string(" settle=");
+	uart_send_number(g_tempSettleCnt);
+	uart_send_string(" diag=");
+	uart_send_number(g_ntcDiagAdc);
+	uart_send_string(" vdd=");
+	uart_send_number(g_ntcDiagVdd);
+	uart_send_string(" chk=");
+	uart_send_number(g_ntcDiagChk);
+	uart_send_string(" isr=");
+	uart_send_number(g_ntcDebugAdc);
+	uart_send_string("\r\n");
 
 	/* 打印12槽位状态 */
 	for(i = 0; i < BATTERY_SLOTS; i++)
@@ -105,7 +122,11 @@ void Print_Status(void)
 		uart_send_number(GSLOT(i)->state);    /* 充电状态 */
 		uart_send_string(" T=");
 		uart_send_number(GSLOT(i)->type);     /* 电池类型 */
-
+		if(0 == i)
+		{
+			uart_send_string(" because : ");
+			uart_send_number(global_test);
+		}
 		/* 附加状态信息 */
 		if(GSLOT(i)->state == CHG_ERROR)
 			uart_send_string(" ERR");      /* 错误 */

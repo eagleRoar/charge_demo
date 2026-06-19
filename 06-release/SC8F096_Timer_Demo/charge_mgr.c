@@ -43,20 +43,21 @@ unsigned char Read_Temperature(void)
 
 	/* 查表: 根据NTC电阻值反推温度
 	   CMFA103J3950HANT: 10K@25C, B=3950
-	   电阻值越大温度越低, 电阻值越小温度越高 */
-	     if(ntcR > 32950) temp = 10;  /* <10C, 按10C处理 */
-	else if(ntcR > 27330) temp = 15;
-	else if(ntcR > 22060) temp = 20;
-	else if(ntcR > 17950) temp = 25;
-	else if(ntcR > 14710) temp = 30;
-	else if(ntcR > 12120) temp = 35;
-	else if(ntcR > 10000) temp = 40;
-	else if(ntcR > 8330)  temp = 45;
-	else if(ntcR > 6970)  temp = 50;
-	else if(ntcR > 5860)  temp = 55;
-	else if(ntcR > 4950)  temp = 60;
-	else if(ntcR > 4200)  temp = 65;
-	else if(ntcR > 3580)  temp = 70;
+	   电阻值越大温度越低, 电阻值越小温度越高
+	   阈值 = 下一档温度对应的R值(本档下边界), 如25C档边界=30C对应8050Ω */
+	     if(ntcR > 22000) temp = 10;  /* <10C, 按10C处理 */
+	else if(ntcR > 15800) temp = 15;
+	else if(ntcR > 12500) temp = 20;
+	else if(ntcR > 10000) temp = 25;
+	else if(ntcR > 8050)  temp = 30;
+	else if(ntcR > 6590)  temp = 35;
+	else if(ntcR > 5460)  temp = 40;
+	else if(ntcR > 4570)  temp = 45;
+	else if(ntcR > 3870)  temp = 50;
+	else if(ntcR > 3300)  temp = 55;
+	else if(ntcR > 2840)  temp = 60;
+	else if(ntcR > 2460)  temp = 65;
+	else if(ntcR > 2140)  temp = 70;
 	else                  temp = 75;  /* >70C, 按75C处理 */
 
 	g_temperature = temp;
@@ -139,6 +140,7 @@ BatterySlot_t g_slot1[6];       /* B7-B12 槽位数据 */
     CHG_FULL -> CHG_CC_CHARGE: 电压下降超过0.08V, 重新充电
     CHG_ERROR -> CHG_DETECT: 电压恢复正常且锂电池, 重新检测
 ========================================================================*/
+int global_test = 0;
 void ChargeProcess_Slot(unsigned char idx)
 {
 	BatterySlot_t *p = GSLOT(idx);
@@ -179,6 +181,10 @@ void ChargeProcess_Slot(unsigned char idx)
 		   p->type == BAT_TYPE_UNKNOWN)
 		{
 			p->state = CHG_ERROR;
+			if(idx == 0)
+			{
+				global_test = p->type;//Justin
+			}
 			break;
 		}
 
@@ -211,6 +217,10 @@ void ChargeProcess_Slot(unsigned char idx)
 		if(p->chargeTimer > TIME_ACTIVATE_MAX)
 		{
 			p->state = CHG_ERROR;
+			if(idx == 0)
+			{
+				global_test += 10;//Justin
+			}
 			break;
 		}
 		/* 电压恢复到0.1V以上: 激活成功, 转为预充 */
@@ -224,6 +234,10 @@ void ChargeProcess_Slot(unsigned char idx)
 		if(v >= ADC_V_OVER)
 		{
 			p->state = CHG_ERROR;
+			if(idx == 0)
+			{
+				global_test += 100;//Justin
+			}
 			break;
 		}
 		break;
@@ -241,6 +255,10 @@ void ChargeProcess_Slot(unsigned char idx)
 		if(v >= ADC_V_OVER)
 		{
 			p->state = CHG_ERROR;
+			if(idx == 0)
+			{
+				global_test += 1000;//Justin
+			}
 			break;
 		}
 		/* 电压达到1.0V: 预充完成, 转为恒流充电 */
@@ -258,12 +276,20 @@ void ChargeProcess_Slot(unsigned char idx)
 		if(p->chargeTimer > TIME_CHARGE_MAX)
 		{
 			p->state = CHG_ERROR;
+			if(idx == 0)
+			{
+				global_test += 10000;//Justin
+			}
 			break;
 		}
 		/* 过压保护 */
 		if(v >= ADC_V_OVER)
 		{
 			p->state = CHG_ERROR;
+			if(idx == 0)
+			{
+				global_test += 100000;//Justin
+			}
 			break;
 		}
 		/* 电压达到满电(1.52V): 转为恒压充电 */
@@ -281,6 +307,11 @@ void ChargeProcess_Slot(unsigned char idx)
 		if(v >= ADC_V_OVER)
 		{
 			p->state = CHG_ERROR;
+			
+			if(idx == 0)
+			{
+				global_test += 1000000;//Justin
+			}
 			break;
 		}
 		/* 保持10min: 充电完成 */
