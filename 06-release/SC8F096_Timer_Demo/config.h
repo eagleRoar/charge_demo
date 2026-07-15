@@ -92,7 +92,7 @@
 #define CHG_FULL           6       /* 充满: 充电完成, 绿灯常亮 */
 #define CHG_ERROR          7       /* 错误: 异常状态, 红灯闪烁 */
 #define CHG_IMP_CHECK      8       /* 阻抗检测: 短脉冲MOSFET测量内阻 */
-#define CHG_NIMH_WATCH     9       /* [废弃] 已简化, 不再使用 */
+#define CHG_IMP_DIODE_TEST 9       /* 体二极管检测: MOSFET关断, 观察电容充电爬升区分线性锂/干电池 */
 
 /*========================================================================
   电池类型枚举
@@ -215,6 +215,11 @@
    干电池: 高内阻→B1AD无飙升, 电压不上升 */
 #define IMP_PULSE_TICKS     1       /* 脉冲持续tick数(1轮≈9ms) */
 #define IMP_NOISE_THRESH     50      /* 电压上升判定阈值: 碳性电池噪声~40, 锂电激活>100 */
+
+/* 体二极管检测(IMP_CHECK方法3): MOSFET关断后BxAD电容通过100K上拉充电,
+   线性锂(体二极管阻断)→电压持续爬升, 干电池(体二极管导通)→电压稳定 */
+#define DIODE_TEST_TICKS     TICK_PER_SEC   /* 最长等待100tick≈1秒 */
+#define DIODE_RISE_THRESH    100            /* 电压上升>100ADC判为爬升 */
 
 /*========================================================================
   温度保护阈值

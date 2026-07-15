@@ -275,20 +275,34 @@ void Do_AdcSample(void)
 	unsigned char ch = s_adcChannels[g_scanIndex];
 	unsigned char ty = S_TYPE(g_scanIndex);
 	unsigned char st = S_STATE(g_scanIndex);
+	unsigned char dly;       /* 延时循环计数器(8位MCU __delay_us参数溢出规避) */
 
 	/* 延时等待Bx节点稳定到电池开路电压
 	   ISR Phase0已关闭MOSFET, Bx节点从PWM驱动电压恢复到开路电压需要时间
 	   线性锂电池(无charger IC拉载): MOSFET导通时BxAD电容被PWM充电至近VCC,
 	   关断后电容通过高阻路径放电, 100μs远不够(实测读到伪OPEN=4091),
-	   延长至500μs确保电容放至电池真实电压
-	   充电状态(MOSFET刚被关闭): ACTIVATE/PRECHARGE/CC/CV/IMP_CHECK */
-	if(ty == BAT_TYPE_LINEAR_LI &&
-	   (st == CHG_ACTIVATE || st == CHG_PRECHARGE ||
-	    st == CHG_CC_CHARGE || st == CHG_CV_CHARGE ||
-	    st == CHG_IMP_CHECK))
-		__delay_us(500);
+	   延长至2000μs确保电容放至电池真实电压
+	   充电状态(MOSFET刚被关闭): ACTIVATE/PRECHARGE/CC/CV
+	   DETECT状态: 配合Charging_Control中DETECT时MOSFET导通,
+	   电容从电池真实电压Vbat起充, 需足够延时使读数匹配旧体二极管均衡电平
+	   (~Vbat+0.5V), 否则低于NIMH_LOW(1015)的电池会漏过IMP_CHECK直接进LI_ION
+	   IMP_CHECK状态: 脉冲后CDx总线拉低, P-ch MOSFET沟道关闭(V_GS=0),
+	   若体二极管被线性锂电池阻断, BxAD电容通过100K上拉充电至VCC需足够延时,
+	   100μs仅充至1967(测不到OPEN), 2000μs可充至≥3990触发LINEAR_LI检测
+	   注: SC8F096 8位编译器__delay_us(2000)可能截断失效, 拆为20x100μs循环 */
+	if((ty == BAT_TYPE_LINEAR_LI &&
+	    (st == CHG_ACTIVATE || st == CHG_PRECHARGE ||
+	     st == CHG_CC_CHARGE || st == CHG_CV_CHARGE)) ||
+	   st == CHG_DETECT ||
+	   st == CHG_IMP_CHECK)
+	{
+		for(dly = 0; dly < 20; dly++)
+			__delay_us(100);
+	}
 	else
+	{
 		__delay_us(100);
+	}
 
 	test_adc = ADC_Sample(ch, 0);           /* VDD参考, 与09-test一致 */
 
@@ -436,6 +450,7 @@ void Print_SystemStatus(void)
 			break;
 		}
 		case CHG_IMP_CHECK:  uart_send_string("[IMP]");  break;
+		case CHG_IMP_DIODE_TEST: uart_send_string("[DIO]"); break;
 		default:             uart_send_string("[???]");  break;
 		}
 
