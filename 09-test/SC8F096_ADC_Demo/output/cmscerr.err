@@ -1,7 +1,11 @@
+Warning[1470]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_ADC_Demo\SC8F096_ADC.c	第267行	trigraph sequence "??(" replaced
+Warning[1470]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_ADC_Demo\SC8F096_ADC.c	第312行	trigraph sequence "??(" replaced
+Warning[350]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_ADC_Demo\SC8F096_ADC.c	第361行	unused label "print_ntc" (from line 0)
+Warning[1090]:	E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_ADC_Demo\SC8F096_ADC.c	第32行	variable "_bx_ch" is not used
 
 Memory Summary:
-    Program space        used   2D8h (   728) of  2000h words   (  8.9%)
-    Data space           used    37h (    55) of   140h bytes   ( 17.2%)
+    Program space        used   821h (  2081) of  2000h words   ( 25.4%)
+    Data space           used    62h (    98) of   140h bytes   ( 30.6%)
     EEPROM space         None available
     Data stack space     used     0h (     0) of    50h bytes   (  0.0%)
     Configuration bits   used     0h (     0) of     2h words   (  0.0%)

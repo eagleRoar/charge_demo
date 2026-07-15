@@ -9,20 +9,20 @@ Version 3.2 HI-TECH Software Intermediate Code
 [v _CHS4 `Vb ~T0 @X0 0 e@1206 ]
 "1091
 [v _GODONE `Vb ~T0 @X0 0 e@1193 ]
+"1141
+[v _RC4 `Vb ~T0 @X0 0 e@2100 ]
+"836
+[v _GIE `Vb ~T0 @X0 0 e@95 ]
 [p mainexit ]
-"23 E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_ADC_Demo\SC8F096_ADC.c
+"48 E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_ADC_Demo\SC8F096_ADC.c
 [v _Init_System `(v ~T0 @X0 0 ef ]
-"24
-[v _AD_Init `(v ~T0 @X0 0 ef ]
-"786 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h
-[v _TRISB7 `Vb ~T0 @X0 0 e@47 ]
-"860
+"860 D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\include\SC8F096.h
 [v _TMR2IF `Vb ~T0 @X0 0 e@105 ]
 "870
 [v _TMR2IE `Vb ~T0 @X0 0 e@113 ]
-"4 E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_ADC_Demo\SC8F096_ADC.c
+"11 E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_ADC_Demo\SC8F096_ADC.c
 [p n 752 ]
-"5
+"12
 [p n 373 ]
 [; ;htc.h: 26: extern const char __xc8_OPTIM_SPEED;
 [; ;htc.h: 28: extern double __fpnormalize(double);
@@ -1262,482 +1262,1103 @@ Version 3.2 HI-TECH Software Intermediate Code
 [; ;sc.h: 184: extern unsigned char __resetbits;
 [; ;sc.h: 185: extern __bit __powerdown;
 [; ;sc.h: 186: extern __bit __timeout;
-"15 E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_ADC_Demo\SC8F096_ADC.c
+"28 E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_ADC_Demo\SC8F096_ADC.c
 [v _adresult `Vui ~T0 @X0 1 e ]
-[; ;SC8F096_ADC.c: 15: volatile unsigned int adresult;
-"16
-[v _result `Vui ~T0 @X0 1 e ]
-[; ;SC8F096_ADC.c: 16: volatile unsigned int result;
-"17
+[; ;SC8F096_ADC.c: 28: volatile unsigned int adresult;
+"29
 [v _test_adc `Vuc ~T0 @X0 1 e ]
-[; ;SC8F096_ADC.c: 17: volatile unsigned char test_adc;
-"18
-[v _power_ad `Vui ~T0 @X0 1 e ]
-[; ;SC8F096_ADC.c: 18: volatile unsigned int power_ad;
-[; ;SC8F096_ADC.c: 20: unsigned char ADC_Sample(unsigned char adch, unsigned char adldo);
-[; ;SC8F096_ADC.c: 21: void DelayXms(unsigned char x);
-[; ;SC8F096_ADC.c: 22: unsigned char ADC_Result(unsigned char adch);
-[; ;SC8F096_ADC.c: 23: void Init_System();
-[; ;SC8F096_ADC.c: 24: void AD_Init();
-"46
+[; ;SC8F096_ADC.c: 29: volatile unsigned char test_adc;
+"32
+[v _bx_ch `Cuc ~T0 @X0 -> 12 `i e ]
+[i _bx_ch
+:U ..
+"33
+-> -> 17 `i `uc
+"34
+-> -> 16 `i `uc
+"35
+-> -> 12 `i `uc
+"36
+-> -> 13 `i `uc
+"37
+-> -> 5 `i `uc
+"38
+-> -> 4 `i `uc
+"39
+-> -> 28 `i `uc
+"40
+-> -> 29 `i `uc
+"41
+-> -> 27 `i `uc
+"42
+-> -> 26 `i `uc
+"43
+-> -> 7 `i `uc
+"45
+-> -> 6 `i `uc
+..
+]
+[; ;SC8F096_ADC.c: 32: const unsigned char bx_ch[12] = {
+[; ;SC8F096_ADC.c: 33: 17,
+[; ;SC8F096_ADC.c: 34: 16,
+[; ;SC8F096_ADC.c: 35: 12,
+[; ;SC8F096_ADC.c: 36: 13,
+[; ;SC8F096_ADC.c: 37: 5,
+[; ;SC8F096_ADC.c: 38: 4,
+[; ;SC8F096_ADC.c: 39: 28,
+[; ;SC8F096_ADC.c: 40: 29,
+[; ;SC8F096_ADC.c: 41: 27,
+[; ;SC8F096_ADC.c: 42: 26,
+[; ;SC8F096_ADC.c: 43: 7,
+[; ;SC8F096_ADC.c: 44: 6
+[; ;SC8F096_ADC.c: 45: };
+[; ;SC8F096_ADC.c: 47: unsigned char ADC_Sample(unsigned char adch, unsigned char adldo);
+[; ;SC8F096_ADC.c: 48: void Init_System(void);
+[; ;SC8F096_ADC.c: 49: void sw_uart_init(void);
+[; ;SC8F096_ADC.c: 50: void uart_send_char(unsigned char c);
+[; ;SC8F096_ADC.c: 51: void uart_send_string(const unsigned char *str);
+[; ;SC8F096_ADC.c: 52: void uart_send_number(unsigned int num);
+"61
 [v _ADC_Sample `(uc ~T0 @X0 1 ef2`uc`uc ]
-"47
+"62
 {
-[; ;SC8F096_ADC.c: 46: unsigned char ADC_Sample(unsigned char adch, unsigned char adldo)
-[; ;SC8F096_ADC.c: 47: {
+[; ;SC8F096_ADC.c: 61: unsigned char ADC_Sample(unsigned char adch, unsigned char adldo)
+[; ;SC8F096_ADC.c: 62: {
 [e :U _ADC_Sample ]
-"46
+"61
 [v _adch `uc ~T0 @X0 1 r1 ]
 [v _adldo `uc ~T0 @X0 1 r2 ]
-"47
+"62
 [f ]
-"48
+"63
 [v _adsum `Vul ~T0 @X0 1 a ]
-[; ;SC8F096_ADC.c: 48: volatile unsigned long adsum = 0;
+[; ;SC8F096_ADC.c: 63: volatile unsigned long adsum = 0;
 [e = _adsum -> -> -> 0 `i `l `ul ]
-"49
+"64
 [v _admin `Vui ~T0 @X0 1 a ]
-[; ;SC8F096_ADC.c: 49: volatile unsigned int admin = 0, admax = 0;
+[; ;SC8F096_ADC.c: 64: volatile unsigned int admin = 0, admax = 0;
 [e = _admin -> -> 0 `i `ui ]
 [v _admax `Vui ~T0 @X0 1 a ]
 [e = _admax -> -> 0 `i `ui ]
-"50
-[v _ad_temp `Vui ~T0 @X0 1 a ]
-[; ;SC8F096_ADC.c: 50: volatile unsigned int ad_temp = 0;
-[e = _ad_temp -> -> 0 `i `ui ]
-[; ;SC8F096_ADC.c: 52: if ((!LDO_EN) && (adldo & 0x04) )
-"52
-[e $ ! && ! _LDO_EN != & -> _adldo `i -> 4 `i -> 0 `i 2  ]
-[; ;SC8F096_ADC.c: 53: {
-"53
-{
-[; ;SC8F096_ADC.c: 55: ADCON1 = adldo;
-"55
-[e = _ADCON1 _adldo ]
-[; ;SC8F096_ADC.c: 56: _delay((unsigned long)((100)*(16000000/4000000.0)));
-"56
-[e ( __delay (1 -> * -> -> 100 `i `d / -> -> 16000000 `l `d .4000000.0 `ul ]
-"57
-}
-[; ;SC8F096_ADC.c: 57: }
-[e $U 3  ]
-"58
-[e :U 2 ]
-[; ;SC8F096_ADC.c: 58: else
-[; ;SC8F096_ADC.c: 59: ADCON1 = adldo;
-"59
-[e = _ADCON1 _adldo ]
-[e :U 3 ]
-[; ;SC8F096_ADC.c: 61: if(adch & 0x10)
-"61
-[e $ ! != & -> _adch `i -> 16 `i -> 0 `i 4  ]
-[; ;SC8F096_ADC.c: 62: {
-"62
-{
-[; ;SC8F096_ADC.c: 63: CHS4 = 1;
-"63
-[e = _CHS4 -> -> 1 `i `b ]
-[; ;SC8F096_ADC.c: 64: adch &= 0x0f;
-"64
-[e =& _adch -> -> 15 `i `uc ]
 "65
-}
-[; ;SC8F096_ADC.c: 65: }
-[e $U 5  ]
-"66
-[e :U 4 ]
-[; ;SC8F096_ADC.c: 66: else
-[; ;SC8F096_ADC.c: 67: CHS4 = 0;
-"67
-[e = _CHS4 -> -> 0 `i `b ]
-[e :U 5 ]
+[v _ad_temp `Vui ~T0 @X0 1 a ]
+[; ;SC8F096_ADC.c: 65: volatile unsigned int ad_temp = 0;
+[e = _ad_temp -> -> 0 `i `ui ]
+[; ;SC8F096_ADC.c: 68: if((!LDO_EN) && (adldo & 0x04))
 "68
-[v _i `uc ~T0 @X0 1 a ]
-[; ;SC8F096_ADC.c: 68: unsigned char i = 0;
-[e = _i -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 69: for (i = 0; i < 10; i++)
+[e $ ! && ! _LDO_EN != & -> _adldo `i -> 4 `i -> 0 `i 2  ]
+[; ;SC8F096_ADC.c: 69: {
 "69
 {
-[e = _i -> -> 0 `i `uc ]
-[e $ < -> _i `i -> 10 `i 6  ]
-[e $U 7  ]
+[; ;SC8F096_ADC.c: 70: ADCON1 = adldo;
 "70
-[e :U 6 ]
-[; ;SC8F096_ADC.c: 70: {
-{
-[; ;SC8F096_ADC.c: 71: ADCON0 = (unsigned char)(0X41 | (adch << 2));
+[e = _ADCON1 _adldo ]
+[; ;SC8F096_ADC.c: 71: _delay((unsigned long)((100)*(16000000/4000000.0)));
 "71
-[e = _ADCON0 -> | -> 65 `i << -> _adch `i -> 2 `i `uc ]
-[; ;SC8F096_ADC.c: 72: asm("nop");
+[e ( __delay (1 -> * -> -> 100 `i `d / -> -> 16000000 `l `d .4000000.0 `ul ]
 "72
-[; <" nop ;# ">
-[; ;SC8F096_ADC.c: 73: asm("nop");
+}
+[; ;SC8F096_ADC.c: 72: }
+[e $U 3  ]
 "73
-[; <" nop ;# ">
-[; ;SC8F096_ADC.c: 74: asm("nop");
+[e :U 2 ]
+[; ;SC8F096_ADC.c: 73: else
+[; ;SC8F096_ADC.c: 74: ADCON1 = adldo;
 "74
-[; <" nop ;# ">
-[; ;SC8F096_ADC.c: 75: asm("nop");
-"75
-[; <" nop ;# ">
-[; ;SC8F096_ADC.c: 76: GODONE = 1;
-"76
-[e = _GODONE -> -> 1 `i `b ]
+[e = _ADCON1 _adldo ]
+[e :U 3 ]
+[; ;SC8F096_ADC.c: 77: if(adch & 0x10)
+"77
+[e $ ! != & -> _adch `i -> 16 `i -> 0 `i 4  ]
+[; ;SC8F096_ADC.c: 78: {
 "78
-[v _j `uc ~T0 @X0 1 a ]
-[; ;SC8F096_ADC.c: 78: unsigned char j = 0;
-[e = _j -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 79: while (GODONE)
+{
+[; ;SC8F096_ADC.c: 79: CHS4 = 1;
 "79
+[e = _CHS4 -> -> 1 `i `b ]
+[; ;SC8F096_ADC.c: 80: adch &= 0x0f;
+"80
+[e =& _adch -> -> 15 `i `uc ]
+"81
+}
+[; ;SC8F096_ADC.c: 81: }
+[e $U 5  ]
+"82
+[e :U 4 ]
+[; ;SC8F096_ADC.c: 82: else
+[; ;SC8F096_ADC.c: 83: CHS4 = 0;
+"83
+[e = _CHS4 -> -> 0 `i `b ]
+[e :U 5 ]
+"85
+[v _i `uc ~T0 @X0 1 a ]
+[; ;SC8F096_ADC.c: 85: unsigned char i;
+[; ;SC8F096_ADC.c: 86: for(i = 0; i < 34; i++)
+"86
+{
+[e = _i -> -> 0 `i `uc ]
+[e $ < -> _i `i -> 34 `i 6  ]
+[e $U 7  ]
+"87
+[e :U 6 ]
+[; ;SC8F096_ADC.c: 87: {
+{
+[; ;SC8F096_ADC.c: 88: ADCON0 = (unsigned char)(0x81 | (adch << 2));
+"88
+[e = _ADCON0 -> | -> 129 `i << -> _adch `i -> 2 `i `uc ]
+[; ;SC8F096_ADC.c: 89: _delay((unsigned long)((5)*(16000000/4000000.0)));
+"89
+[e ( __delay (1 -> * -> -> 5 `i `d / -> -> 16000000 `l `d .4000000.0 `ul ]
+[; ;SC8F096_ADC.c: 90: GODONE = 1;
+"90
+[e = _GODONE -> -> 1 `i `b ]
+"92
+[v _j `uc ~T0 @X0 1 a ]
+[; ;SC8F096_ADC.c: 92: unsigned char j = 0;
+[e = _j -> -> 0 `i `uc ]
+[; ;SC8F096_ADC.c: 93: while(GODONE)
+"93
 [e $U 9  ]
 [e :U 10 ]
-[; ;SC8F096_ADC.c: 80: {
-"80
+[; ;SC8F096_ADC.c: 94: {
+"94
 {
-[; ;SC8F096_ADC.c: 81: _delay((unsigned long)((2)*(16000000/4000000.0)));
-"81
+[; ;SC8F096_ADC.c: 95: _delay((unsigned long)((2)*(16000000/4000000.0)));
+"95
 [e ( __delay (1 -> * -> -> 2 `i `d / -> -> 16000000 `l `d .4000000.0 `ul ]
-[; ;SC8F096_ADC.c: 83: if (0 == (--j))
-"83
+[; ;SC8F096_ADC.c: 96: if(0 == (--j)) return 0;
+"96
 [e $ ! == -> 0 `i -> =- _j -> -> 1 `i `uc `i 12  ]
-[; ;SC8F096_ADC.c: 84: return 0;
-"84
 [e ) -> -> 0 `i `uc ]
 [e $UE 1  ]
 [e :U 12 ]
-"85
+"97
 }
 [e :U 9 ]
-"79
+"93
 [e $ _GODONE 10  ]
 [e :U 11 ]
-[; ;SC8F096_ADC.c: 85: }
-[; ;SC8F096_ADC.c: 87: ad_temp = (unsigned int)((ADRESH << 4) + (ADRESL >> 4));
-"87
+[; ;SC8F096_ADC.c: 97: }
+[; ;SC8F096_ADC.c: 99: ad_temp = (unsigned int)((ADRESH << 4) + (ADRESL >> 4));
+"99
 [e = _ad_temp -> + << -> _ADRESH `i -> 4 `i >> -> _ADRESL `i -> 4 `i `ui ]
-[; ;SC8F096_ADC.c: 89: if (0 == admax)
-"89
+[; ;SC8F096_ADC.c: 101: if(0 == admax)
+"101
 [e $ ! == -> -> 0 `i `ui _admax 13  ]
-[; ;SC8F096_ADC.c: 90: {
-"90
+[; ;SC8F096_ADC.c: 102: {
+"102
 {
-[; ;SC8F096_ADC.c: 91: admax = ad_temp;
-"91
+[; ;SC8F096_ADC.c: 103: admax = ad_temp;
+"103
 [e = _admax _ad_temp ]
-[; ;SC8F096_ADC.c: 92: admin = ad_temp;
-"92
+[; ;SC8F096_ADC.c: 104: admin = ad_temp;
+"104
 [e = _admin _ad_temp ]
-"93
+"105
 }
-[; ;SC8F096_ADC.c: 93: }
+[; ;SC8F096_ADC.c: 105: }
 [e $U 14  ]
-"94
+"106
 [e :U 13 ]
-[; ;SC8F096_ADC.c: 94: else if (ad_temp > admax)
+[; ;SC8F096_ADC.c: 106: else if(ad_temp > admax)
 [e $ ! > _ad_temp _admax 15  ]
-[; ;SC8F096_ADC.c: 95: admax = ad_temp;
-"95
+[; ;SC8F096_ADC.c: 107: admax = ad_temp;
+"107
 [e = _admax _ad_temp ]
 [e $U 16  ]
-"96
+"108
 [e :U 15 ]
-[; ;SC8F096_ADC.c: 96: else if (ad_temp < admin)
+[; ;SC8F096_ADC.c: 108: else if(ad_temp < admin)
 [e $ ! < _ad_temp _admin 17  ]
-[; ;SC8F096_ADC.c: 97: admin = ad_temp;
-"97
+[; ;SC8F096_ADC.c: 109: admin = ad_temp;
+"109
 [e = _admin _ad_temp ]
 [e :U 17 ]
-"99
+"111
 [e :U 16 ]
 [e :U 14 ]
-[; ;SC8F096_ADC.c: 99: adsum += ad_temp;
+[; ;SC8F096_ADC.c: 111: adsum += ad_temp;
 [e =+ _adsum -> _ad_temp `ul ]
-"100
+"112
 }
-"69
+"86
 [e ++ _i -> -> 1 `i `uc ]
-[e $ < -> _i `i -> 10 `i 6  ]
+[e $ < -> _i `i -> 34 `i 6  ]
 [e :U 7 ]
-"100
+"112
 }
-[; ;SC8F096_ADC.c: 100: }
-[; ;SC8F096_ADC.c: 101: adsum -= admax;
-"101
+[; ;SC8F096_ADC.c: 112: }
+[; ;SC8F096_ADC.c: 114: adsum -= admax;
+"114
 [e =- _adsum -> _admax `ul ]
-[; ;SC8F096_ADC.c: 102: if (adsum >= admin)
-"102
+[; ;SC8F096_ADC.c: 115: if(adsum >= admin)
+"115
 [e $ ! >= _adsum -> _admin `ul 18  ]
-[; ;SC8F096_ADC.c: 103: adsum -= admin;
-"103
+[; ;SC8F096_ADC.c: 116: adsum -= admin;
+"116
 [e =- _adsum -> _admin `ul ]
 [e $U 19  ]
-"104
+"117
 [e :U 18 ]
-[; ;SC8F096_ADC.c: 104: else
-[; ;SC8F096_ADC.c: 105: adsum = 0;
-"105
+[; ;SC8F096_ADC.c: 117: else
+[; ;SC8F096_ADC.c: 118: adsum = 0;
+"118
 [e = _adsum -> -> -> 0 `i `l `ul ]
 [e :U 19 ]
-[; ;SC8F096_ADC.c: 107: adresult = adsum >> 3;
-"107
-[e = _adresult -> >> _adsum -> 3 `i `ui ]
-[; ;SC8F096_ADC.c: 109: adsum = 0;
-"109
-[e = _adsum -> -> -> 0 `i `l `ul ]
-[; ;SC8F096_ADC.c: 110: admin = 0;
-"110
-[e = _admin -> -> 0 `i `ui ]
-[; ;SC8F096_ADC.c: 111: admax = 0;
-"111
-[e = _admax -> -> 0 `i `ui ]
-[; ;SC8F096_ADC.c: 112: return 0xA5;
-"112
+[; ;SC8F096_ADC.c: 120: adresult = adsum >> 5;
+"120
+[e = _adresult -> >> _adsum -> 5 `i `ui ]
+[; ;SC8F096_ADC.c: 121: return 0xA5;
+"121
 [e ) -> -> 165 `i `uc ]
 [e $UE 1  ]
-[; ;SC8F096_ADC.c: 114: }
-"114
+[; ;SC8F096_ADC.c: 122: }
+"122
 [e :UE 1 ]
 }
-[v $root$_main `(v ~T0 @X0 0 e ]
-"120
-[v _main `(v ~T0 @X0 1 ef ]
-"121
-{
-[; ;SC8F096_ADC.c: 120: void main()
-[; ;SC8F096_ADC.c: 121: {
-[e :U _main ]
-[f ]
-[; ;SC8F096_ADC.c: 122: Init_System();
-"122
-[e ( _Init_System ..  ]
-[; ;SC8F096_ADC.c: 123: AD_Init();
-"123
-[e ( _AD_Init ..  ]
-[; ;SC8F096_ADC.c: 125: while (1)
-"125
-[e :U 22 ]
-[; ;SC8F096_ADC.c: 126: {
-"126
-{
-[; ;SC8F096_ADC.c: 127: asm("clrwdt");
 "127
-[; <" clrwdt ;# ">
-[; ;SC8F096_ADC.c: 130: TRISB7 = 1;
+[v _sw_uart_init `(v ~T0 @X0 1 ef ]
+"128
+{
+[; ;SC8F096_ADC.c: 127: void sw_uart_init(void)
+[; ;SC8F096_ADC.c: 128: {
+[e :U _sw_uart_init ]
+[f ]
+[; ;SC8F096_ADC.c: 129: TRISC &= ~0x10;
+"129
+[e =& _TRISC -> ~ -> 16 `i `uc ]
+[; ;SC8F096_ADC.c: 130: ANSEL2 &= ~0x10;
 "130
-[e = _TRISB7 -> -> 1 `i `b ]
-[; ;SC8F096_ADC.c: 131: ANSEL1 |= 0X80;
+[e =& _ANSEL2 -> ~ -> 16 `i `uc ]
+[; ;SC8F096_ADC.c: 131: RC4 = 1;
 "131
-[e =| _ANSEL1 -> -> 128 `i `uc ]
-[; ;SC8F096_ADC.c: 132: test_adc = ADC_Sample(15, 7);
+[e = _RC4 -> -> 1 `i `b ]
+[; ;SC8F096_ADC.c: 132: }
 "132
-[e = _test_adc ( _ADC_Sample (2 , -> -> 15 `i `uc -> -> 7 `i `uc ]
-[; ;SC8F096_ADC.c: 133: if (0xA5 == test_adc)
-"133
-[e $ ! == -> 165 `i -> _test_adc `i 24  ]
-[; ;SC8F096_ADC.c: 134: {
-"134
-{
-"136
-}
-[; ;SC8F096_ADC.c: 136: }
-[e $U 25  ]
-"137
-[e :U 24 ]
-[; ;SC8F096_ADC.c: 137: else
-[; ;SC8F096_ADC.c: 138: {
-"138
-{
-[; ;SC8F096_ADC.c: 139: ADCON0 = 0;
-"139
-[e = _ADCON0 -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 140: ADCON1 = 0;
-"140
-[e = _ADCON1 -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 141: _delay((unsigned long)((100)*(16000000/4000000.0)));
-"141
-[e ( __delay (1 -> * -> -> 100 `i `d / -> -> 16000000 `l `d .4000000.0 `ul ]
-"142
-}
-[e :U 25 ]
-[; ;SC8F096_ADC.c: 142: }
-[; ;SC8F096_ADC.c: 144: test_adc = ADC_Sample(31, 0);
-"144
-[e = _test_adc ( _ADC_Sample (2 , -> -> 31 `i `uc -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 145: if (0xA5 == test_adc)
-"145
-[e $ ! == -> 165 `i -> _test_adc `i 26  ]
-[; ;SC8F096_ADC.c: 146: {
-"146
-{
-"147
-[v _power_temp `Vul ~T0 @X0 1 a ]
-[; ;SC8F096_ADC.c: 147: volatile unsigned long power_temp;
-[; ;SC8F096_ADC.c: 149: power_temp = (unsigned long)(((4096UL*1.2*1000))/adresult);
-"149
-[e = _power_temp -> / * * -> -> 4096 `ul `d .1.2 -> -> 1000 `i `d -> _adresult `d `ul ]
-[; ;SC8F096_ADC.c: 150: power_ad = (unsigned int)(power_temp);
-"150
-[e = _power_ad -> _power_temp `ui ]
-"151
-}
-[; ;SC8F096_ADC.c: 151: }
-[e $U 27  ]
-"152
-[e :U 26 ]
-[; ;SC8F096_ADC.c: 152: else
-[; ;SC8F096_ADC.c: 153: {
-"153
-{
-[; ;SC8F096_ADC.c: 154: ADCON0 = 0;
-"154
-[e = _ADCON0 -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 155: ADCON1 = 0;
-"155
-[e = _ADCON1 -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 156: _delay((unsigned long)((100)*(16000000/4000000.0)));
-"156
-[e ( __delay (1 -> * -> -> 100 `i `d / -> -> 16000000 `l `d .4000000.0 `ul ]
-"157
-}
-[e :U 27 ]
-"160
-}
-[e :U 21 ]
-"125
-[e $U 22  ]
-[e :U 23 ]
-[; ;SC8F096_ADC.c: 157: }
-[; ;SC8F096_ADC.c: 160: }
-[; ;SC8F096_ADC.c: 161: }
-"161
 [e :UE 20 ]
 }
-"170
-[v _Init_System `(v ~T0 @X0 1 ef ]
-"171
+"134
+[v _uart_send_char `(v ~T0 @X0 1 ef1`uc ]
+"135
 {
-[; ;SC8F096_ADC.c: 170: void Init_System()
-[; ;SC8F096_ADC.c: 171: {
-[e :U _Init_System ]
+[; ;SC8F096_ADC.c: 134: void uart_send_char(unsigned char c)
+[; ;SC8F096_ADC.c: 135: {
+[e :U _uart_send_char ]
+"134
+[v _c `uc ~T0 @X0 1 r1 ]
+"135
 [f ]
-[; ;SC8F096_ADC.c: 172: asm("nop");
-"172
-[; <" nop ;# ">
-[; ;SC8F096_ADC.c: 173: asm("clrwdt");
-"173
-[; <" clrwdt ;# ">
-[; ;SC8F096_ADC.c: 174: OPTION_REG = 0;
-"174
-[e = _OPTION_REG -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 175: asm("clrwdt");
-"175
-[; <" clrwdt ;# ">
-[; ;SC8F096_ADC.c: 176: OSCCON = 0X70;
-"176
-[e = _OSCCON -> -> 112 `i `uc ]
-[; ;SC8F096_ADC.c: 178: WPUA = 0B00000000;
-"178
-[e = _WPUA -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 179: WPUB = 0B00000000;
-"179
-[e = _WPUB -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 180: WPUC = 0B00000000;
-"180
-[e = _WPUC -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 181: WPUD = 0B00000000;
-"181
-[e = _WPUD -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 183: TRISA = 0B00000000;
-"183
-[e = _TRISA -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 184: TRISB = 0B00000000;
-"184
-[e = _TRISB -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 185: TRISC = 0B00000000;
-"185
-[e = _TRISC -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 186: TRISD = 0B00000000;
-"186
-[e = _TRISD -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 188: PORTA = 0B00000000;
-"188
-[e = _PORTA -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 189: PORTB = 0B00000000;
-"189
-[e = _PORTB -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 190: PORTC = 0B00000000;
-"190
-[e = _PORTC -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 191: PORTD = 0B00000000;
-"191
-[e = _PORTD -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 193: CC0CON = 0;
-"193
-[e = _CC0CON -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 194: CC1CON = 0;
-"194
-[e = _CC1CON -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 198: PR2 = 249;
-"198
-[e = _PR2 -> -> 249 `i `uc ]
-[; ;SC8F096_ADC.c: 199: TMR2IF = 0;
-"199
-[e = _TMR2IF -> -> 0 `i `b ]
-[; ;SC8F096_ADC.c: 200: TMR2IE = 1;
-"200
-[e = _TMR2IE -> -> 1 `i `b ]
-[; ;SC8F096_ADC.c: 202: T2CON = 0B00000100;
-"202
-[e = _T2CON -> -> 4 `i `uc ]
-[; ;SC8F096_ADC.c: 203: INTCON = 0XC0;
-"203
-[e = _INTCON -> -> 192 `i `uc ]
-[; ;SC8F096_ADC.c: 204: }
-"204
-[e :UE 28 ]
-}
-[v $root$_Isr_Timer `(v ~T0 @X0 0 e ]
-[v F1318 `(v ~T0 @X0 1 tf ]
-"215
-[v _Isr_Timer `IF1318 ~T0 @X0 1 e ]
-"216
+"136
+[v _i `uc ~T0 @X0 1 a ]
+[; ;SC8F096_ADC.c: 136: unsigned char i;
+[; ;SC8F096_ADC.c: 137: GIE = 0;
+"137
+[e = _GIE -> -> 0 `i `b ]
+[; ;SC8F096_ADC.c: 138: RC4 = 0;
+"138
+[e = _RC4 -> -> 0 `i `b ]
+[; ;SC8F096_ADC.c: 139: _delay((unsigned long)((104)*(16000000/4000000.0)));
+"139
+[e ( __delay (1 -> * -> -> 104 `i `d / -> -> 16000000 `l `d .4000000.0 `ul ]
+[; ;SC8F096_ADC.c: 140: for(i = 0; i < 8; i++)
+"140
 {
-[; ;SC8F096_ADC.c: 215: void interrupt Isr_Timer()
-[; ;SC8F096_ADC.c: 216: {
-[e :U _Isr_Timer ]
+[e = _i -> -> 0 `i `uc ]
+[e $ < -> _i `i -> 8 `i 22  ]
+[e $U 23  ]
+"141
+[e :U 22 ]
+[; ;SC8F096_ADC.c: 141: {
+{
+[; ;SC8F096_ADC.c: 142: if(c & 0x01) RC4 = 1; else RC4 = 0;
+"142
+[e $ ! != & -> _c `i -> 1 `i -> 0 `i 25  ]
+[e = _RC4 -> -> 1 `i `b ]
+[e $U 26  ]
+[e :U 25 ]
+[e = _RC4 -> -> 0 `i `b ]
+[e :U 26 ]
+[; ;SC8F096_ADC.c: 143: _delay((unsigned long)((104)*(16000000/4000000.0)));
+"143
+[e ( __delay (1 -> * -> -> 104 `i `d / -> -> 16000000 `l `d .4000000.0 `ul ]
+[; ;SC8F096_ADC.c: 144: c >>= 1;
+"144
+[e =>> _c -> 1 `i ]
+"145
+}
+"140
+[e ++ _i -> -> 1 `i `uc ]
+[e $ < -> _i `i -> 8 `i 22  ]
+[e :U 23 ]
+"145
+}
+[; ;SC8F096_ADC.c: 145: }
+[; ;SC8F096_ADC.c: 146: RC4 = 1;
+"146
+[e = _RC4 -> -> 1 `i `b ]
+[; ;SC8F096_ADC.c: 147: _delay((unsigned long)((104)*(16000000/4000000.0)));
+"147
+[e ( __delay (1 -> * -> -> 104 `i `d / -> -> 16000000 `l `d .4000000.0 `ul ]
+[; ;SC8F096_ADC.c: 148: GIE = 1;
+"148
+[e = _GIE -> -> 1 `i `b ]
+[; ;SC8F096_ADC.c: 149: }
+"149
+[e :UE 21 ]
+}
+"151
+[v _uart_send_string `(v ~T0 @X0 1 ef1`*Cuc ]
+"152
+{
+[; ;SC8F096_ADC.c: 151: void uart_send_string(const unsigned char *str)
+[; ;SC8F096_ADC.c: 152: {
+[e :U _uart_send_string ]
+"151
+[v _str `*Cuc ~T0 @X0 1 r1 ]
+"152
 [f ]
-[; ;SC8F096_ADC.c: 217: if (TMR2IF)
-"217
-[e $ ! _TMR2IF 30  ]
-[; ;SC8F096_ADC.c: 218: {
-"218
-{
-[; ;SC8F096_ADC.c: 219: TMR2IF = 0;
-"219
-[e = _TMR2IF -> -> 0 `i `b ]
-"221
-}
+[; ;SC8F096_ADC.c: 153: while(*str) uart_send_char(*str++);
+"153
+[e $U 28  ]
+[e :U 29 ]
+[e ( _uart_send_char (1 *U ++ _str * -> -> 1 `i `x -> -> # *U _str `i `x ]
+[e :U 28 ]
+[e $ != -> *U _str `i -> -> -> 0 `i `Cuc `i 29  ]
 [e :U 30 ]
-[; ;SC8F096_ADC.c: 221: }
-[; ;SC8F096_ADC.c: 223: }
-"223
-[e :UE 29 ]
+[; ;SC8F096_ADC.c: 154: }
+"154
+[e :UE 27 ]
 }
-"234
-[v _AD_Init `(v ~T0 @X0 1 ef ]
-"235
+"156
+[v _uart_send_number `(v ~T0 @X0 1 ef1`ui ]
+"157
 {
-[; ;SC8F096_ADC.c: 234: void AD_Init()
-[; ;SC8F096_ADC.c: 235: {
-[e :U _AD_Init ]
+[; ;SC8F096_ADC.c: 156: void uart_send_number(unsigned int num)
+[; ;SC8F096_ADC.c: 157: {
+[e :U _uart_send_number ]
+"156
+[v _num `ui ~T0 @X0 1 r1 ]
+"157
 [f ]
-[; ;SC8F096_ADC.c: 264: ADCON0 = 0X41;
-"264
-[e = _ADCON0 -> -> 65 `i `uc ]
-[; ;SC8F096_ADC.c: 281: ADCON1 = 0;
-"281
-[e = _ADCON1 -> -> 0 `i `uc ]
-[; ;SC8F096_ADC.c: 282: }
-"282
+"158
+[v _buf `uc ~T0 @X0 -> 6 `i a ]
+"159
+[v _i `uc ~T0 @X0 1 a ]
+[; ;SC8F096_ADC.c: 158: unsigned char buf[6];
+[; ;SC8F096_ADC.c: 159: unsigned char i = 0, j;
+[e = _i -> -> 0 `i `uc ]
+[v _j `uc ~T0 @X0 1 a ]
+[; ;SC8F096_ADC.c: 160: if(num == 0) { uart_send_char('0'); return; }
+"160
+[e $ ! == _num -> -> 0 `i `ui 32  ]
+{
+[e ( _uart_send_char (1 -> -> 48 `ui `uc ]
+[e $UE 31  ]
+}
+[e :U 32 ]
+[; ;SC8F096_ADC.c: 161: while(num > 0) { buf[i++] = '0' + (num % 10); num /= 10; }
+"161
+[e $U 33  ]
+[e :U 34 ]
+{
+[e = *U + &U _buf * -> ++ _i -> -> 1 `i `uc `ux -> -> # *U &U _buf `ui `ux -> + -> 48 `ui % _num -> -> 10 `i `ui `uc ]
+[e =/ _num -> -> 10 `uc `ui ]
+}
+[e :U 33 ]
+[e $ > _num -> -> 0 `i `ui 34  ]
+[e :U 35 ]
+[; ;SC8F096_ADC.c: 162: for(j = i; j > 0; j--) uart_send_char(buf[j-1]);
+"162
+{
+[e = _j _i ]
+[e $ > -> _j `i -> 0 `i 36  ]
+[e $U 37  ]
+[e :U 36 ]
+[e ( _uart_send_char (1 *U + &U _buf * -> -> - -> _j `i -> 1 `i `ui `ux -> -> # *U &U _buf `ui `ux ]
+[e -- _j -> -> 1 `i `uc ]
+[e $ > -> _j `i -> 0 `i 36  ]
+[e :U 37 ]
+}
+[; ;SC8F096_ADC.c: 163: }
+"163
 [e :UE 31 ]
 }
+[v $root$_main `(v ~T0 @X0 0 e ]
+"168
+[v _main `(v ~T0 @X0 1 ef ]
+"169
+{
+[; ;SC8F096_ADC.c: 168: void main(void)
+[; ;SC8F096_ADC.c: 169: {
+[e :U _main ]
+[f ]
+[; ;SC8F096_ADC.c: 170: Init_System();
+"170
+[e ( _Init_System ..  ]
+[; ;SC8F096_ADC.c: 171: sw_uart_init();
+"171
+[e ( _sw_uart_init ..  ]
+[; ;SC8F096_ADC.c: 173: ADCON0 = 0x41;
+"173
+[e = _ADCON0 -> -> 65 `i `uc ]
+[; ;SC8F096_ADC.c: 183: ANSEL0 |= 0xF0;
+"183
+[e =| _ANSEL0 -> -> 240 `i `uc ]
+[; ;SC8F096_ADC.c: 184: ANSEL1 |= 0x03;
+"184
+[e =| _ANSEL1 -> -> 3 `i `uc ]
+[; ;SC8F096_ADC.c: 185: ANSEL2 |= 0x07;
+"185
+[e =| _ANSEL2 -> -> 7 `i `uc ]
+[; ;SC8F096_ADC.c: 186: ANSEL3 |= 0x3C;
+"186
+[e =| _ANSEL3 -> -> 60 `i `uc ]
+[; ;SC8F096_ADC.c: 188: uart_send_string("B1-B12 ADC Test\r\n");
+"188
+[e ( _uart_send_string (1 :s 1C ]
+"190
+[v _tick `ui ~T0 @X0 1 a ]
+[; ;SC8F096_ADC.c: 190: unsigned int tick = 0;
+[e = _tick -> -> 0 `i `ui ]
+"191
+[v _vcc_mv `ui ~T0 @X0 1 a ]
+"192
+[v _bx `uc ~T0 @X0 1 a ]
+"195
+[v _vdd_buf `ui ~T0 @X0 -> 12 `i a ]
+[; ;SC8F096_ADC.c: 191: unsigned int vcc_mv;
+[; ;SC8F096_ADC.c: 192: unsigned char bx;
+[; ;SC8F096_ADC.c: 195: unsigned int vdd_buf[12];
+[; ;SC8F096_ADC.c: 197: while(1)
+"197
+[e :U 41 ]
+[; ;SC8F096_ADC.c: 198: {
+"198
+{
+[; ;SC8F096_ADC.c: 199: asm("clrwdt");
+"199
+[; <" clrwdt ;# ">
+[; ;SC8F096_ADC.c: 200: _delay((unsigned long)((10)*(16000000/4000.0)));
+"200
+[e ( __delay (1 -> * -> -> 10 `i `d / -> -> 16000000 `l `d .4000.0 `ul ]
+[; ;SC8F096_ADC.c: 201: tick++;
+"201
+[e ++ _tick -> -> 1 `i `ui ]
+[; ;SC8F096_ADC.c: 202: if(tick % 200 != 0) continue;
+"202
+[e $ ! != % _tick -> -> 200 `i `ui -> -> 0 `i `ui 43  ]
+[e $U 40  ]
+[e :U 43 ]
+[; ;SC8F096_ADC.c: 203: asm("clrwdt");
+"203
+[; <" clrwdt ;# ">
+[; ;SC8F096_ADC.c: 206: vcc_mv = 5000;
+"206
+[e = _vcc_mv -> -> 5000 `i `ui ]
+[; ;SC8F096_ADC.c: 207: test_adc = ADC_Sample(31, 0);
+"207
+[e = _test_adc ( _ADC_Sample (2 , -> -> 31 `i `uc -> -> 0 `i `uc ]
+[; ;SC8F096_ADC.c: 208: if(0xA5 == test_adc)
+"208
+[e $ ! == -> 165 `i -> _test_adc `i 44  ]
+[; ;SC8F096_ADC.c: 209: {
+"209
+{
+"210
+[v _pt `ul ~T0 @X0 1 a ]
+[; ;SC8F096_ADC.c: 210: unsigned long pt = (unsigned long)((4096UL*1.2*1000)) / adresult;
+[e = _pt / -> * * -> -> 4096 `ul `d .1.2 -> -> 1000 `i `d `ul -> _adresult `ul ]
+[; ;SC8F096_ADC.c: 211: vcc_mv = (unsigned int)pt;
+"211
+[e = _vcc_mv -> _pt `ui ]
+"212
+}
+[e :U 44 ]
+[; ;SC8F096_ADC.c: 212: }
+[; ;SC8F096_ADC.c: 216: ADC_Sample(17, 0); vdd_buf[0] = adresult;
+"216
+[e ( _ADC_Sample (2 , -> -> 17 `i `uc -> -> 0 `i `uc ]
+[e = *U + &U _vdd_buf * -> -> -> 0 `i `ui `ux -> -> # *U &U _vdd_buf `ui `ux _adresult ]
+[; ;SC8F096_ADC.c: 217: ADC_Sample(12, 0); vdd_buf[2] = adresult;
+"217
+[e ( _ADC_Sample (2 , -> -> 12 `i `uc -> -> 0 `i `uc ]
+[e = *U + &U _vdd_buf * -> -> -> 2 `i `ui `ux -> -> # *U &U _vdd_buf `ui `ux _adresult ]
+[; ;SC8F096_ADC.c: 218: ADC_Sample(13, 0); vdd_buf[3] = adresult;
+"218
+[e ( _ADC_Sample (2 , -> -> 13 `i `uc -> -> 0 `i `uc ]
+[e = *U + &U _vdd_buf * -> -> -> 3 `i `ui `ux -> -> # *U &U _vdd_buf `ui `ux _adresult ]
+[; ;SC8F096_ADC.c: 219: ADC_Sample(5, 0); vdd_buf[4] = adresult;
+"219
+[e ( _ADC_Sample (2 , -> -> 5 `i `uc -> -> 0 `i `uc ]
+[e = *U + &U _vdd_buf * -> -> -> 4 `i `ui `ux -> -> # *U &U _vdd_buf `ui `ux _adresult ]
+[; ;SC8F096_ADC.c: 220: ADC_Sample(7, 0); vdd_buf[5] = adresult;
+"220
+[e ( _ADC_Sample (2 , -> -> 7 `i `uc -> -> 0 `i `uc ]
+[e = *U + &U _vdd_buf * -> -> -> 5 `i `ui `ux -> -> # *U &U _vdd_buf `ui `ux _adresult ]
+[; ;SC8F096_ADC.c: 221: ADC_Sample(6, 0); vdd_buf[6] = adresult;
+"221
+[e ( _ADC_Sample (2 , -> -> 6 `i `uc -> -> 0 `i `uc ]
+[e = *U + &U _vdd_buf * -> -> -> 6 `i `ui `ux -> -> # *U &U _vdd_buf `ui `ux _adresult ]
+[; ;SC8F096_ADC.c: 222: ADC_Sample(4, 0); vdd_buf[7] = adresult;
+"222
+[e ( _ADC_Sample (2 , -> -> 4 `i `uc -> -> 0 `i `uc ]
+[e = *U + &U _vdd_buf * -> -> -> 7 `i `ui `ux -> -> # *U &U _vdd_buf `ui `ux _adresult ]
+[; ;SC8F096_ADC.c: 223: ADC_Sample(28, 0); vdd_buf[8] = adresult;
+"223
+[e ( _ADC_Sample (2 , -> -> 28 `i `uc -> -> 0 `i `uc ]
+[e = *U + &U _vdd_buf * -> -> -> 8 `i `ui `ux -> -> # *U &U _vdd_buf `ui `ux _adresult ]
+[; ;SC8F096_ADC.c: 224: ADC_Sample(29, 0); vdd_buf[9] = adresult;
+"224
+[e ( _ADC_Sample (2 , -> -> 29 `i `uc -> -> 0 `i `uc ]
+[e = *U + &U _vdd_buf * -> -> -> 9 `i `ui `ux -> -> # *U &U _vdd_buf `ui `ux _adresult ]
+[; ;SC8F096_ADC.c: 225: ADC_Sample(27, 0); vdd_buf[10] = adresult;
+"225
+[e ( _ADC_Sample (2 , -> -> 27 `i `uc -> -> 0 `i `uc ]
+[e = *U + &U _vdd_buf * -> -> -> 10 `i `ui `ux -> -> # *U &U _vdd_buf `ui `ux _adresult ]
+[; ;SC8F096_ADC.c: 226: ADC_Sample(26, 0); vdd_buf[11] = adresult;
+"226
+[e ( _ADC_Sample (2 , -> -> 26 `i `uc -> -> 0 `i `uc ]
+[e = *U + &U _vdd_buf * -> -> -> 11 `i `ui `ux -> -> # *U &U _vdd_buf `ui `ux _adresult ]
+[; ;SC8F096_ADC.c: 228: asm("clrwdt");
+"228
+[; <" clrwdt ;# ">
+[; ;SC8F096_ADC.c: 229: ADC_Sample(16, 0);
+"229
+[e ( _ADC_Sample (2 , -> -> 16 `i `uc -> -> 0 `i `uc ]
+[; ;SC8F096_ADC.c: 230: vdd_buf[1] = adresult;
+"230
+[e = *U + &U _vdd_buf * -> -> -> 1 `i `ui `ux -> -> # *U &U _vdd_buf `ui `ux _adresult ]
+[; ;SC8F096_ADC.c: 233: for(bx = 0; bx < 6; bx++)
+"233
+{
+[e = _bx -> -> 0 `i `uc ]
+[e $ < -> _bx `i -> 6 `i 45  ]
+[e $U 46  ]
+"234
+[e :U 45 ]
+[; ;SC8F096_ADC.c: 234: {
+{
+"235
+[v _bat_mv `ul ~T0 @X0 1 a ]
+"236
+[v _vx_mv `ui ~T0 @X0 1 a ]
+[; ;SC8F096_ADC.c: 235: unsigned long bat_mv;
+[; ;SC8F096_ADC.c: 236: unsigned int vx_mv;
+[; ;SC8F096_ADC.c: 238: vx_mv = (unsigned long)vdd_buf[bx] * vcc_mv / 4096UL;
+"238
+[e = _vx_mv -> / * -> *U + &U _vdd_buf * -> _bx `ux -> -> # *U &U _vdd_buf `ui `ux `ul -> _vcc_mv `ul -> 4096 `ul `ui ]
+[; ;SC8F096_ADC.c: 239: if(vx_mv + 200U >= vcc_mv)
+"239
+[e $ ! >= + _vx_mv -> 200 `ui _vcc_mv 48  ]
+[; ;SC8F096_ADC.c: 240: {
+"240
+{
+[; ;SC8F096_ADC.c: 241: uart_send_string("B");
+"241
+[e ( _uart_send_string (1 :s 2C ]
+[; ;SC8F096_ADC.c: 242: uart_send_number(bx+1);
+"242
+[e ( _uart_send_number (1 -> + -> _bx `i -> 1 `i `ui ]
+[; ;SC8F096_ADC.c: 243: uart_send_string("=");
+"243
+[e ( _uart_send_string (1 :s 3C ]
+[; ;SC8F096_ADC.c: 244: uart_send_number(vdd_buf[bx]);
+"244
+[e ( _uart_send_number (1 *U + &U _vdd_buf * -> _bx `ux -> -> # *U &U _vdd_buf `ui `ux ]
+[; ;SC8F096_ADC.c: 245: uart_send_string(" OPEN");
+"245
+[e ( _uart_send_string (1 :s 4C ]
+"246
+}
+[; ;SC8F096_ADC.c: 246: }
+[e $U 49  ]
+"247
+[e :U 48 ]
+[; ;SC8F096_ADC.c: 247: else
+[; ;SC8F096_ADC.c: 248: {
+"248
+{
+[; ;SC8F096_ADC.c: 249: bat_mv = (1159UL * vx_mv);
+"249
+[e = _bat_mv * -> 1159 `ul -> _vx_mv `ul ]
+[; ;SC8F096_ADC.c: 250: if(bat_mv > (647UL * (unsigned long)vcc_mv))
+"250
+[e $ ! > _bat_mv * -> 647 `ul -> _vcc_mv `ul 50  ]
+[; ;SC8F096_ADC.c: 251: {
+"251
+{
+[; ;SC8F096_ADC.c: 252: bat_mv = (bat_mv - 647UL * (unsigned long)vcc_mv + 1000UL/2) / 1000UL;
+"252
+[e = _bat_mv / + - _bat_mv * -> 647 `ul -> _vcc_mv `ul / -> 1000 `ul -> -> -> 2 `i `l `ul -> 1000 `ul ]
+[; ;SC8F096_ADC.c: 253: uart_send_string("B");
+"253
+[e ( _uart_send_string (1 :s 5C ]
+[; ;SC8F096_ADC.c: 254: uart_send_number(bx+1);
+"254
+[e ( _uart_send_number (1 -> + -> _bx `i -> 1 `i `ui ]
+[; ;SC8F096_ADC.c: 255: uart_send_string("=");
+"255
+[e ( _uart_send_string (1 :s 6C ]
+[; ;SC8F096_ADC.c: 256: uart_send_number(vdd_buf[bx]);
+"256
+[e ( _uart_send_number (1 *U + &U _vdd_buf * -> _bx `ux -> -> # *U &U _vdd_buf `ui `ux ]
+[; ;SC8F096_ADC.c: 257: uart_send_string(" BAT(");
+"257
+[e ( _uart_send_string (1 :s 7C ]
+[; ;SC8F096_ADC.c: 258: uart_send_number((unsigned int)bat_mv);
+"258
+[e ( _uart_send_number (1 -> _bat_mv `ui ]
+[; ;SC8F096_ADC.c: 259: uart_send_string("mV)");
+"259
+[e ( _uart_send_string (1 :s 8C ]
+"260
+}
+[; ;SC8F096_ADC.c: 260: }
+[e $U 51  ]
+"261
+[e :U 50 ]
+[; ;SC8F096_ADC.c: 261: else
+[; ;SC8F096_ADC.c: 262: {
+"262
+{
+[; ;SC8F096_ADC.c: 263: uart_send_string("B");
+"263
+[e ( _uart_send_string (1 :s 9C ]
+[; ;SC8F096_ADC.c: 264: uart_send_number(bx+1);
+"264
+[e ( _uart_send_number (1 -> + -> _bx `i -> 1 `i `ui ]
+[; ;SC8F096_ADC.c: 265: uart_send_string("=");
+"265
+[e ( _uart_send_string (1 :s 10C ]
+[; ;SC8F096_ADC.c: 266: uart_send_number(vdd_buf[bx]);
+"266
+[e ( _uart_send_number (1 *U + &U _vdd_buf * -> _bx `ux -> -> # *U &U _vdd_buf `ui `ux ]
+[; ;SC8F096_ADC.c: 267: uart_send_string(" ?[");
+"267
+[e ( _uart_send_string (1 :s 11C ]
+[; ;SC8F096_ADC.c: 268: uart_send_number((unsigned int)vx_mv);
+"268
+[e ( _uart_send_number (1 _vx_mv ]
+[; ;SC8F096_ADC.c: 269: uart_send_string("mV)");
+"269
+[e ( _uart_send_string (1 :s 12C ]
+"270
+}
+[e :U 51 ]
+"271
+}
+[e :U 49 ]
+[; ;SC8F096_ADC.c: 270: }
+[; ;SC8F096_ADC.c: 271: }
+[; ;SC8F096_ADC.c: 272: uart_send_string(" ");
+"272
+[e ( _uart_send_string (1 :s 13C ]
+"273
+}
+"233
+[e ++ _bx -> -> 1 `i `uc ]
+[e $ < -> _bx `i -> 6 `i 45  ]
+[e :U 46 ]
+"273
+}
+[; ;SC8F096_ADC.c: 273: }
+[; ;SC8F096_ADC.c: 274: uart_send_string("\r\n ");
+"274
+[e ( _uart_send_string (1 :s 14C ]
+[; ;SC8F096_ADC.c: 275: asm("clrwdt");
+"275
+[; <" clrwdt ;# ">
+[; ;SC8F096_ADC.c: 278: for(bx = 6; bx < 12; bx++)
+"278
+{
+[e = _bx -> -> 6 `i `uc ]
+[e $ < -> _bx `i -> 12 `i 52  ]
+[e $U 53  ]
+"279
+[e :U 52 ]
+[; ;SC8F096_ADC.c: 279: {
+{
+"280
+[v _bat_mv `ul ~T0 @X0 1 a ]
+"281
+[v _vx_mv `ui ~T0 @X0 1 a ]
+[; ;SC8F096_ADC.c: 280: unsigned long bat_mv;
+[; ;SC8F096_ADC.c: 281: unsigned int vx_mv;
+[; ;SC8F096_ADC.c: 283: vx_mv = (unsigned long)vdd_buf[bx] * vcc_mv / 4096UL;
+"283
+[e = _vx_mv -> / * -> *U + &U _vdd_buf * -> _bx `ux -> -> # *U &U _vdd_buf `ui `ux `ul -> _vcc_mv `ul -> 4096 `ul `ui ]
+[; ;SC8F096_ADC.c: 284: if(vx_mv + 200U >= vcc_mv)
+"284
+[e $ ! >= + _vx_mv -> 200 `ui _vcc_mv 55  ]
+[; ;SC8F096_ADC.c: 285: {
+"285
+{
+[; ;SC8F096_ADC.c: 286: uart_send_string("B");
+"286
+[e ( _uart_send_string (1 :s 15C ]
+[; ;SC8F096_ADC.c: 287: uart_send_number(bx+1);
+"287
+[e ( _uart_send_number (1 -> + -> _bx `i -> 1 `i `ui ]
+[; ;SC8F096_ADC.c: 288: uart_send_string("=");
+"288
+[e ( _uart_send_string (1 :s 16C ]
+[; ;SC8F096_ADC.c: 289: uart_send_number(vdd_buf[bx]);
+"289
+[e ( _uart_send_number (1 *U + &U _vdd_buf * -> _bx `ux -> -> # *U &U _vdd_buf `ui `ux ]
+[; ;SC8F096_ADC.c: 290: uart_send_string(" OPEN");
+"290
+[e ( _uart_send_string (1 :s 17C ]
+"291
+}
+[; ;SC8F096_ADC.c: 291: }
+[e $U 56  ]
+"292
+[e :U 55 ]
+[; ;SC8F096_ADC.c: 292: else
+[; ;SC8F096_ADC.c: 293: {
+"293
+{
+[; ;SC8F096_ADC.c: 294: bat_mv = (1159UL * vx_mv);
+"294
+[e = _bat_mv * -> 1159 `ul -> _vx_mv `ul ]
+[; ;SC8F096_ADC.c: 295: if(bat_mv > (647UL * (unsigned long)vcc_mv))
+"295
+[e $ ! > _bat_mv * -> 647 `ul -> _vcc_mv `ul 57  ]
+[; ;SC8F096_ADC.c: 296: {
+"296
+{
+[; ;SC8F096_ADC.c: 297: bat_mv = (bat_mv - 647UL * (unsigned long)vcc_mv + 1000UL/2) / 1000UL;
+"297
+[e = _bat_mv / + - _bat_mv * -> 647 `ul -> _vcc_mv `ul / -> 1000 `ul -> -> -> 2 `i `l `ul -> 1000 `ul ]
+[; ;SC8F096_ADC.c: 298: uart_send_string("B");
+"298
+[e ( _uart_send_string (1 :s 18C ]
+[; ;SC8F096_ADC.c: 299: uart_send_number(bx+1);
+"299
+[e ( _uart_send_number (1 -> + -> _bx `i -> 1 `i `ui ]
+[; ;SC8F096_ADC.c: 300: uart_send_string("=");
+"300
+[e ( _uart_send_string (1 :s 19C ]
+[; ;SC8F096_ADC.c: 301: uart_send_number(vdd_buf[bx]);
+"301
+[e ( _uart_send_number (1 *U + &U _vdd_buf * -> _bx `ux -> -> # *U &U _vdd_buf `ui `ux ]
+[; ;SC8F096_ADC.c: 302: uart_send_string(" BAT(");
+"302
+[e ( _uart_send_string (1 :s 20C ]
+[; ;SC8F096_ADC.c: 303: uart_send_number((unsigned int)bat_mv);
+"303
+[e ( _uart_send_number (1 -> _bat_mv `ui ]
+[; ;SC8F096_ADC.c: 304: uart_send_string("mV) ");
+"304
+[e ( _uart_send_string (1 :s 21C ]
+"305
+}
+[; ;SC8F096_ADC.c: 305: }
+[e $U 58  ]
+"306
+[e :U 57 ]
+[; ;SC8F096_ADC.c: 306: else
+[; ;SC8F096_ADC.c: 307: {
+"307
+{
+[; ;SC8F096_ADC.c: 308: uart_send_string("B");
+"308
+[e ( _uart_send_string (1 :s 22C ]
+[; ;SC8F096_ADC.c: 309: uart_send_number(bx+1);
+"309
+[e ( _uart_send_number (1 -> + -> _bx `i -> 1 `i `ui ]
+[; ;SC8F096_ADC.c: 310: uart_send_string("=");
+"310
+[e ( _uart_send_string (1 :s 23C ]
+[; ;SC8F096_ADC.c: 311: uart_send_number(vdd_buf[bx]);
+"311
+[e ( _uart_send_number (1 *U + &U _vdd_buf * -> _bx `ux -> -> # *U &U _vdd_buf `ui `ux ]
+[; ;SC8F096_ADC.c: 312: uart_send_string(" ?[");
+"312
+[e ( _uart_send_string (1 :s 24C ]
+[; ;SC8F096_ADC.c: 313: uart_send_number((unsigned int)vx_mv);
+"313
+[e ( _uart_send_number (1 _vx_mv ]
+[; ;SC8F096_ADC.c: 314: uart_send_string("mV) ");
+"314
+[e ( _uart_send_string (1 :s 25C ]
+"315
+}
+[e :U 58 ]
+"316
+}
+[e :U 56 ]
+[; ;SC8F096_ADC.c: 315: }
+[; ;SC8F096_ADC.c: 316: }
+[; ;SC8F096_ADC.c: 317: uart_send_string(" ");
+"317
+[e ( _uart_send_string (1 :s 26C ]
+"318
+}
+"278
+[e ++ _bx -> -> 1 `i `uc ]
+[e $ < -> _bx `i -> 12 `i 52  ]
+[e :U 53 ]
+"318
+}
+[; ;SC8F096_ADC.c: 318: }
+[; ;SC8F096_ADC.c: 320: print_ntc:
+"320
+[e :U 59 ]
+[; ;SC8F096_ADC.c: 322: test_adc = ADC_Sample(18, 0);
+"322
+[e = _test_adc ( _ADC_Sample (2 , -> -> 18 `i `uc -> -> 0 `i `uc ]
+[; ;SC8F096_ADC.c: 323: if(0xA5 == test_adc)
+"323
+[e $ ! == -> 165 `i -> _test_adc `i 60  ]
+[; ;SC8F096_ADC.c: 324: {
+"324
+{
+"325
+[v _ntc_adc `ui ~T0 @X0 1 a ]
+[; ;SC8F096_ADC.c: 325: unsigned int ntc_adc = adresult;
+[e = _ntc_adc _adresult ]
+[; ;SC8F096_ADC.c: 327: uart_send_string(" NTC=");
+"327
+[e ( _uart_send_string (1 :s 27C ]
+[; ;SC8F096_ADC.c: 328: uart_send_number(ntc_adc);
+"328
+[e ( _uart_send_number (1 _ntc_adc ]
+[; ;SC8F096_ADC.c: 330: if(ntc_adc < 100)
+"330
+[e $ ! < _ntc_adc -> -> 100 `i `ui 61  ]
+[; ;SC8F096_ADC.c: 331: {
+"331
+{
+[; ;SC8F096_ADC.c: 332: uart_send_string(" T=SHORT");
+"332
+[e ( _uart_send_string (1 :s 28C ]
+"333
+}
+[; ;SC8F096_ADC.c: 333: }
+[e $U 62  ]
+"334
+[e :U 61 ]
+[; ;SC8F096_ADC.c: 334: else if(ntc_adc > 3996)
+[e $ ! > _ntc_adc -> -> 3996 `i `ui 63  ]
+[; ;SC8F096_ADC.c: 335: {
+"335
+{
+[; ;SC8F096_ADC.c: 336: uart_send_string(" T=OPEN");
+"336
+[e ( _uart_send_string (1 :s 29C ]
+"337
+}
+[; ;SC8F096_ADC.c: 337: }
+[e $U 64  ]
+"338
+[e :U 63 ]
+[; ;SC8F096_ADC.c: 338: else
+[; ;SC8F096_ADC.c: 339: {
+"339
+{
+"340
+[v _rt `ul ~T0 @X0 1 a ]
+[; ;SC8F096_ADC.c: 340: unsigned long rt = (unsigned long)ntc_adc * 10000UL / (4096UL - ntc_adc);
+[e = _rt / * -> _ntc_adc `ul -> 10000 `ul - -> 4096 `ul -> _ntc_adc `ul ]
+"341
+[v _temp_x10 `ui ~T0 @X0 1 a ]
+[; ;SC8F096_ADC.c: 341: unsigned int temp_x10;
+[; ;SC8F096_ADC.c: 342: if(rt >= 10000UL)
+"342
+[e $ ! >= _rt -> 10000 `ul 65  ]
+[; ;SC8F096_ADC.c: 343: temp_x10 = 250U - (unsigned int)((rt - 10000UL) * 10UL / 445UL);
+"343
+[e = _temp_x10 - -> 250 `ui -> / * - _rt -> 10000 `ul -> 10 `ul -> 445 `ul `ui ]
+[e $U 66  ]
+"344
+[e :U 65 ]
+[; ;SC8F096_ADC.c: 344: else
+[; ;SC8F096_ADC.c: 345: temp_x10 = 250U + (unsigned int)((10000UL - rt) * 10UL / 445UL);
+"345
+[e = _temp_x10 + -> 250 `ui -> / * - -> 10000 `ul _rt -> 10 `ul -> 445 `ul `ui ]
+[e :U 66 ]
+[; ;SC8F096_ADC.c: 347: uart_send_string(" T=");
+"347
+[e ( _uart_send_string (1 :s 30C ]
+[; ;SC8F096_ADC.c: 348: uart_send_number(temp_x10 / 10);
+"348
+[e ( _uart_send_number (1 / _temp_x10 -> -> 10 `i `ui ]
+[; ;SC8F096_ADC.c: 349: uart_send_string(".");
+"349
+[e ( _uart_send_string (1 :s 31C ]
+[; ;SC8F096_ADC.c: 350: uart_send_number(temp_x10 % 10);
+"350
+[e ( _uart_send_number (1 % _temp_x10 -> -> 10 `i `ui ]
+[; ;SC8F096_ADC.c: 351: uart_send_string("C");
+"351
+[e ( _uart_send_string (1 :s 32C ]
+"352
+}
+[e :U 64 ]
+[e :U 62 ]
+"353
+}
+[e :U 60 ]
+[; ;SC8F096_ADC.c: 352: }
+[; ;SC8F096_ADC.c: 353: }
+[; ;SC8F096_ADC.c: 355: uart_send_string("\r\n VCC=");
+"355
+[e ( _uart_send_string (1 :s 33C ]
+[; ;SC8F096_ADC.c: 356: uart_send_number(vcc_mv);
+"356
+[e ( _uart_send_number (1 _vcc_mv ]
+[; ;SC8F096_ADC.c: 357: uart_send_string("mV\r\n");
+"357
+[e ( _uart_send_string (1 :s 34C ]
+[; ;SC8F096_ADC.c: 359: asm("clrwdt");
+"359
+[; <" clrwdt ;# ">
+"360
+}
+[e :U 40 ]
+"197
+[e $U 41  ]
+[e :U 42 ]
+[; ;SC8F096_ADC.c: 360: }
+[; ;SC8F096_ADC.c: 361: }
+"361
+[e :UE 39 ]
+}
+"366
+[v _Init_System `(v ~T0 @X0 1 ef ]
+"367
+{
+[; ;SC8F096_ADC.c: 366: void Init_System(void)
+[; ;SC8F096_ADC.c: 367: {
+[e :U _Init_System ]
+[f ]
+[; ;SC8F096_ADC.c: 368: asm("nop");
+"368
+[; <" nop ;# ">
+[; ;SC8F096_ADC.c: 369: asm("clrwdt");
+"369
+[; <" clrwdt ;# ">
+[; ;SC8F096_ADC.c: 370: OPTION_REG = 0x0F;
+"370
+[e = _OPTION_REG -> -> 15 `i `uc ]
+[; ;SC8F096_ADC.c: 371: asm("clrwdt");
+"371
+[; <" clrwdt ;# ">
+[; ;SC8F096_ADC.c: 372: OSCCON = 0X70;
+"372
+[e = _OSCCON -> -> 112 `i `uc ]
+[; ;SC8F096_ADC.c: 374: WPUA = 0B00000000;
+"374
+[e = _WPUA -> -> 0 `i `uc ]
+[; ;SC8F096_ADC.c: 375: WPUB = 0B00000000;
+"375
+[e = _WPUB -> -> 0 `i `uc ]
+[; ;SC8F096_ADC.c: 376: WPUC = 0B00000000;
+"376
+[e = _WPUC -> -> 0 `i `uc ]
+[; ;SC8F096_ADC.c: 377: WPUD = 0B00000000;
+"377
+[e = _WPUD -> -> 0 `i `uc ]
+[; ;SC8F096_ADC.c: 382: TRISA = 0xF0; PORTA = 0x0F;
+"382
+[e = _TRISA -> -> 240 `i `uc ]
+[e = _PORTA -> -> 15 `i `uc ]
+[; ;SC8F096_ADC.c: 383: TRISB = 0x30; PORTB = 0x4F;
+"383
+[e = _TRISB -> -> 48 `i `uc ]
+[e = _PORTB -> -> 79 `i `uc ]
+[; ;SC8F096_ADC.c: 384: TRISC = 0x07; PORTC = 0x00;
+"384
+[e = _TRISC -> -> 7 `i `uc ]
+[e = _PORTC -> -> 0 `i `uc ]
+[; ;SC8F096_ADC.c: 385: TRISD = 0xF0; PORTD = 0x0F;
+"385
+[e = _TRISD -> -> 240 `i `uc ]
+[e = _PORTD -> -> 15 `i `uc ]
+[; ;SC8F096_ADC.c: 387: CC0CON = 0;
+"387
+[e = _CC0CON -> -> 0 `i `uc ]
+[; ;SC8F096_ADC.c: 388: CC1CON = 0;
+"388
+[e = _CC1CON -> -> 0 `i `uc ]
+[; ;SC8F096_ADC.c: 390: PR2 = 249;
+"390
+[e = _PR2 -> -> 249 `i `uc ]
+[; ;SC8F096_ADC.c: 391: TMR2IF = 0;
+"391
+[e = _TMR2IF -> -> 0 `i `b ]
+[; ;SC8F096_ADC.c: 392: TMR2IE = 1;
+"392
+[e = _TMR2IE -> -> 1 `i `b ]
+[; ;SC8F096_ADC.c: 393: T2CON = 0B00000100;
+"393
+[e = _T2CON -> -> 4 `i `uc ]
+[; ;SC8F096_ADC.c: 394: INTCON = 0XC0;
+"394
+[e = _INTCON -> -> 192 `i `uc ]
+[; ;SC8F096_ADC.c: 395: }
+"395
+[e :UE 67 ]
+}
+[v $root$_Isr_Timer `(v ~T0 @X0 0 e ]
+[v F1361 `(v ~T0 @X0 1 tf ]
+"397
+[v _Isr_Timer `IF1361 ~T0 @X0 1 e ]
+"398
+{
+[; ;SC8F096_ADC.c: 397: void interrupt Isr_Timer(void)
+[; ;SC8F096_ADC.c: 398: {
+[e :U _Isr_Timer ]
+[f ]
+[; ;SC8F096_ADC.c: 399: if(TMR2IF)
+"399
+[e $ ! _TMR2IF 69  ]
+[; ;SC8F096_ADC.c: 400: {
+"400
+{
+[; ;SC8F096_ADC.c: 401: TMR2IF = 0;
+"401
+[e = _TMR2IF -> -> 0 `i `b ]
+"402
+}
+[e :U 69 ]
+[; ;SC8F096_ADC.c: 402: }
+[; ;SC8F096_ADC.c: 403: }
+"403
+[e :UE 68 ]
+}
+[a 11C 32 63 91 0 ]
+[a 24C 32 63 91 0 ]
+[a 28C 32 84 61 83 72 79 82 84 0 ]
+[a 29C 32 84 61 79 80 69 78 0 ]
+[a 4C 32 79 80 69 78 0 ]
+[a 17C 32 79 80 69 78 0 ]
+[a 32C 67 0 ]
+[a 2C 66 0 ]
+[a 5C 66 0 ]
+[a 9C 66 0 ]
+[a 15C 66 0 ]
+[a 18C 66 0 ]
+[a 22C 66 0 ]
+[a 30C 32 84 61 0 ]
+[a 27C 32 78 84 67 61 0 ]
+[a 33C 13 10 32 86 67 67 61 0 ]
+[a 3C 61 0 ]
+[a 6C 61 0 ]
+[a 10C 61 0 ]
+[a 16C 61 0 ]
+[a 19C 61 0 ]
+[a 23C 61 0 ]
+[a 31C 46 0 ]
+[a 8C 109 86 41 0 ]
+[a 12C 109 86 41 0 ]
+[a 7C 32 66 65 84 40 0 ]
+[a 20C 32 66 65 84 40 0 ]
+[a 21C 109 86 41 32 0 ]
+[a 25C 109 86 41 32 0 ]
+[a 14C 13 10 32 0 ]
+[a 13C 32 0 ]
+[a 26C 32 0 ]
+[a 1C 66 49 45 66 49 50 32 65 68 67 32 84 101 115 116 13 10 0 ]
+[a 34C 109 86 13 10 0 ]

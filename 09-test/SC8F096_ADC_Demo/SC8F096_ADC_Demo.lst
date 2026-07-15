@@ -1,1232 +1,2208 @@
 ---- E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_ADC_Demo\SC8F096_ADC.c ----------------------------------------------------------------------
 1:                /**********************************************************
-2:                ADºÏ≤‚∑∂¿˝≥Ã–Ú
-3:                **********************************************************/
-4:                #pragma warning disable 752
-5:                #pragma warning disable 373			//∆¡±ŒµÙ±‡“Îµƒ1∏ˆæØ∏Ê
-6:                #include <sc.h>
-7:                
-8:                #ifndef _XTAL_FREQ
-9:                #define _XTAL_FREQ 16000000			//16MHz, π”√ƒ⁄÷√—” ±∫Ø ˝±ÿ–Î∂®“Â÷˜∆µ£¨
-10:               									//»Á”√FCPU_DIV—°‘Ò2T£¨‘Ú∂® ±∏≥÷µºı∞Î
-11:               #endif
-12:               
-13:               #define     POWER_RATIO  	(4096UL*1.2*1000)
+2:                12ÊßΩ ADC ÈááÈõÜÊµãËØï - ÂèåÂèÇÊï∞Á∫øÊÄßÊ†áÂÆö
+3:                SC8F096, 16MHz, UART TX=RC4(J1-CLK), 9600bps
+4:                Êé•Á∫ø: J1-CLK(RC4) ‚Üí USB-TTLÊ®°ÂùóRX, J1-GND ‚Üí Ê®°ÂùóGND
+5:                Ê≥®ÊÑè: ÁÉßÂΩïÂÆåÂøÖÈ°ªÊãîÊéâÁÉßÂΩïÂô®, ÂÜçÊé•‰∏≤Âè£Ê®°Âùó
+6:                
+7:                Ê†áÂÆöÁÇπ: ADC=3345‚Üí1.52V, ADC=3457‚Üí1.68V (‰∏áÁî®Ë°®ÂØπÁÖß)
+8:                ÂÖ¨Âºè: V_BAT = (1159*V_B1AD - 647*VCC) / 1000
+9:                       Œ±=1.159, Œ≤=0.647 (ÂèåÂèÇÊï∞Á∫øÊÄßÊãüÂêà, ÊØîÂè†Âä†ÂÆöÁêÜÊõ¥ÂêªÂêàÂÆûÊµã)
+10:               **********************************************************/
+11:               #pragma warning disable 752
+12:               #pragma warning disable 373
+13:               #include <sc.h>
 14:               
-15:               volatile unsigned int adresult;
-16:               volatile unsigned int result;
-17:               volatile unsigned char test_adc;
-18:               volatile unsigned int power_ad;
-19:               
-20:               unsigned char ADC_Sample(unsigned char adch, unsigned char adldo);
-21:               void DelayXms(unsigned char x);
-22:               unsigned char ADC_Result(unsigned char adch);
-23:               void Init_System();
-24:               void AD_Init();
-25:               
-26:               #define _DEBUG			//µ˜ ‘≥Ã–Ú”√
-27:               
-28:               /**********************************************************
-29:               ∫Ø ˝√˚≥∆£∫AD_Sample
-30:               ∫Ø ˝π¶ƒ‹£∫ADºÏ≤‚
-31:               »Îø⁄≤Œ ˝£∫adch - ºÏ≤‚Õ®µ¿
-32:               ≥ˆø⁄≤Œ ˝£∫Œﬁ
-33:               ±∏    ◊¢£∫≤…—˘Õ®µ¿–Ë◊‘––…Ë÷√Œ™ ‰»Îø⁄
-34:               	      ≤…—˘10¥Œ,»°÷–º‰∞À¥Œµƒ∆Ωæ˘÷µŒ™≤…—˘Ω·π˚¥Ê”⁄adresult÷–
-35:               
-36:               	      adch Œ™ ‰»ÎADÕ®µ¿ 0-15£¨31
-37:                            31  ºÏ≤‚ƒ⁄≤ø1.2V
-38:               	
-39:                		  adldo =5,ø™∆Ùƒ⁄≤øLDO 2V ◊˜Œ™ADC ≤Œøº
-40:                		  adldo =6,ø™∆Ùƒ⁄≤øLDO 2.4V ◊˜Œ™ADC ≤Œøº
-41:               		  adldo =7,ø™∆Ùƒ⁄≤øLDO 3V ◊˜Œ™ADC ≤Œøº
-42:                		  adldo =0,VDD ◊˜Œ™ADC ≤Œøº
-43:                		  AD◊™ªªΩ·π˚◊Û∂‘∆Î
-44:                		  ADC≤ŒøºµÁ—π¥”VDD«–ªªµΩLDO ±–Ë“™—” ±100us“‘…œ£¨≤≈ƒ‹Ω¯––AD◊™ªª
-45:               **********************************************************/
-46:               unsigned char ADC_Sample(unsigned char adch, unsigned char adldo) 
-  001B    1283    CLRB	0x3,5
-  001C    1303    CLRB	0x3,6
-  001D    00A1    LD	0x21,A
-47:               {
-48:               	volatile unsigned long adsum = 0;
-49:               	volatile unsigned int admin = 0, admax = 0;
-  001E    2109    CALL	0x109
-  001F    120A    CLRB	0xA,4
-  0020    118A    CLRB	0xA,3
-50:               	volatile unsigned int ad_temp = 0;
-  0021    01AB    CLR	0x2B
-  0022    01AC    CLR	0x2C
-51:               
-52:               	if ((!LDO_EN) && (adldo & 0x04) ) 
-  0023    1683    SETB	0x3,5
-  0024    1D16    SNZB	0x16,2
-  0025    1D72    SNZB	0x72,2
-  0026    282E    JP	0x2E
-53:               	{
-54:               								//»Áπ˚AD≤Œøº¥”VDDªªµΩƒ⁄≤øLDO£¨–Ë“™—” ±100US“‘…œ
-55:               		ADCON1 = adldo;			//◊Û∂‘∆Î,AD÷µ»°12Œª
-  0027    0872    LD	A,0x72
-  0028    0096    LD	0x16,A
-56:               		__delay_us(100);		//IDEƒ⁄÷√—” ±∫Ø ˝£¨—” ±100us
-  0029    3085    LDIA	0x85
-  002A    00F3    LD	0x73,A
-  002B    0BF3    SZDECR	0x73
-  002C    282B    JP	0x2B
-57:               	} 
-  002D    2830    JP	0x30
-58:               	else
-59:               		ADCON1 = adldo;			//»Áπ˚ADCON1.7(ADFM)=1Œ™”“∂‘∆Î£¨,AD÷µ»°10Œª
-  002E    0872    LD	A,0x72
-  002F    0096    LD	0x16,A
-60:               
-61:               	if(adch & 0x10) 
-  0030    1283    CLRB	0x3,5
-  0031    1303    CLRB	0x3,6
-  0032    1E21    SNZB	0x21,4
-  0033    283A    JP	0x3A
-62:               	{
-63:               		CHS4 = 1;
-  0034    1683    SETB	0x3,5
-  0035    1716    SETB	0x16,6
-64:               		adch &= 0x0f;
-  0036    300F    LDIA	0xF
-  0037    1283    CLRB	0x3,5
-  0038    05A1    ANDR	0x21
-65:               	}
-  0039    283C    JP	0x3C
-66:               	else
-67:               		CHS4 = 0;
-  003A    1683    SETB	0x3,5
-  003B    1316    CLRB	0x16,6
-68:               	unsigned char i = 0;
-  003C    1283    CLRB	0x3,5
-  003D    01A2    CLR	0x22
-69:               	for (i = 0; i < 10; i++) 
-  003E    01A2    CLR	0x22
-70:               	{
-71:               		ADCON0 = (unsigned char)(0X41 | (adch << 2));	//16∑÷∆µ£¨»Áπ˚÷˜∆µŒ™16M£¨‘Ú±ÿ–Î—°16∑÷∆µªÚ“‘…œ
-  003F    0821    LD	A,0x21
-  0040    00F3    LD	0x73,A
-  0041    3001    LDIA	0x1
-  0042    1003    CLRB	0x3,0
-  0043    0DF3    RLCR	0x73
-  0044    3EFF    ADDIA	0xFF
-  0045    1003    CLRB	0x3,0
-  0046    1D03    SNZB	0x3,2
-  0047    2843    JP	0x43
-  0048    0D73    RLCA	0x73
-  0049    3841    ORIA	0x41
-  004A    1683    SETB	0x3,5
-  004B    0095    LD	0x15,A
-  004C    0000    NOP
-  004D    0000    NOP
-  004E    0000    NOP
-  004F    0000    NOP
-72:               		asm("nop");
-73:               		asm("nop");
-74:               		asm("nop");
-75:               		asm("nop");				//—°‘ÒÕ®µ¿∫Û–Ë—” ±1uS“‘…œ
-76:               		GODONE = 1;				//ø™ º◊™ªª
-  0050    1683    SETB	0x3,5
-  0051    1303    CLRB	0x3,6
-  0052    1495    SETB	0x15,1
-77:               
-78:               		unsigned char j = 0;
-  0053    1283    CLRB	0x3,5
-  0054    01A0    CLR	0x20
-79:               		while (GODONE) 
-  0055    1683    SETB	0x3,5
-  0056    1C95    SNZB	0x15,1
-  0057    2861    JP	0x61
-80:               		{
-81:               			__delay_us(2);		//—” ±2us(±‡“Î∆˜ƒ⁄÷√∫Ø ˝)
-  0058    2859    JP	0x59
-  0059    285A    JP	0x5A
-  005A    285B    JP	0x5B
-  005B    285C    JP	0x5C
-82:               
-83:               			if (0 == (--j))		//—” ±0.5ms»‘√ª”–AD◊™ªªΩ· ¯£¨Ã¯≥ˆ≥Ã–Ú
-  005C    1283    CLRB	0x3,5
-  005D    1303    CLRB	0x3,6
-  005E    0BA0    SZDECR	0x20
-  005F    2855    JP	0x55
-84:               			return 0;
-  0060    3400    RET	0x0
-85:               		}
-86:               
-87:               		ad_temp = (unsigned int)((ADRESH << 4) + (ADRESL >> 4));	//º∆À„12ŒªAD÷µ
-  0061    0819    LD	A,0x19
-  0062    1283    CLRB	0x3,5
-  0063    00AB    LD	0x2B,A
-  0064    01AC    CLR	0x2C
-  0065    0EAB    SWAPR	0x2B
-  0066    0EAC    SWAPR	0x2C
-  0067    30F0    LDIA	0xF0
-  0068    05AC    ANDR	0x2C
-  0069    082B    LD	A,0x2B
-  006A    390F    ANDIA	0xF
-  006B    04AC    ORR	0x2C
-  006C    30F0    LDIA	0xF0
-  006D    05AB    ANDR	0x2B
-  006E    1683    SETB	0x3,5
-  006F    0E18    SWAPA	0x18
-  0070    390F    ANDIA	0xF
-  0071    1283    CLRB	0x3,5
-  0072    07AB    ADDR	0x2B
-  0073    1803    SZB	0x3,0
-  0074    0AAC    INCR	0x2C
-88:               
-89:               		if (0 == admax) 
-  0075    0829    LD	A,0x29
-  0076    042A    ORA	0x2A
-  0077    1D03    SNZB	0x3,2
-  0078    287E    JP	0x7E
-90:               		{
-91:               			admax = ad_temp;
-  0079    082C    LD	A,0x2C
-  007A    00AA    LD	0x2A,A
-  007B    082B    LD	A,0x2B
-  007C    00A9    LD	0x29,A
-  007D    2893    JP	0x93
-92:               			admin = ad_temp;
-93:               		} 
-94:               		else if (ad_temp > admax)
-  007E    082C    LD	A,0x2C
-  007F    022A    SUBA	0x2A
-  0080    1D03    SNZB	0x3,2
-  0081    2884    JP	0x84
-  0082    082B    LD	A,0x2B
-  0083    0229    SUBA	0x29
-  0084    1803    SZB	0x3,0
-  0085    288B    JP	0x8B
-95:               			admax = ad_temp;				//AD≤…—˘◊Ó¥Û÷µ
-  0086    082C    LD	A,0x2C
-  0087    00AA    LD	0x2A,A
-  0088    082B    LD	A,0x2B
-  0089    00A9    LD	0x29,A
-  008A    2897    JP	0x97
-96:               		else if (ad_temp < admin)
-  008B    0828    LD	A,0x28
-  008C    022C    SUBA	0x2C
-  008D    1D03    SNZB	0x3,2
-  008E    2891    JP	0x91
-  008F    0827    LD	A,0x27
-  0090    022B    SUBA	0x2B
-  0091    1803    SZB	0x3,0
-  0092    2897    JP	0x97
-97:               			admin = ad_temp;				//AD≤…—˘◊Ó–°÷µ
-  0093    082C    LD	A,0x2C
-  0094    00A8    LD	0x28,A
-  0095    082B    LD	A,0x2B
-  0096    00A7    LD	0x27,A
-98:               
-99:               		adsum += ad_temp;
-  0097    082B    LD	A,0x2B
-  0098    00F3    LD	0x73,A
-  0099    082C    LD	A,0x2C
-  009A    00F4    LD	0x74,A
-  009B    01F5    CLR	0x75
-  009C    01F6    CLR	0x76
-  009D    0873    LD	A,0x73
-  009E    07A3    ADDR	0x23
-  009F    0874    LD	A,0x74
-  00A0    1103    CLRB	0x3,2
-  00A1    1803    SZB	0x3,0
-  00A2    3E01    ADDIA	0x1
-  00A3    1D03    SNZB	0x3,2
-  00A4    07A4    ADDR	0x24
-  00A5    0875    LD	A,0x75
-  00A6    1103    CLRB	0x3,2
-  00A7    1803    SZB	0x3,0
-  00A8    3E01    ADDIA	0x1
-  00A9    1D03    SNZB	0x3,2
-  00AA    07A5    ADDR	0x25
-  00AB    0876    LD	A,0x76
-  00AC    1103    CLRB	0x3,2
-  00AD    1803    SZB	0x3,0
-  00AE    3E01    ADDIA	0x1
-  00AF    1D03    SNZB	0x3,2
-  00B0    07A6    ADDR	0x26
-  00B1    300A    LDIA	0xA
-  00B2    0AA2    INCR	0x22
-  00B3    0222    SUBA	0x22
-  00B4    1C03    SNZB	0x3,0
-  00B5    283F    JP	0x3F
-100:              	}
-101:              		adsum -= admax;
-  00B6    0829    LD	A,0x29
-  00B7    00F3    LD	0x73,A
-  00B8    082A    LD	A,0x2A
-  00B9    20FA    CALL	0xFA
-  00BA    120A    CLRB	0xA,4
-  00BB    118A    CLRB	0xA,3
-  00BC    1C03    SNZB	0x3,0
-  00BD    0F76    SZINCA	0x76
-  00BE    02A6    SUBR	0x26
-102:              		if (adsum >= admin)
-  00BF    0827    LD	A,0x27
-  00C0    00F3    LD	0x73,A
-  00C1    0828    LD	A,0x28
-  00C2    00F4    LD	0x74,A
-  00C3    01F5    CLR	0x75
-  00C4    01F6    CLR	0x76
-  00C5    0876    LD	A,0x76
-  00C6    0226    SUBA	0x26
-  00C7    1D03    SNZB	0x3,2
-  00C8    28D3    JP	0xD3
-  00C9    0875    LD	A,0x75
-  00CA    0225    SUBA	0x25
-  00CB    1D03    SNZB	0x3,2
-  00CC    28D3    JP	0xD3
-  00CD    0874    LD	A,0x74
-  00CE    0224    SUBA	0x24
-  00CF    1D03    SNZB	0x3,2
-  00D0    28D3    JP	0xD3
-  00D1    0873    LD	A,0x73
-  00D2    0223    SUBA	0x23
-  00D3    1C03    SNZB	0x3,0
-  00D4    28DF    JP	0xDF
-103:              			adsum -= admin;
-  00D5    0827    LD	A,0x27
-  00D6    00F3    LD	0x73,A
-  00D7    0828    LD	A,0x28
-  00D8    20FA    CALL	0xFA
-  00D9    120A    CLRB	0xA,4
-  00DA    118A    CLRB	0xA,3
-  00DB    1C03    SNZB	0x3,0
-  00DC    0F76    SZINCA	0x76
-  00DD    02A6    SUBR	0x26
-  00DE    28E3    JP	0xE3
-104:              		else
-105:              			adsum = 0;
-  00DF    01A3    CLR	0x23
-  00E0    01A4    CLR	0x24
-  00E1    01A5    CLR	0x25
-  00E2    01A6    CLR	0x26
-106:              
-107:              		adresult = adsum >> 3;		//8¥Œ∆Ωæ˘÷µ◊˜Œ™◊Ó÷’Ω·π˚
-  00E3    0823    LD	A,0x23
-  00E4    00F3    LD	0x73,A
-  00E5    0824    LD	A,0x24
-  00E6    00F4    LD	0x74,A
-  00E7    0825    LD	A,0x25
-  00E8    00F5    LD	0x75,A
-  00E9    0826    LD	A,0x26
-  00EA    00F6    LD	0x76,A
-  00EB    3003    LDIA	0x3
-  00EC    1003    CLRB	0x3,0
-  00ED    0CF6    RRCR	0x76
-  00EE    0CF5    RRCR	0x75
-  00EF    0CF4    RRCR	0x74
-  00F0    0CF3    RRCR	0x73
-  00F1    3EFF    ADDIA	0xFF
-  00F2    1D03    SNZB	0x3,2
-  00F3    28EC    JP	0xEC
-  00F4    0874    LD	A,0x74
-  00F5    00C7    LD	0x47,A
-  00F6    0873    LD	A,0x73
-  00F7    00C6    LD	0x46,A
-108:              
-109:              		adsum = 0;
-110:              		admin = 0;
-111:              		admax = 0;
-  00F8    2109    CALL	0x109
-112:              		return 0xA5;
-  00F9    34A5    RET	0xA5
-113:              		
-114:              }
-115:              
-116:              
-117:              /***********************************************************
-118:              main÷˜∫Ø ˝
-119:              ***********************************************************/
-120:              void main() 
-121:              {
-122:              	Init_System();
-  01CC    120A    CLRB	0xA,4
-  01CD    118A    CLRB	0xA,3
-  01CE    229D    CALL	0x29D
-123:              	AD_Init();
-  01D1    120A    CLRB	0xA,4
-  01D2    118A    CLRB	0xA,3
-  01D3    22D7    CALL	0x2D7
-124:              
-125:              	while (1) 
-  01D6    0064    CLRWDT
-126:              	{
-127:              		asm("clrwdt");
-128:              
-129:              #ifdef _DEBUG
-130:              		TRISB7 = 1;							//≤‚ ‘AN15∂‘”¶µƒIO…ËŒ™ ‰»Î,
-  01D7    1283    CLRB	0x3,5
-  01D8    1303    CLRB	0x3,6
-  01D9    1785    SETB	0x5,7
-131:              		ANSEL1 |= 0X80;						//≤‚ ‘AN15∂‘”¶µƒIO…ËŒ™ƒ£ƒ‚ ‰»Î
-  01DA    1683    SETB	0x3,5
-  01DB    1794    SETB	0x14,7
-132:              		test_adc = ADC_Sample(15, 7);		//≤‚ ‘AN15ø⁄µƒAD÷µ£¨≤ŒøºµÁ—π3V
-  01DC    3007    LDIA	0x7
-  01DD    00F2    LD	0x72,A
-  01DE    300F    LDIA	0xF
-  01DF    120A    CLRB	0xA,4
-  01E0    118A    CLRB	0xA,3
-  01E1    201B    CALL	0x1B
-  01E4    00C8    LD	0x48,A
-133:              		if (0xA5 == test_adc)				//≤‚ ‘ÕÍ≥…£¨»Á“Ú∆‰À˚‘≠“Úµº÷¬AD◊™ªª√ª”–ÕÍ≥…£¨‘Ú≤ª¥¶¿Ì
-  01E5    30A5    LDIA	0xA5
-  01E6    0648    XORA	0x48
-  01E7    1903    SZB	0x3,2
-  01E8    29F3    JP	0x1F3
-134:              		{
-135:              			
-136:              		}
-137:              		else
-138:              		{
-139:              			ADCON0 = 0;						//»Áπ˚◊™ªª√ª”–ÕÍ≥…£¨–Ë≥ı ºªØADCON0,1
-  01E9    1683    SETB	0x3,5
-  01EA    0195    CLR	0x15
-140:              			ADCON1 = 0;				
-  01EB    0196    CLR	0x16
-141:              			__delay_us(100);				//—” ±100us(±‡“Î∆˜ƒ⁄÷√∫Ø ˝)
-  01EC    3084    LDIA	0x84
-  01ED    1283    CLRB	0x3,5
-  01EE    1303    CLRB	0x3,6
-  01EF    00BF    LD	0x3F,A
-  01F0    0BBF    SZDECR	0x3F
-  01F1    29F0    JP	0x1F0
-  01F2    0000    NOP
-  01F3    301F    LDIA	0x1F
-142:              		}
-143:              
-144:              		test_adc = ADC_Sample(31, 0);		//≤‚ ‘ƒ⁄≤øª˘◊º1.2Vœ‡∂‘µÁ‘¥µƒAD÷µ
-  01F4    01F2    CLR	0x72
-  01F5    120A    CLRB	0xA,4
-  01F6    118A    CLRB	0xA,3
-  01F7    201B    CALL	0x1B
-  01FA    00C8    LD	0x48,A
-145:              		if (0xA5 == test_adc)
-  01FB    30A5    LDIA	0xA5
-  01FC    0648    XORA	0x48
-  01FD    1D03    SNZB	0x3,2
-  01FE    2A30    JP	0x230
-146:              		{
-147:              			volatile unsigned long power_temp;
-148:              			
-149:              			power_temp = (unsigned long)((POWER_RATIO)/adresult);		//1.2*4096/AD=VDD£¨≤Œ ˝∑≈¥Û1000±∂ 
-  01FF    3096    LDIA	0x96
-  0200    01A6    CLR	0x26
-  0201    00A7    LD	0x27,A
-  0202    304A    LDIA	0x4A
-  0203    00A8    LD	0x28,A
-  0204    0847    LD	A,0x47
-  0205    00A1    LD	0x21,A
-  0206    0846    LD	A,0x46
-  0207    00A0    LD	0x20,A
-  0208    120A    CLRB	0xA,4
-  0209    118A    CLRB	0xA,3
-  020A    2112    CALL	0x112
-  020D    0820    LD	A,0x20
-  020E    00A3    LD	0x23,A
-  020F    0821    LD	A,0x21
-  0210    00A4    LD	0x24,A
-  0211    0822    LD	A,0x22
-  0212    00A5    LD	0x25,A
-  0213    120A    CLRB	0xA,4
-  0214    118A    CLRB	0xA,3
-  0215    2122    CALL	0x122
-  0218    0823    LD	A,0x23
-  0219    00B2    LD	0x32,A
-  021A    0824    LD	A,0x24
-  021B    00B3    LD	0x33,A
-  021C    0825    LD	A,0x25
-  021D    00B4    LD	0x34,A
-  021E    120A    CLRB	0xA,4
-  021F    118A    CLRB	0xA,3
-  0220    223B    CALL	0x23B
-  0223    0835    LD	A,0x35
-  0224    00C3    LD	0x43,A
-  0225    0834    LD	A,0x34
-  0226    00C2    LD	0x42,A
-  0227    0833    LD	A,0x33
-  0228    00C1    LD	0x41,A
-  0229    0832    LD	A,0x32
-  022A    00C0    LD	0x40,A
-150:              			power_ad = (unsigned int)(power_temp);		//Õ®π˝ƒ⁄≤øª˘◊ºµÁ—πÕ∆≥ˆ–æ∆¨VDDµÁ—π
-  022B    0841    LD	A,0x41
-  022C    00C5    LD	0x45,A
-  022D    0840    LD	A,0x40
-  022E    00C4    LD	0x44,A
-151:              		}	
-  022F    29D6    JP	0x1D6
-152:              		else
-153:              		{
-154:              			ADCON0 = 0;						//»Áπ˚◊™ªª√ª”–ÕÍ≥…£¨–Ë≥ı ºªØADCON0,1
-  0230    1683    SETB	0x3,5
-  0231    0195    CLR	0x15
-155:              			ADCON1 = 0;				
-  0232    0196    CLR	0x16
-156:              			__delay_us(100);				//—” ±100us(±‡“Î∆˜ƒ⁄÷√∫Ø ˝)
-  0233    3084    LDIA	0x84
-  0234    1283    CLRB	0x3,5
-  0235    1303    CLRB	0x3,6
-  0236    00BF    LD	0x3F,A
-  0237    0BBF    SZDECR	0x3F
-  0238    2A37    JP	0x237
-  0239    0000    NOP
-  023A    29D6    JP	0x1D6
-157:              		}
-158:              
-159:              #endif
-160:              	}
-161:              }
-162:              
-163:              /**********************************************************
-164:              ∫Ø ˝√˚≥∆£∫Init_System
-165:              ∫Ø ˝π¶ƒ‹£∫œµÕ≥≥ı ºªØ
-166:              »Îø⁄≤Œ ˝£∫Œﬁ
-167:              ≥ˆø⁄≤Œ ˝£∫Œﬁ
-168:              ±∏    ◊¢£∫
-169:              **********************************************************/
-170:              void Init_System() 
-  029D    0000    NOP
-  029E    0064    CLRWDT
-171:              {
-172:              	asm("nop");
-173:              	asm("clrwdt");
-174:              	OPTION_REG = 0;					//‘§∑÷∆µ∏¯TMR0 £¨Timer0 π”√ƒ⁄≤ø ±÷”Focs/4£¨‘§∑÷∆µ±»Œ™1:2
-  029F    1283    CLRB	0x3,5
-  02A0    1303    CLRB	0x3,6
-  02A1    0181    CLR	0x1
-  02A2    0064    CLRWDT
-175:              	asm("clrwdt");
-176:              	OSCCON = 0X70;					//ƒ⁄≤ø’Òµ¥∆˜8M
-  02A3    3070    LDIA	0x70
-  02A4    1283    CLRB	0x3,5
-  02A5    1303    CLRB	0x3,6
-  02A6    0094    LD	0x14,A
-177:              
-178:              	WPUA = 0B00000000;				//≈‰÷√…œ¿≠£¨1Œ™ πƒ‹…œ¿≠
-  02A7    1683    SETB	0x3,5
-  02A8    0188    CLR	0x8
-179:              	WPUB = 0B00000000;
-  02A9    1283    CLRB	0x3,5
-  02AA    0188    CLR	0x8
-180:              	WPUC = 0B00000000;
-  02AB    1703    SETB	0x3,6
-  02AC    0188    CLR	0x8
-181:              	WPUD = 0B00000000;
-  02AD    0195    CLR	0x15
-182:              
-183:              	TRISA = 0B00000000;				//≈‰÷√IO◊¥Ã¨£¨0Œ™ ‰≥ˆ£¨1Œ™ ‰»Î
-  02AE    1683    SETB	0x3,5
-  02AF    1303    CLRB	0x3,6
-  02B0    0185    CLR	0x5
-184:              	TRISB = 0B00000000;
-  02B1    1283    CLRB	0x3,5
-  02B2    0185    CLR	0x5
-185:              	TRISC = 0B00000000;
-  02B3    1703    SETB	0x3,6
-  02B4    0185    CLR	0x5
-186:              	TRISD = 0B00000000;
-  02B5    0194    CLR	0x14
-187:              
-188:              	PORTA = 0B00000000;
-  02B6    1683    SETB	0x3,5
-  02B7    1303    CLRB	0x3,6
-  02B8    0186    CLR	0x6
-189:              	PORTB = 0B00000000;
-  02B9    1283    CLRB	0x3,5
-  02BA    0186    CLR	0x6
-190:              	PORTC = 0B00000000;
-  02BB    1703    SETB	0x3,6
-  02BC    0186    CLR	0x6
-191:              	PORTD = 0B00000000;
-  02BD    0187    CLR	0x7
-192:              	
-193:              	CC0CON = 0;					//πÿ±’ CC0°¢CC1 µƒœ¬¿≠µÁ◊Ë
-  02BE    1683    SETB	0x3,5
-  02BF    0195    CLR	0x15
-194:              	CC1CON = 0;
-  02C0    0196    CLR	0x16
-195:              
-196:              //---------------------------------------
-197:              //125us÷–∂œ≥ı ºªØ
-198:              	PR2 = 249;					//…Ë∂®Timer≥ı º÷µ£¨∂® ±÷‹∆⁄ «250*4/8M=125uS
-  02C1    30F9    LDIA	0xF9
-  02C2    1283    CLRB	0x3,5
-  02C3    1303    CLRB	0x3,6
-  02C4    0091    LD	0x11,A
-199:              	TMR2IF = 0;
-  02C5    108D    CLRB	0xD,1
-200:              	TMR2IE = 1;					// πƒ‹Timer2“Á≥ˆ÷–∂œ
-  02C6    148E    SETB	0xE,1
-201:              
-202:              	T2CON = 0B00000100;			//ø™∆ÙTimer2,…Ë÷√TMR2µƒ∑÷∆µ±»Œ™1:1
-  02C7    3004    LDIA	0x4
-  02C8    0093    LD	0x13,A
-203:              	INTCON = 0XC0;				//ø™∆Ù◊‹÷–∂œ
-  02C9    30C0    LDIA	0xC0
-  02CA    008B    LD	0xB,A
-  02CB    0008    RET
-204:              }
-205:              
-206:              /***********************************************************
-207:              ÷–∂œ∑˛ŒÒ∫Ø ˝
-208:              ∫Ø ˝√˚≥∆£∫Isr_Timer()
-209:              ∫Ø ˝π¶ƒ‹£∫÷–∂œ¥¶¿Ì∫Ø ˝
-210:              »Îø⁄≤Œ ˝£∫
-211:              ≥ˆø⁄≤Œ ˝£∫
-212:              ±∏    ◊¢£∫125US∂® ±2÷–∂œ
-213:              			À˘”–÷–∂œ∂º «‘⁄’‚∏ˆ∫Ø ˝¿Ô√Ê¥¶¿Ì
-214:              ***********************************************************/
-215:              void interrupt Isr_Timer() 
-216:              {
-217:              	if (TMR2IF) 
-  02CC    1283    CLRB	0x3,5
-  02CD    1303    CLRB	0x3,6
-  02CE    188D    SZB	0xD,1
-218:              	{			//»Ù÷ª πƒ‹¡À“ª∏ˆ÷–∂œ‘¥,ø…“‘¬‘»•≈–∂œ
-219:              		TMR2IF = 0;
-  02CF    108D    CLRB	0xD,1
-  02D0    0871    LD	A,0x71
-  02D1    008A    LD	0xA,A
-  02D2    0E70    SWAPA	0x70
-  02D3    0083    LD	0x3,A
-  02D4    0EFE    SWAPR	0x7E
-  02D5    0E7E    SWAPA	0x7E
-  02D6    0009    RETI
-220:              
-221:              	}
-222:              
-223:              }
-224:              
-225:              /***********************************************************
-226:              ÷–∂œ∑˛ŒÒ∫Ø ˝
-227:              ∫Ø ˝√˚≥∆£∫AD_Init()
-228:              ∫Ø ˝π¶ƒ‹£∫AD≥ı ºªØ¥¶¿Ì∫Ø ˝
-229:              »Îø⁄≤Œ ˝£∫
-230:              ≥ˆø⁄≤Œ ˝£∫
-231:              ±∏    ◊¢£∫µ⁄“ª¥Œ¥Úø™AD‘ –ÌŒªADON£¨–Ë—” ±20uS“‘…œ≤≈ƒ‹Ω¯»ÎAD≤…—˘
-232:              			»Á∫ÛºÃ≥Ã–Ú≤ªπÿ±’ADON£¨‘Ú≤ª–Ë“™—” ±
-233:              ***********************************************************/
-234:              void AD_Init() 
-235:              {
-236:              	/*********** ADCON0 ****************************
-237:              		Bit7~Bit6  ADCS<1:0>:  AD◊™ªª ±÷”—°‘ÒŒª°£
-238:              			00=  F HSI /16
-239:              			01=  F HSI /32
-240:              			10=  F HSI /64
-241:              			11=  F HSI /128
-242:              		Bit5~Bit2  CHS<3:0>:  ƒ£ƒ‚Õ®µ¿—°‘ÒŒª°£”ÎADCON1ºƒ¥Ê∆˜CHS4◊È∫œCHS<3:0>
-243:              			CHS<4:0>: 
-244:              			00000=  AN0
-245:              			00001=  AN1
-246:              			00010=  AN2
-247:              			00011=  AN3
-248:              			00100=  AN4
-249:              			00101=  AN5
-250:              			°≠ 
-251:              			11100=  AN28
-252:              			11101=  AN29
-253:              			11110=  OPA ‰≥ˆ
-254:              			11111=  1.2V£®πÃ∂®≤ŒøºµÁ—π£©
-255:              			∆‰À˚=  ±£¡Ù
-256:              		Bit1  GO/DONE: AD◊™ªª◊¥Ã¨Œª°£
-257:              			1=  AD◊™ªª’˝‘⁄Ω¯––°£Ω´∏√Œª÷√1∆Ù∂ØAD◊™ªª°£µ±AD◊™ªªÕÍ≥…“‘∫Û£¨∏√Œª”…”≤º˛◊‘∂Ø«Â¡„°£
-258:              				µ±GO/DONEŒª¥”1±‰0ªÚADIF¥”0±‰1 ±£¨–Ë÷¡…Ÿµ»¥˝¡Ω∏ˆTAD ±º‰£¨≤≈ƒ‹‘Ÿ¥Œ∆Ù∂ØAD◊™ªª°£
-259:              			0=  AD◊™ªªÕÍ≥…/ªÚ≤ª‘⁄Ω¯––÷–°£
-260:              		Bit0  ADON:  ADC πƒ‹Œª°£
-261:              			1=   πƒ‹ADC£ª
-262:              			0=  Ω˚÷πADC£¨≤ªœ˚∫ƒπ§◊˜µÁ¡˜°£
-263:              	*********************************************/
-264:              	ADCON0 = 0X41;		//ADONø™∆Ù£¨AD≤…—˘ ±º‰—°Œ™FSYS/32
-  02D7    3041    LDIA	0x41
-  02D8    1683    SETB	0x3,5
-  02D9    0095    LD	0x15,A
-265:              	
-266:              	/*********** ADCON1 ****************************
-267:              		Bit7  ADFM:  AD◊™ªªΩ·π˚∏Ò Ω—°‘ÒŒª£ª
-268:              			1=  ”“∂‘∆Î£ª
-269:              			0=  ◊Û∂‘∆Î°£
-270:              		Bit6  CHS4:  Õ®µ¿—°‘ÒŒª
-271:              		Bit5~Bit3  Œ¥”√ 
-272:              		Bit2  LDO_EN:  ƒ⁄≤ø≤ŒøºµÁ—π πƒ‹Œª°£
-273:              			1=   πƒ‹ADCƒ⁄≤øLDO≤ŒøºµÁ—π£ª
-274:              				µ±—°‘Òƒ⁄≤øLDO◊˜≤ŒøºµÁ—π ±£¨ADC◊Ó¥Û”––ßæ´∂»Œ™8Œª°£
-275:              			0=  VDD◊˜Œ™ADC≤ŒøºµÁ—π°£
-276:              		Bit1~Bit0  LDO_SEL<1:0>:  ≤ŒøºµÁ—π—°‘ÒŒª
-277:              			0X=  2.0V
-278:              			10=  2.4V
-279:              			11=  3.0V
-280:              	*********************************************/
-281:              	ADCON1 = 0;
-  02DA    0196    CLR	0x16
-  02DB    0008    RET
-282:              }
----- D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwtoft.c ----------------------------------------------------------------------
-1:                /*	Floating point routines.
-2:                
-3:                	Copyright (c) 2012 Microchip Technology Inc. All rights reserved.
-4:                */
-5:                
-6:                // this is bigendian code right now. Need to parameterise it.
-7:                
-8:                #include	"ftarith.h"
-9:                
-10:               
-11:               // Convert unsigned int to float
-12:               
-13:               #ifdef _OLDLIB
-14:               #define	f1_as_mant1	(*(unsigned short long *)&f1)
-15:               float
-16:               __lwtoft(unsigned int c)
-17:               {
-18:               	float	f1;
-19:               	
-20:               	if(c == 0)
-21:               		return 0.0;
-22:               	f1_as_mant1 = c;
-23:               	__ftpack(&f1_as_mant1, 127+15);
-24:               	return f1;
-25:               }
-26:               #else
-27:               float
-28:               __lwtoft(unsigned int c)
-  0112    0820    LD	A,0x20
-  0113    00F2    LD	0x72,A
-  0114    0821    LD	A,0x21
-  0115    00F3    LD	0x73,A
-  0116    308E    LDIA	0x8E
-  0117    01F4    CLR	0x74
-  0118    00F5    LD	0x75,A
-  0119    01F6    CLR	0x76
-  011A    218A    CALL	0x18A
-  011B    0872    LD	A,0x72
-  011C    00A0    LD	0x20,A
-  011D    0873    LD	A,0x73
-  011E    00A1    LD	0x21,A
-  011F    0874    LD	A,0x74
-  0120    00A2    LD	0x22,A
-  0121    0008    RET
-29:               {
-30:               	return __ftpack(c, 127+15, 0);
-31:               }
-32:               #endif
----- D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\ftdiv.c ----------------------------------------------------------------------
-1:                /*	Floating point routines.
-2:                
-3:                	Copyright (c) 2012 Microchip Technology Inc. All rights reserved.
-4:                */
-5:                
-6:                // this is bigendian code right now. Need to parameterise it.
-7:                
-8:                #include	"ftarith.h"
-9:                
-10:               #define	f1_as_dividend	(*(unsigned short long *)&f1)
-11:               #define	f2_as_divisor	(*(unsigned short long *)&f2)
-12:               #define	f3_as_quot	(*(unsigned short long *)&f3)
-13:               
-14:               // floating addition
-15:               #ifdef _OLDLIB
-16:               #define	cntr		sign2
-17:               float
-18:               #ifdef _PIC18
-19:               __ftdiv(float f1, float f2)
-20:               #else
-21:               __ftdiv(float f2, float f1)
-22:               #endif
-23:               {
-24:               	unsigned char	exp1, exp2, sign1, sign2;
-25:               	float	f3;
-26:               	
-27:               	f3_as_quot = 0;
-28:               	sign1 = __ftunpack(&f1_as_dividend, &exp1);
-29:               	if(exp1 == 0)
-30:               		return f3;
-31:               	sign2 = __ftunpack(&f2_as_divisor, &exp2);
-32:               	if(exp2 == 0)
-33:               		return f3;
-34:               	exp1 -= exp2-127+8;	// compute new exponent
-35:               	sign1 ^= sign2;
-36:               	cntr = 16+8;
-37:               	do {
-38:               		f3_as_quot <<= 1;
-39:               		if(f1_as_dividend >= f2_as_divisor) {
-40:               			f1_as_dividend -= f2_as_divisor;
-41:               			f3_as_quot |= 1;
-42:               		}
-43:               		f1_as_dividend <<= 1;
-44:               	} while(--cntr != 0);
-45:               	__ftpack(&f3_as_quot, exp1);
-46:               	if(sign1)
-47:               		f3_as_quot |= 0x800000;
-48:               	return f3;
-49:               }
-50:               #else
-51:               #define	exp2	sign
-52:               float
-53:               #ifdef _PIC18
-54:               __ftdiv(float f1, float f2)
-55:               #else
-56:               __ftdiv(float f2, float f1)
-  0122    0826    LD	A,0x26
-  0123    00A9    LD	0x29,A
-  0124    0827    LD	A,0x27
-  0125    00AA    LD	0x2A,A
-  0126    0828    LD	A,0x28
-  0127    00AB    LD	0x2B,A
-  0128    1003    CLRB	0x3,0
-  0129    0D2A    RLCA	0x2A
-  012A    0D2B    RLCA	0x2B
-  012B    00B0    LD	0x30,A
-  012C    0830    LD	A,0x30
-  012D    1D03    SNZB	0x3,2
-  012E    2933    JP	0x133
-  012F    01A3    CLR	0x23
-  0130    01A4    CLR	0x24
-  0131    01A5    CLR	0x25
-  0132    0008    RET
-  0133    0823    LD	A,0x23
-  0134    00A9    LD	0x29,A
-  0135    0824    LD	A,0x24
-  0136    00AA    LD	0x2A,A
-  0137    0825    LD	A,0x25
-  0138    00AB    LD	0x2B,A
-  0139    1003    CLRB	0x3,0
-  013A    0D2A    RLCA	0x2A
-  013B    0D2B    RLCA	0x2B
-  013C    00B1    LD	0x31,A
-  013D    0831    LD	A,0x31
-  013E    1D03    SNZB	0x3,2
-  013F    2944    JP	0x144
-  0140    01A3    CLR	0x23
-  0141    01A4    CLR	0x24
-  0142    01A5    CLR	0x25
-  0143    0008    RET
-  0144    3089    LDIA	0x89
-  0145    01AD    CLR	0x2D
-  0146    01AE    CLR	0x2E
-  0147    01AF    CLR	0x2F
-  0148    0731    ADDA	0x31
-  0149    00A9    LD	0x29,A
-  014A    02B0    SUBR	0x30
-  014B    0828    LD	A,0x28
-  014C    00B1    LD	0x31,A
-  014D    0825    LD	A,0x25
-  014E    06B1    XORR	0x31
-  014F    3080    LDIA	0x80
-  0150    05B1    ANDR	0x31
-  0151    3018    LDIA	0x18
-  0152    17A7    SETB	0x27,7
-  0153    01A8    CLR	0x28
-  0154    17A4    SETB	0x24,7
-  0155    01A5    CLR	0x25
-  0156    00AC    LD	0x2C,A
-  0157    1003    CLRB	0x3,0
-  0158    0DAD    RLCR	0x2D
-  0159    0DAE    RLCR	0x2E
-  015A    0DAF    RLCR	0x2F
-  015B    0825    LD	A,0x25
-  015C    0228    SUBA	0x28
-  015D    1D03    SNZB	0x3,2
-  015E    2965    JP	0x165
-  015F    0824    LD	A,0x24
-  0160    0227    SUBA	0x27
-  0161    1D03    SNZB	0x3,2
-  0162    2965    JP	0x165
-  0163    0823    LD	A,0x23
-  0164    0226    SUBA	0x26
-  0165    1C03    SNZB	0x3,0
-  0166    2973    JP	0x173
-  0167    0823    LD	A,0x23
-  0168    02A6    SUBR	0x26
-  0169    0824    LD	A,0x24
-  016A    1C03    SNZB	0x3,0
-  016B    0F24    SZINCA	0x24
-  016C    02A7    SUBR	0x27
-  016D    0825    LD	A,0x25
-  016E    1C03    SNZB	0x3,0
-  016F    0A25    INCA	0x25
-  0170    02A8    SUBR	0x28
-  0171    142D    SETB	0x2D,0
-  0172    1003    CLRB	0x3,0
-  0173    0DA6    RLCR	0x26
-  0174    0DA7    RLCR	0x27
-  0175    0DA8    RLCR	0x28
-  0176    0BAC    SZDECR	0x2C
-  0177    2957    JP	0x157
-  0178    082D    LD	A,0x2D
-  0179    00F2    LD	0x72,A
-  017A    082E    LD	A,0x2E
-  017B    00F3    LD	0x73,A
-  017C    082F    LD	A,0x2F
-  017D    00F4    LD	0x74,A
-  017E    0830    LD	A,0x30
-  017F    00F5    LD	0x75,A
-  0180    0831    LD	A,0x31
-  0181    00F6    LD	0x76,A
-  0182    218A    CALL	0x18A
-  0183    0872    LD	A,0x72
-  0184    00A3    LD	0x23,A
-  0185    0873    LD	A,0x73
-  0186    00A4    LD	0x24,A
-  0187    0874    LD	A,0x74
-  0188    00A5    LD	0x25,A
-  0189    0008    RET
-57:               #endif
-58:               {
-59:               	unsigned char	exp, sign, cntr;
-60:               	float	f3;
-61:               	
-62:               	// unpack the operands
-63:               	if((exp = f1_as_dividend >> 15) == 0)
-64:               		return 0.0;
-65:               	if((exp2 = f2_as_divisor >> 15) == 0)
-66:               		return 0.0;
-67:               	f3_as_quot = 0;
-68:               	exp -= exp2-127+8;	// compute new exponent
-69:               	sign = f1_as_dividend >> 16;
-70:               	sign ^= (unsigned char)(f2_as_divisor >> 16);
-71:               	sign &= 0x80;
-72:               	f1_as_dividend |= 0x8000UL;
-73:               	f1_as_dividend &= 0xFFFFUL;
-74:               	f2_as_divisor |= 0x8000UL;
-75:               	f2_as_divisor &= 0xFFFFUL;
-76:               	cntr = 16+8;
-77:               	do {
-78:               		f3_as_quot <<= 1;
-79:               		if(f1_as_dividend >= f2_as_divisor) {
-80:               			f1_as_dividend -= f2_as_divisor;
-81:               			f3_as_quot |= 1;
-82:               		}
-83:               		f1_as_dividend <<= 1;
-84:               	} while(--cntr != 0);
-85:               	return __ftpack(f3_as_quot, exp, sign);
-86:               }
-87:               #endif	
----- D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\float.c ----------------------------------------------------------------------
-1:                /*	Floating point routines.
-2:                
-3:                	Copyright (c) 2012 Microchip Technology Inc. All rights reserved.
-4:                */
-5:                
-6:                #include	"ftarith.h"
-7:                
-8:                
-9:                //	unpack the operand pointed to. Store the exponent into the location pointed to by exp,
-10:               //	and return the sign (zero is positive)
-11:               
-12:               #ifdef _OLDLIB
-13:               
-14:               unsigned char
-15:               __ftunpack(unsigned short long * arg, unsigned char * exp)
-16:               {
-17:               	unsigned char	sign;
+15:               #ifndef _XTAL_FREQ
+16:               #define _XTAL_FREQ 16000000
+17:               #endif
 18:               
-19:               	*exp = sign = *arg >> 15;
-20:               	if(sign == 0) {
-21:               		*arg = 0;
-22:               		return 0;
-23:               	}
-24:               	sign = 0;
-25:               	*arg |= 0x8000;
-26:               	if(*arg & 0x800000)
-27:               		sign++;
-28:               	*arg &= 0xFFFF;
-29:               	return sign;
-30:               }
-31:               
-32:               // normalize and pack the supplied argument into floating point format
-33:               
-34:               void
-35:               __ftpack(unsigned short long * arg, unsigned char exp)
-36:               {
-37:               	if(exp == 0 || *arg == 0) {
-38:               		*arg = 0;
-39:               		return;
-40:               	}
-41:               	while(*arg & 0xFE0000UL) {
-42:               		exp++;
-43:               		*arg >>= 1;
-44:               	}
-45:               	while(*arg & 0xFF0000UL) {
-46:               		exp++;
-47:               		(*arg)++;
-48:               		*arg >>= 1;
-49:               	}
-50:               	while(!(*arg & 0x8000UL)) {
-51:               		exp--;
-52:               		*arg <<= 1;
-53:               	}
-54:               	if(!(exp & 1))
-55:               		*arg &= ~0x8000L;
-56:               	exp >>= 1;
-57:               	*arg |= (unsigned short long)exp << 16;
-58:               }
-59:               
-60:               #else
-61:               float
-62:               __ftpack(unsigned short long arg, unsigned char exp, unsigned char sign)
-  018A    0875    LD	A,0x75
-  018B    1903    SZB	0x3,2
-  018C    2992    JP	0x192
-  018D    0874    LD	A,0x74
-  018E    0473    ORA	0x73
-  018F    0472    ORA	0x72
-  0190    1D03    SNZB	0x3,2
-  0191    299B    JP	0x19B
-  0192    01F2    CLR	0x72
-  0193    01F3    CLR	0x73
-  0194    01F4    CLR	0x74
-  0195    0008    RET
-  0196    0AF5    INCR	0x75
-  0197    1003    CLRB	0x3,0
-  0198    0CF4    RRCR	0x74
-  0199    0CF3    RRCR	0x73
-  019A    0CF2    RRCR	0x72
-  019B    30FE    LDIA	0xFE
-  019C    0574    ANDA	0x74
-  019D    1903    SZB	0x3,2
-  019E    29AA    JP	0x1AA
-  019F    2996    JP	0x196
-  01A0    0AF5    INCR	0x75
-  01A1    0AF2    INCR	0x72
-  01A2    1903    SZB	0x3,2
-  01A3    0AF3    INCR	0x73
-  01A4    1903    SZB	0x3,2
-  01A5    0AF4    INCR	0x74
-  01A6    1003    CLRB	0x3,0
-  01A7    0CF4    RRCR	0x74
-  01A8    0CF3    RRCR	0x73
-  01A9    0CF2    RRCR	0x72
-  01AA    30FF    LDIA	0xFF
-  01AB    0574    ANDA	0x74
-  01AC    1903    SZB	0x3,2
-  01AD    29B8    JP	0x1B8
-  01AE    29A0    JP	0x1A0
-  01AF    3002    LDIA	0x2
-  01B0    0275    SUBA	0x75
-  01B1    1C03    SNZB	0x3,0
-  01B2    29BA    JP	0x1BA
-  01B3    03F5    DECR	0x75
-  01B4    1003    CLRB	0x3,0
-  01B5    0DF2    RLCR	0x72
-  01B6    0DF3    RLCR	0x73
-  01B7    0DF4    RLCR	0x74
-  01B8    1FF3    SNZB	0x73,7
-  01B9    29AF    JP	0x1AF
-  01BA    1C75    SNZB	0x75,0
-  01BB    13F3    CLRB	0x73,7
-  01BC    1003    CLRB	0x3,0
-  01BD    0CF5    RRCR	0x75
-  01BE    0875    LD	A,0x75
-  01BF    00F9    LD	0x79,A
-  01C0    01F8    CLR	0x78
-  01C1    01F7    CLR	0x77
-  01C2    0877    LD	A,0x77
-  01C3    04F2    ORR	0x72
-  01C4    0878    LD	A,0x78
-  01C5    04F3    ORR	0x73
-  01C6    0879    LD	A,0x79
-  01C7    04F4    ORR	0x74
-  01C8    0876    LD	A,0x76
-  01C9    1D03    SNZB	0x3,2
-  01CA    17F4    SETB	0x74,7
-  01CB    0008    RET
-63:               {
-64:               	if(exp == 0 || arg == 0)
-65:               		return 0.0;
-66:               	while(arg & 0xFE0000UL) {
-67:               		exp++;
-68:               		arg >>= 1;
-69:               	}
-70:               	while(arg & 0xFF0000UL) {
-71:               		exp++;
-72:               		(arg)++;
-73:               		arg >>= 1;
-74:               	}
-75:               	while(!(arg & 0x8000UL) && exp > 1) {
-76:               		exp--;
-77:               		arg <<= 1;
-78:               	}
-79:               	if(!(exp & 1))
-80:               		arg &= ~0x8000L;
-81:               	exp >>= 1;
-82:               	arg |= (unsigned short long)exp << 16;
-83:               	if (sign)
-84:               		arg |= 0x800000UL;
-85:                  return *(float*)&arg;	
-86:               }
-87:               
-88:               #endif
----- D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\fttol.c ----------------------------------------------------------------------
-1:                /*	Floating point routines.
-2:                
-3:                	Copyright (c) 2012 Microchip Technology Inc. All rights reserved.
-4:                */
-5:                
-6:                // this is bigendian code right now. Need to parameterise it.
-7:                
-8:                #include	"ftarith.h"
-9:                
-10:               #define	f1_as_mant1	(*(unsigned short long *)&f1)
-11:               
-12:               // Convert float to long
-13:               
-14:               #ifdef _OLDLIB
-15:               long
-16:               __fttol(float f1)
-17:               {
-18:               	unsigned char	sign1, exp1;
-19:               	unsigned long	lval;
-20:               
-21:               	sign1 = __ftunpack(&f1_as_mant1, &exp1);
-22:               	lval = f1_as_mant1;
-23:               	exp1 -= 127+15;
-24:               	if((signed char)exp1 < 0) {
-25:               		if((signed char)exp1 < -15)
-26:               			return 0;
-27:               		do
-28:               			lval >>= 1;
-29:               		while(++exp1 != 0);
-30:               	} else {
-31:               		if(exp1 >= 32)
-32:               			return 00;
-33:               		while(exp1 != 0) {
-34:               			lval <<= 1;
-35:               			exp1--;
-36:               		}
-37:               	}
-38:               	if(sign1)
-39:               		lval = -lval;
-40:               	return lval;
-41:               }
-42:               #else
-43:               long
-44:               __fttol(float f1)
-  023B    2296    CALL	0x296
+19:               #define     POWER_RATIO      (4096UL*1.2*1000)
+20:               #define     SW_TX            RC4
+21:               #define     BIT_TIME         104     /* 9600bps */
+22:               
+23:               /* ÂèåÂèÇÊï∞Á∫øÊÄßÊ†áÂÆö: BAT = (Œ±*V_B1AD - Œ≤*VCC), Œ±=1.159, Œ≤=0.647 */
+24:               #define     ALPHA_NUM        1159UL   /* Œ± * 1000 */
+25:               #define     BETA_NUM          647UL   /* Œ≤ * 1000 */
+26:               #define     CAL_DEN           1000UL
+27:               
+28:               volatile unsigned int adresult;
+29:               volatile unsigned char test_adc;
+30:               
+31:               /* B1..B12ÂØπÂ∫îÁöÑADCÈÄöÈÅìÂè∑ (B1-B5Â∑≤È™åËØÅ, B6-B12ÈÄöËøáÂç°ÊßΩÂÆûÊµãÊ†°Ê≠£) */
+32:               const unsigned char bx_ch[12] = {
+33:                   17,  /* B1=AN17 (È™åËØÅOK) */
+34:                   16,  /* B2=AN16 (È™åËØÅOK) */
+35:                   12,  /* B3=AN12 (È™åËØÅOK) */
+36:                   13,  /* B4=AN13 (È™åËØÅOK) */
+37:                   5,   /* B5=AN5  (È™åËØÅOK) */
+38:                   4,   /* B6=AN4  (ÂÆûÊµã: Áâ©ÁêÜB6‚ÜíÂéüÊòæÁ§∫B8) */
+39:                   28,  /* B7=AN28 (ÂÆûÊµã: Áâ©ÁêÜB7‚ÜíÂéüÊòæÁ§∫B9) */
+40:                   29,  /* B8=AN29 (ÂÆûÊµã: Áâ©ÁêÜB8‚ÜíÂéüÊòæÁ§∫B10) */
+41:                   27,  /* B9=AN27 (ÂÆûÊµã: Áâ©ÁêÜB9‚ÜíÂéüÊòæÁ§∫B11) */
+42:                   26,  /* B10=AN26(ÂÆûÊµã: Áâ©ÁêÜB10‚ÜíÂéüÊòæÁ§∫B12) */
+43:                   7,   /* B11=AN7 (ÂÆûÊµã: Áâ©ÁêÜB11‚ÜíÂéüÊòæÁ§∫B6) */
+44:                   6    /* B12=AN6 (ÂÆûÊµã: Áâ©ÁêÜB12‚ÜíÂéüÊòæÁ§∫B7) */
+45:               };
+46:               
+47:               unsigned char ADC_Sample(unsigned char adch, unsigned char adldo);
+48:               void Init_System(void);
+49:               void sw_uart_init(void);
+50:               void uart_send_char(unsigned char c);
+51:               void uart_send_string(const unsigned char *str);
+52:               void uart_send_number(unsigned int num);
+53:               
+54:               /*========================================================================
+55:                 ADCÈááÊ†∑ - ÂèÇËÄÉÂÆòÊñπ‰ª£Á†ÅÊ®°Âºè: ADCON0Âæ™ÁéØÂÜÖÂÜôÂÖ• + 100ŒºsÂèÇËÄÉÂàáÊç¢Âª∂Êó∂
+56:                 ÂéªÊûÅÂÄºÂπ≥Âùá: 34Ê¨°ÈááÊ†∑, Âéªmin/maxÂêé32Ê¨°>>5Âπ≥Âùá
+57:                 adch: ÈÄöÈÅìÂè∑(0~31), adldo: bit2=1‚ÜíLDO=3V, =0‚ÜíVDDÂèÇËÄÉ
+58:                 Êó∂Èíü: ADCS=10=Fosc/32, Tad=2Œºs@16MHz
+59:                 Ê≥®: VDD‚ÜíLDOÂèÇËÄÉÂàáÊç¢ÈúÄ100ŒºsÂª∂Êó∂, CHS4Áî®‰ΩçÊìç‰ΩúËÄåÈùûADCON1|=0x40
+60:               ========================================================================*/
+61:               unsigned char ADC_Sample(unsigned char adch, unsigned char adldo)
+  053F    1283    CLRB	0x3,5
+  0540    1303    CLRB	0x3,6
+  0541    00A1    LD	0x21,A
+62:               {
+63:                   volatile unsigned long adsum = 0;
+  0542    01A3    CLR	0x23
+  0543    01A4    CLR	0x24
+  0544    01A5    CLR	0x25
+  0545    01A6    CLR	0x26
+64:                   volatile unsigned int admin = 0, admax = 0;
+  0546    01A7    CLR	0x27
+  0547    01A8    CLR	0x28
+  0548    01A9    CLR	0x29
+  0549    01AA    CLR	0x2A
+65:                   volatile unsigned int ad_temp = 0;
+  054A    01AB    CLR	0x2B
+  054B    01AC    CLR	0x2C
+66:               
+67:                   /* ADCÂèÇËÄÉÁîµÂéã‰ªéVDDÂàáÊç¢Âà∞LDOÊó∂, ÈúÄË¶ÅÂª∂Êó∂100us‰ª•‰∏ä(ÂÆòÊñπÂèÇËÄÉ‰ª£Á†ÅÊ≥®Èáä) */
+68:                   if((!LDO_EN) && (adldo & 0x04))
+  054C    1683    SETB	0x3,5
+  054D    1D16    SNZB	0x16,2
+  054E    1D72    SNZB	0x72,2
+  054F    2D57    JP	0x557
+69:                   {
+70:                       ADCON1 = adldo;
+  0550    0872    LD	A,0x72
+  0551    0096    LD	0x16,A
+71:                       __delay_us(100);
+  0552    3085    LDIA	0x85
+  0553    00F3    LD	0x73,A
+  0554    0BF3    SZDECR	0x73
+  0555    2D54    JP	0x554
+72:                   }
+  0556    2D59    JP	0x559
+73:                   else
+74:                       ADCON1 = adldo;
+  0557    0872    LD	A,0x72
+  0558    0096    LD	0x16,A
+75:               
+76:                   /* CHS4‰Ωç: AN16~AN31ÈúÄË¶ÅÁΩÆ1 */
+77:                   if(adch & 0x10)
+  0559    1283    CLRB	0x3,5
+  055A    1303    CLRB	0x3,6
+  055B    1E21    SNZB	0x21,4
+  055C    2D63    JP	0x563
+78:                   {
+79:                       CHS4 = 1;
+  055D    1683    SETB	0x3,5
+  055E    1716    SETB	0x16,6
+80:                       adch &= 0x0f;
+  055F    300F    LDIA	0xF
+  0560    1283    CLRB	0x3,5
+  0561    05A1    ANDR	0x21
+81:                   }
+  0562    2D65    JP	0x565
+82:                   else
+83:                       CHS4 = 0;
+  0563    1683    SETB	0x3,5
+  0564    1316    CLRB	0x16,6
+84:               
+85:                   unsigned char i;
+86:                   for(i = 0; i < 34; i++)
+  0565    1283    CLRB	0x3,5
+  0566    01A2    CLR	0x22
+87:                   {
+88:                       ADCON0 = (unsigned char)(0x81 | (adch << 2));  /* Fosc/32, Tad=2Œºs */
+  0567    0821    LD	A,0x21
+  0568    00F3    LD	0x73,A
+  0569    3001    LDIA	0x1
+  056A    1003    CLRB	0x3,0
+  056B    0DF3    RLCR	0x73
+  056C    3EFF    ADDIA	0xFF
+  056D    1003    CLRB	0x3,0
+  056E    1D03    SNZB	0x3,2
+  056F    2D6B    JP	0x56B
+  0570    0D73    RLCA	0x73
+  0571    3881    ORIA	0x81
+  0572    1683    SETB	0x3,5
+  0573    0095    LD	0x15,A
+89:                       __delay_us(5);           /* ÈááÈõÜÊó∂Èó¥5Œºs */
+  0574    3006    LDIA	0x6
+  0575    00F3    LD	0x73,A
+  0576    0BF3    SZDECR	0x73
+  0577    2D76    JP	0x576
+  0578    0000    NOP
+90:                       GODONE = 1;              /* ÂêØÂä®ËΩ¨Êç¢ */
+  0579    1683    SETB	0x3,5
+  057A    1303    CLRB	0x3,6
+  057B    1495    SETB	0x15,1
+91:               
+92:                       unsigned char j = 0;
+  057C    1283    CLRB	0x3,5
+  057D    01A0    CLR	0x20
+93:                       while(GODONE)
+  057E    1683    SETB	0x3,5
+  057F    1C95    SNZB	0x15,1
+  0580    2D8A    JP	0x58A
+94:                       {
+95:                           __delay_us(2);
+  0581    2D82    JP	0x582
+  0582    2D83    JP	0x583
+  0583    2D84    JP	0x584
+  0584    2D85    JP	0x585
+96:                           if(0 == (--j)) return 0;
+  0585    1283    CLRB	0x3,5
+  0586    1303    CLRB	0x3,6
+  0587    0BA0    SZDECR	0x20
+  0588    2D7E    JP	0x57E
+  0589    3400    RET	0x0
+97:                       }
+98:               
+99:                       ad_temp = (unsigned int)((ADRESH << 4) + (ADRESL >> 4));  /* 12‰ΩçADÂÄº */
+  058A    0819    LD	A,0x19
+  058B    1283    CLRB	0x3,5
+  058C    00AB    LD	0x2B,A
+  058D    01AC    CLR	0x2C
+  058E    0EAB    SWAPR	0x2B
+  058F    0EAC    SWAPR	0x2C
+  0590    30F0    LDIA	0xF0
+  0591    05AC    ANDR	0x2C
+  0592    082B    LD	A,0x2B
+  0593    390F    ANDIA	0xF
+  0594    04AC    ORR	0x2C
+  0595    30F0    LDIA	0xF0
+  0596    05AB    ANDR	0x2B
+  0597    1683    SETB	0x3,5
+  0598    0E18    SWAPA	0x18
+  0599    390F    ANDIA	0xF
+  059A    1283    CLRB	0x3,5
+  059B    07AB    ADDR	0x2B
+  059C    1803    SZB	0x3,0
+  059D    0AAC    INCR	0x2C
+100:              
+101:                      if(0 == admax)
+  059E    0829    LD	A,0x29
+  059F    042A    ORA	0x2A
+  05A0    1D03    SNZB	0x3,2
+  05A1    2DA7    JP	0x5A7
+102:                      {
+103:                          admax = ad_temp;
+  05A2    082C    LD	A,0x2C
+  05A3    00AA    LD	0x2A,A
+  05A4    082B    LD	A,0x2B
+  05A5    00A9    LD	0x29,A
+  05A6    2DBC    JP	0x5BC
+104:                          admin = ad_temp;
+105:                      }
+106:                      else if(ad_temp > admax)
+  05A7    082C    LD	A,0x2C
+  05A8    022A    SUBA	0x2A
+  05A9    1D03    SNZB	0x3,2
+  05AA    2DAD    JP	0x5AD
+  05AB    082B    LD	A,0x2B
+  05AC    0229    SUBA	0x29
+  05AD    1803    SZB	0x3,0
+  05AE    2DB4    JP	0x5B4
+107:                          admax = ad_temp;
+  05AF    082C    LD	A,0x2C
+  05B0    00AA    LD	0x2A,A
+  05B1    082B    LD	A,0x2B
+  05B2    00A9    LD	0x29,A
+  05B3    2DC0    JP	0x5C0
+108:                      else if(ad_temp < admin)
+  05B4    0828    LD	A,0x28
+  05B5    022C    SUBA	0x2C
+  05B6    1D03    SNZB	0x3,2
+  05B7    2DBA    JP	0x5BA
+  05B8    0827    LD	A,0x27
+  05B9    022B    SUBA	0x2B
+  05BA    1803    SZB	0x3,0
+  05BB    2DC0    JP	0x5C0
+109:                          admin = ad_temp;
+  05BC    082C    LD	A,0x2C
+  05BD    00A8    LD	0x28,A
+  05BE    082B    LD	A,0x2B
+  05BF    00A7    LD	0x27,A
+110:              
+111:                      adsum += ad_temp;
+  05C0    082B    LD	A,0x2B
+  05C1    00F3    LD	0x73,A
+  05C2    082C    LD	A,0x2C
+  05C3    00F4    LD	0x74,A
+  05C4    01F5    CLR	0x75
+  05C5    01F6    CLR	0x76
+  05C6    0873    LD	A,0x73
+  05C7    07A3    ADDR	0x23
+  05C8    0874    LD	A,0x74
+  05C9    1103    CLRB	0x3,2
+  05CA    1803    SZB	0x3,0
+  05CB    3E01    ADDIA	0x1
+  05CC    1D03    SNZB	0x3,2
+  05CD    07A4    ADDR	0x24
+  05CE    0875    LD	A,0x75
+  05CF    1103    CLRB	0x3,2
+  05D0    1803    SZB	0x3,0
+  05D1    3E01    ADDIA	0x1
+  05D2    1D03    SNZB	0x3,2
+  05D3    07A5    ADDR	0x25
+  05D4    0876    LD	A,0x76
+  05D5    1103    CLRB	0x3,2
+  05D6    1803    SZB	0x3,0
+  05D7    3E01    ADDIA	0x1
+  05D8    1D03    SNZB	0x3,2
+  05D9    07A6    ADDR	0x26
+  05DA    3022    LDIA	0x22
+  05DB    0AA2    INCR	0x22
+  05DC    0222    SUBA	0x22
+  05DD    1C03    SNZB	0x3,0
+  05DE    2D67    JP	0x567
+112:                  }
+113:              
+114:                  adsum -= admax;
+  05DF    0829    LD	A,0x29
+  05E0    00F3    LD	0x73,A
+  05E1    082A    LD	A,0x2A
+  05E2    2623    CALL	0x623
+  05E3    120A    CLRB	0xA,4
+  05E4    118A    CLRB	0xA,3
+  05E5    1C03    SNZB	0x3,0
+  05E6    0F76    SZINCA	0x76
+  05E7    02A6    SUBR	0x26
+115:                  if(adsum >= admin)
+  05E8    0827    LD	A,0x27
+  05E9    00F3    LD	0x73,A
+  05EA    0828    LD	A,0x28
+  05EB    00F4    LD	0x74,A
+  05EC    01F5    CLR	0x75
+  05ED    01F6    CLR	0x76
+  05EE    0876    LD	A,0x76
+  05EF    0226    SUBA	0x26
+  05F0    1D03    SNZB	0x3,2
+  05F1    2DFC    JP	0x5FC
+  05F2    0875    LD	A,0x75
+  05F3    0225    SUBA	0x25
+  05F4    1D03    SNZB	0x3,2
+  05F5    2DFC    JP	0x5FC
+  05F6    0874    LD	A,0x74
+  05F7    0224    SUBA	0x24
+  05F8    1D03    SNZB	0x3,2
+  05F9    2DFC    JP	0x5FC
+  05FA    0873    LD	A,0x73
+  05FB    0223    SUBA	0x23
+  05FC    1C03    SNZB	0x3,0
+  05FD    2E08    JP	0x608
+116:                      adsum -= admin;
+  05FE    0827    LD	A,0x27
+  05FF    00F3    LD	0x73,A
+  0600    0828    LD	A,0x28
+  0601    2623    CALL	0x623
+  0602    120A    CLRB	0xA,4
+  0603    118A    CLRB	0xA,3
+  0604    1C03    SNZB	0x3,0
+  0605    0F76    SZINCA	0x76
+  0606    02A6    SUBR	0x26
+  0607    2E0C    JP	0x60C
+117:                  else
+118:                      adsum = 0;
+  0608    01A3    CLR	0x23
+  0609    01A4    CLR	0x24
+  060A    01A5    CLR	0x25
+  060B    01A6    CLR	0x26
+119:              
+120:                  adresult = adsum >> 5;       /* 32Ê¨°Âπ≥Âùá */
+  060C    0823    LD	A,0x23
+  060D    00F3    LD	0x73,A
+  060E    0824    LD	A,0x24
+  060F    00F4    LD	0x74,A
+  0610    0825    LD	A,0x25
+  0611    00F5    LD	0x75,A
+  0612    0826    LD	A,0x26
+  0613    00F6    LD	0x76,A
+  0614    3005    LDIA	0x5
+  0615    1003    CLRB	0x3,0
+  0616    0CF6    RRCR	0x76
+  0617    0CF5    RRCR	0x75
+  0618    0CF4    RRCR	0x74
+  0619    0CF3    RRCR	0x73
+  061A    3EFF    ADDIA	0xFF
+  061B    1D03    SNZB	0x3,2
+  061C    2E15    JP	0x615
+  061D    0874    LD	A,0x74
+  061E    1683    SETB	0x3,5
+  061F    00DB    LD	0x5B,A
+  0620    0873    LD	A,0x73
+  0621    00DA    LD	0x5A,A
+121:                  return 0xA5;
+  0622    34A5    RET	0xA5
+122:              }
+123:              
+124:              /*========================================================================
+125:                ËΩØ‰ª∂UART
+126:              ========================================================================*/
+127:              void sw_uart_init(void)
+128:              {
+129:                  TRISC &= ~0x10;
+  07ED    1703    SETB	0x3,6
+  07EE    1205    CLRB	0x5,4
+130:                  ANSEL2 &= ~0x10;
+  07EF    1209    CLRB	0x9,4
+131:                  SW_TX = 1;
+  07F0    1606    SETB	0x6,4
+  07F1    0008    RET
+132:              }
+133:              
+134:              void uart_send_char(unsigned char c)
+  0689    00F3    LD	0x73,A
+135:              {
+136:                  unsigned char i;
+137:                  GIE = 0;
+  068A    138B    CLRB	0xB,7
+138:                  SW_TX = 0;
+  068B    1283    CLRB	0x3,5
+  068C    1703    SETB	0x3,6
+  068D    1206    CLRB	0x6,4
+139:                  __delay_us(BIT_TIME);
+  068E    308A    LDIA	0x8A
+  068F    00F2    LD	0x72,A
+  0690    0BF2    SZDECR	0x72
+  0691    2E90    JP	0x690
+  0692    0000    NOP
+140:                  for(i = 0; i < 8; i++)
+  0693    01F4    CLR	0x74
+141:                  {
+142:                      if(c & 0x01) SW_TX = 1; else SW_TX = 0;
+  0694    1C73    SNZB	0x73,0
+  0695    2E9A    JP	0x69A
+  0696    1283    CLRB	0x3,5
+  0697    1703    SETB	0x3,6
+  0698    1606    SETB	0x6,4
+  0699    2E9D    JP	0x69D
+  069A    1283    CLRB	0x3,5
+  069B    1703    SETB	0x3,6
+  069C    1206    CLRB	0x6,4
+143:                      __delay_us(BIT_TIME);
+  069D    308A    LDIA	0x8A
+  069E    00F2    LD	0x72,A
+  069F    0BF2    SZDECR	0x72
+  06A0    2E9F    JP	0x69F
+  06A1    0000    NOP
+  06A2    3008    LDIA	0x8
+144:                      c >>= 1;
+  06A3    1003    CLRB	0x3,0
+  06A4    0CF3    RRCR	0x73
+  06A5    0AF4    INCR	0x74
+  06A6    0274    SUBA	0x74
+  06A7    1C03    SNZB	0x3,0
+  06A8    2E94    JP	0x694
+145:                  }
+146:                  SW_TX = 1;
+  06A9    1283    CLRB	0x3,5
+  06AA    1703    SETB	0x3,6
+  06AB    1606    SETB	0x6,4
+147:                  __delay_us(BIT_TIME);
+  06AC    308A    LDIA	0x8A
+  06AD    00F2    LD	0x72,A
+  06AE    0BF2    SZDECR	0x72
+  06AF    2EAE    JP	0x6AE
+  06B0    0000    NOP
+148:                  GIE = 1;
+  06B1    178B    SETB	0xB,7
+  06B2    0008    RET
+149:              }
+150:              
+151:              void uart_send_string(const unsigned char *str)
+  0672    00F5    LD	0x75,A
+152:              {
+153:                  while(*str) uart_send_char(*str++);
+  0673    0875    LD	A,0x75
+  0674    0084    LD	0x4,A
+  0675    120A    CLRB	0xA,4
+  0676    118A    CLRB	0xA,3
+  0677    2701    CALL	0x701
+  067A    3A00    XORIA	0x0
+  067B    1903    SZB	0x3,2
+  067C    0008    RET
+  067D    0875    LD	A,0x75
+  067E    0084    LD	0x4,A
+  067F    120A    CLRB	0xA,4
+  0680    118A    CLRB	0xA,3
+  0681    2701    CALL	0x701
+  0684    2689    CALL	0x689
+  0685    120A    CLRB	0xA,4
+  0686    118A    CLRB	0xA,3
+  0687    0AF5    INCR	0x75
+  0688    2E73    JP	0x673
+154:              }
+155:              
+156:              void uart_send_number(unsigned int num)
+157:              {
+158:                  unsigned char buf[6];
+159:                  unsigned char i = 0, j;
+  0632    1283    CLRB	0x3,5
+  0633    01A6    CLR	0x26
+160:                  if(num == 0) { uart_send_char('0'); return; }
+  0634    0879    LD	A,0x79
+  0635    047A    ORA	0x7A
+  0636    1D03    SNZB	0x3,2
+  0637    2E5C    JP	0x65C
+  0638    3030    LDIA	0x30
+  0639    2E89    JP	0x689
+  063A    1283    CLRB	0x3,5
+  063B    0826    LD	A,0x26
+  063C    3E20    ADDIA	0x20
+  063D    0084    LD	0x4,A
+  063E    300A    LDIA	0xA
+  063F    00F2    LD	0x72,A
+  0640    01F3    CLR	0x73
+  0641    087A    LD	A,0x7A
+  0642    00F5    LD	0x75,A
+  0643    0879    LD	A,0x79
+  0644    00F4    LD	0x74,A
+  0645    26DD    CALL	0x6DD
+  0646    120A    CLRB	0xA,4
+  0647    118A    CLRB	0xA,3
+  0648    0872    LD	A,0x72
+  0649    3E30    ADDIA	0x30
+  064A    1383    CLRB	0x3,7
+  064B    0080    LD	0x0,A
+  064C    1283    CLRB	0x3,5
+  064D    300A    LDIA	0xA
+  064E    0AA6    INCR	0x26
+  064F    00F2    LD	0x72,A
+  0650    01F3    CLR	0x73
+  0651    087A    LD	A,0x7A
+  0652    00F5    LD	0x75,A
+  0653    0879    LD	A,0x79
+  0654    00F4    LD	0x74,A
+  0655    26B3    CALL	0x6B3
+  0656    120A    CLRB	0xA,4
+  0657    118A    CLRB	0xA,3
+  0658    0873    LD	A,0x73
+  0659    00FA    LD	0x7A,A
+  065A    0872    LD	A,0x72
+  065B    00F9    LD	0x79,A
+  065C    0879    LD	A,0x79
+  065D    047A    ORA	0x7A
+  065E    1D03    SNZB	0x3,2
+  065F    2E3A    JP	0x63A
+161:                  while(num > 0) { buf[i++] = '0' + (num % 10); num /= 10; }
+162:                  for(j = i; j > 0; j--) uart_send_char(buf[j-1]);
+  0660    1283    CLRB	0x3,5
+  0661    0826    LD	A,0x26
+  0662    00A7    LD	0x27,A
+  0663    0827    LD	A,0x27
+  0664    1903    SZB	0x3,2
+  0665    0008    RET
+  0666    3EFF    ADDIA	0xFF
+  0667    3E20    ADDIA	0x20
+  0668    0084    LD	0x4,A
+  0669    1383    CLRB	0x3,7
+  066A    0800    LD	A,0x0
+  066B    2689    CALL	0x689
+  066C    120A    CLRB	0xA,4
+  066D    118A    CLRB	0xA,3
+  066E    1283    CLRB	0x3,5
+  066F    1303    CLRB	0x3,6
+  0670    03A7    DECR	0x27
+  0671    2E63    JP	0x663
+163:              }
+164:              
+165:              /*========================================================================
+166:                main
+167:              ========================================================================*/
+168:              void main(void)
+169:              {
+170:                  Init_System();
+  0018    120A    CLRB	0xA,4
+  0019    158A    SETB	0xA,3
+  001A    27CD    CALL	0x7CD
+171:                  sw_uart_init();
+  001D    120A    CLRB	0xA,4
+  001E    118A    CLRB	0xA,3
+  001F    27ED    CALL	0x7ED
+172:              
+173:                  ADCON0 = 0x41;
+  0022    3041    LDIA	0x41
+  0023    1683    SETB	0x3,5
+  0024    1303    CLRB	0x3,6
+  0025    0095    LD	0x15,A
+174:              
+175:                  /* ANSEL: ËÆæ‰∏∫Ê®°ÊãüËæìÂÖ•ÁöÑÂºïËÑö
+176:                     AN4=RA4, AN5=RA5, AN6=RA6, AN7=RA7     ‚Üí ANSEL0
+177:                     AN12=RB0, AN13=RB1                       ‚Üí ANSEL1
+178:                     AN16=RC0(B2AD), AN17=RC1(B1AD)           ‚Üí ANSEL2
+179:                     AN26=RD2, AN27=RD3                       ‚Üí ANSEL3
+180:                     AN28=RD4, AN29=RD5                       ‚Üí ANSEL3
+181:                     Ê≥®ÊÑè: RD2/RD3 ÂêåÊó∂ÊòØ B11/B8 MOSFETÊ†ÖÊûÅ, ‰πüÊòØ B10AD/B9AD ADCËæìÂÖ•
+182:                           ËøôÈáåËÆæ‰∏∫Ê®°ÊãüËæìÂÖ•Âêé‰ºöË¶ÜÁõñËæìÂá∫Áä∂ÊÄÅ, ÈúÄË¶ÅÂêéÊúüÂ§ÑÁêÜ */
+183:                  ANSEL0 |= 0xF0;     /* AN4~7=RA4~7 */
+  0026    30F0    LDIA	0xF0
+  0027    0493    ORR	0x13
+184:                  ANSEL1 |= 0x03;     /* AN12~13=RB0~1 */
+  0028    3003    LDIA	0x3
+  0029    0494    ORR	0x14
+185:                  ANSEL2 |= 0x07;     /* AN16~17=RC0~1, AN18=RC2(NTC) */
+  002A    3007    LDIA	0x7
+  002B    1283    CLRB	0x3,5
+  002C    1703    SETB	0x3,6
+  002D    0489    ORR	0x9
+186:                  ANSEL3 |= 0x3C;     /* AN26~29=RD2~5 */
+  002E    303C    LDIA	0x3C
+  002F    1683    SETB	0x3,5
+  0030    1303    CLRB	0x3,6
+  0031    048C    ORR	0xC
+187:              
+188:                  uart_send_string("B1-B12 ADC Test\r\n");
+  0032    3001    LDIA	0x1
+  0033    120A    CLRB	0xA,4
+  0034    118A    CLRB	0xA,3
+  0035    2672    CALL	0x672
+189:              
+190:                  unsigned int tick = 0;
+  0038    1683    SETB	0x3,5
+  0039    1303    CLRB	0x3,6
+  003A    01A8    CLR	0x28
+  003B    01A9    CLR	0x29
+191:                  unsigned int vcc_mv;
+192:                  unsigned char bx;
+193:              
+194:                  /* VDD-onlyËØäÊñ≠: ÂÖ®ÈÄöÈÅìVDDÂèÇËÄÉ, ÊéíÈô§LDOÂàáÊç¢Âπ≤Êâ∞ */
+195:                  unsigned int vdd_buf[12];
+196:              
+197:                  while(1)
+  003C    0064    CLRWDT
+198:                  {
+199:                      asm("clrwdt");
+200:                      __delay_ms(10);
+  003D    3034    LDIA	0x34
+  003E    1283    CLRB	0x3,5
+  003F    1303    CLRB	0x3,6
+  0040    00B2    LD	0x32,A
+  0041    30F1    LDIA	0xF1
+  0042    00B1    LD	0x31,A
+  0043    0BB1    SZDECR	0x31
+  0044    2843    JP	0x43
+  0045    0BB2    SZDECR	0x32
+  0046    2843    JP	0x43
+201:                      tick++;
+  0047    1683    SETB	0x3,5
+  0048    1303    CLRB	0x3,6
+  0049    0AA8    INCR	0x28
+  004A    1903    SZB	0x3,2
+  004B    0AA9    INCR	0x29
+202:                      if(tick % 200 != 0) continue;  /* 2Áßí‰∏ÄÊ¨° */
+  004C    30C8    LDIA	0xC8
+  004D    00F2    LD	0x72,A
+  004E    01F3    CLR	0x73
+  004F    0829    LD	A,0x29
+  0050    00F5    LD	0x75,A
+  0051    0828    LD	A,0x28
+  0052    00F4    LD	0x74,A
+  0053    120A    CLRB	0xA,4
+  0054    118A    CLRB	0xA,3
+  0055    26DD    CALL	0x6DD
+  0058    0872    LD	A,0x72
+  0059    0473    ORA	0x73
+  005A    1D03    SNZB	0x3,2
+  005B    283C    JP	0x3C
+  005C    0064    CLRWDT
+203:                      asm("clrwdt");
+204:              
+205:                      /* === ËØäÊñ≠: ËØªÂèñVCC === */
+206:                      vcc_mv = 5000;
+  005D    3088    LDIA	0x88
+  005E    1683    SETB	0x3,5
+  005F    1303    CLRB	0x3,6
+  0060    00D6    LD	0x56,A
+  0061    3013    LDIA	0x13
+  0062    00D7    LD	0x57,A
+  0063    301F    LDIA	0x1F
+207:                      test_adc = ADC_Sample(31, 0);
+  0064    01F2    CLR	0x72
+  0065    120A    CLRB	0xA,4
+  0066    118A    CLRB	0xA,3
+  0067    253F    CALL	0x53F
+  006A    1683    SETB	0x3,5
+  006B    00D9    LD	0x59,A
+208:                      if(0xA5 == test_adc)
+  006C    30A5    LDIA	0xA5
+  006D    0659    XORA	0x59
+  006E    1D03    SNZB	0x3,2
+  006F    2896    JP	0x96
+209:                      {
+210:                          unsigned long pt = (unsigned long)(POWER_RATIO) / adresult;
+  0070    085A    LD	A,0x5A
+  0071    1283    CLRB	0x3,5
+  0072    00A4    LD	0x24,A
+  0073    1683    SETB	0x3,5
+  0074    085B    LD	A,0x5B
+  0075    1283    CLRB	0x3,5
+  0076    00A5    LD	0x25,A
+  0077    304B    LDIA	0x4B
+  0078    01A6    CLR	0x26
+  0079    01A7    CLR	0x27
+  007A    01AB    CLR	0x2B
+  007B    00AA    LD	0x2A,A
+  007C    01A9    CLR	0x29
+  007D    01A8    CLR	0x28
+  007E    120A    CLRB	0xA,4
+  007F    118A    CLRB	0xA,3
+  0080    2764    CALL	0x764
+  0083    0827    LD	A,0x27
+  0084    1683    SETB	0x3,5
+  0085    00A3    LD	0x23,A
+  0086    1283    CLRB	0x3,5
+  0087    0826    LD	A,0x26
+  0088    1683    SETB	0x3,5
+  0089    00A2    LD	0x22,A
+  008A    1283    CLRB	0x3,5
+  008B    0825    LD	A,0x25
+  008C    1683    SETB	0x3,5
+  008D    00A1    LD	0x21,A
+  008E    1283    CLRB	0x3,5
+  008F    0824    LD	A,0x24
+  0090    1683    SETB	0x3,5
+  0091    00A0    LD	0x20,A
+211:                          vcc_mv = (unsigned int)pt;
+  0092    0821    LD	A,0x21
+  0093    00D7    LD	0x57,A
+  0094    0820    LD	A,0x20
+  0095    00D6    LD	0x56,A
+  0096    3011    LDIA	0x11
+212:                      }
+213:              
+214:                      /* === ÈááÈõÜ: B2(AN16)ÊîæÊúÄÂêéËØª, ÈÅøÂÖçÂÖ∂ÁîµÊ±†ÂΩ±ÂìçÂêéÁª≠ÈÄöÈÅì === */
+215:                      /* ÂÖàËØªB1, B3~B12(Ë∑≥ËøáB2) */
+216:                      ADC_Sample(17, 0);  vdd_buf[0] = adresult;   /* B1=AN17 */
+  0097    01F2    CLR	0x72
+  0098    120A    CLRB	0xA,4
+  0099    118A    CLRB	0xA,3
+  009A    253F    CALL	0x53F
+  009D    1683    SETB	0x3,5
+  009E    085B    LD	A,0x5B
+  009F    00AB    LD	0x2B,A
+  00A0    085A    LD	A,0x5A
+  00A1    00AA    LD	0x2A,A
+  00A2    300C    LDIA	0xC
+217:                      ADC_Sample(12, 0);  vdd_buf[2] = adresult;   /* B3=AN12 */
+  00A3    01F2    CLR	0x72
+  00A4    120A    CLRB	0xA,4
+  00A5    118A    CLRB	0xA,3
+  00A6    253F    CALL	0x53F
+  00A9    1683    SETB	0x3,5
+  00AA    085B    LD	A,0x5B
+  00AB    00AF    LD	0x2F,A
+  00AC    085A    LD	A,0x5A
+  00AD    00AE    LD	0x2E,A
+  00AE    300D    LDIA	0xD
+218:                      ADC_Sample(13, 0);  vdd_buf[3] = adresult;   /* B4=AN13 */
+  00AF    01F2    CLR	0x72
+  00B0    120A    CLRB	0xA,4
+  00B1    118A    CLRB	0xA,3
+  00B2    253F    CALL	0x53F
+  00B5    1683    SETB	0x3,5
+  00B6    085B    LD	A,0x5B
+  00B7    00B1    LD	0x31,A
+  00B8    085A    LD	A,0x5A
+  00B9    00B0    LD	0x30,A
+  00BA    3005    LDIA	0x5
+219:                      ADC_Sample(5, 0);   vdd_buf[4] = adresult;   /* B5=AN5 */
+  00BB    01F2    CLR	0x72
+  00BC    120A    CLRB	0xA,4
+  00BD    118A    CLRB	0xA,3
+  00BE    253F    CALL	0x53F
+  00C1    1683    SETB	0x3,5
+  00C2    085B    LD	A,0x5B
+  00C3    00B3    LD	0x33,A
+  00C4    085A    LD	A,0x5A
+  00C5    00B2    LD	0x32,A
+  00C6    3007    LDIA	0x7
+220:                      ADC_Sample(7, 0);   vdd_buf[5] = adresult;   /* B6=AN7 */
+  00C7    01F2    CLR	0x72
+  00C8    120A    CLRB	0xA,4
+  00C9    118A    CLRB	0xA,3
+  00CA    253F    CALL	0x53F
+  00CD    1683    SETB	0x3,5
+  00CE    085B    LD	A,0x5B
+  00CF    00B5    LD	0x35,A
+  00D0    085A    LD	A,0x5A
+  00D1    00B4    LD	0x34,A
+  00D2    3006    LDIA	0x6
+221:                      ADC_Sample(6, 0);   vdd_buf[6] = adresult;   /* B7=AN6 */
+  00D3    01F2    CLR	0x72
+  00D4    120A    CLRB	0xA,4
+  00D5    118A    CLRB	0xA,3
+  00D6    253F    CALL	0x53F
+  00D9    1683    SETB	0x3,5
+  00DA    085B    LD	A,0x5B
+  00DB    00B7    LD	0x37,A
+  00DC    085A    LD	A,0x5A
+  00DD    00B6    LD	0x36,A
+  00DE    3004    LDIA	0x4
+222:                      ADC_Sample(4, 0);   vdd_buf[7] = adresult;   /* B8=AN4 */
+  00DF    01F2    CLR	0x72
+  00E0    120A    CLRB	0xA,4
+  00E1    118A    CLRB	0xA,3
+  00E2    253F    CALL	0x53F
+  00E5    1683    SETB	0x3,5
+  00E6    085B    LD	A,0x5B
+  00E7    00B9    LD	0x39,A
+  00E8    085A    LD	A,0x5A
+  00E9    00B8    LD	0x38,A
+  00EA    301C    LDIA	0x1C
+223:                      ADC_Sample(28, 0);  vdd_buf[8] = adresult;   /* B9=AN28 */
+  00EB    01F2    CLR	0x72
+  00EC    120A    CLRB	0xA,4
+  00ED    118A    CLRB	0xA,3
+  00EE    253F    CALL	0x53F
+  00F1    1683    SETB	0x3,5
+  00F2    085B    LD	A,0x5B
+  00F3    00BB    LD	0x3B,A
+  00F4    085A    LD	A,0x5A
+  00F5    00BA    LD	0x3A,A
+  00F6    301D    LDIA	0x1D
+224:                      ADC_Sample(29, 0);  vdd_buf[9] = adresult;   /* B10=AN29 */
+  00F7    01F2    CLR	0x72
+  00F8    120A    CLRB	0xA,4
+  00F9    118A    CLRB	0xA,3
+  00FA    253F    CALL	0x53F
+  00FD    1683    SETB	0x3,5
+  00FE    085B    LD	A,0x5B
+  00FF    00BD    LD	0x3D,A
+  0100    085A    LD	A,0x5A
+  0101    00BC    LD	0x3C,A
+  0102    301B    LDIA	0x1B
+225:                      ADC_Sample(27, 0);  vdd_buf[10] = adresult;  /* B11=AN27 */
+  0103    01F2    CLR	0x72
+  0104    120A    CLRB	0xA,4
+  0105    118A    CLRB	0xA,3
+  0106    253F    CALL	0x53F
+  0109    1683    SETB	0x3,5
+  010A    085B    LD	A,0x5B
+  010B    00BF    LD	0x3F,A
+  010C    085A    LD	A,0x5A
+  010D    00BE    LD	0x3E,A
+  010E    301A    LDIA	0x1A
+226:                      ADC_Sample(26, 0);  vdd_buf[11] = adresult;  /* B12=AN26 */
+  010F    01F2    CLR	0x72
+  0110    120A    CLRB	0xA,4
+  0111    118A    CLRB	0xA,3
+  0112    253F    CALL	0x53F
+  0115    1683    SETB	0x3,5
+  0116    085B    LD	A,0x5B
+  0117    00C1    LD	0x41,A
+  0118    085A    LD	A,0x5A
+  0119    00C0    LD	0x40,A
+  011A    0064    CLRWDT
+  011B    3010    LDIA	0x10
+227:                      /* B2(AN16)ÊúÄÂêéËØª, ‰∏çÂΩ±Âìç‰ªª‰ΩïÂÖ∂‰ªñÈÄöÈÅì */
+228:                      asm("clrwdt");
+229:                      ADC_Sample(16, 0);
+  011C    01F2    CLR	0x72
+  011D    120A    CLRB	0xA,4
+  011E    118A    CLRB	0xA,3
+  011F    253F    CALL	0x53F
+230:                      vdd_buf[1] = adresult;
+  0122    1683    SETB	0x3,5
+  0123    085B    LD	A,0x5B
+  0124    00AD    LD	0x2D,A
+  0125    085A    LD	A,0x5A
+  0126    00AC    LD	0x2C,A
+231:              
+232:                      /* === Á¨¨3Ê≠•: ÊâìÂç∞ B1~B6 Á¨¨‰∏ÄË°å === */
+233:                      for(bx = 0; bx < 6; bx++)
+  0127    01D8    CLR	0x58
+234:                      {
+235:                          unsigned long bat_mv;
+236:                          unsigned int vx_mv;
+237:              
+238:                          vx_mv = (unsigned long)vdd_buf[bx] * vcc_mv / 4096UL;
+  0128    1003    CLRB	0x3,0
+  0129    24B3    CALL	0x4B3
+  012A    120A    CLRB	0xA,4
+  012B    118A    CLRB	0xA,3
+  012C    27AC    CALL	0x7AC
+  012F    24CB    CALL	0x4CB
+  0130    120A    CLRB	0xA,4
+  0131    118A    CLRB	0xA,3
+  0132    00C9    LD	0x49,A
+  0133    1283    CLRB	0x3,5
+  0134    0833    LD	A,0x33
+  0135    1683    SETB	0x3,5
+  0136    00C8    LD	0x48,A
+239:                          if(vx_mv + 200U >= vcc_mv)
+  0137    3EC8    ADDIA	0xC8
+  0138    1283    CLRB	0x3,5
+  0139    00B1    LD	0x31,A
+  013A    1683    SETB	0x3,5
+  013B    0849    LD	A,0x49
+  013C    24DF    CALL	0x4DF
+  013D    120A    CLRB	0xA,4
+  013E    118A    CLRB	0xA,3
+  013F    1C03    SNZB	0x3,0
+  0140    295D    JP	0x15D
+240:                          {
+241:                              uart_send_string("B");
+  0141    305A    LDIA	0x5A
+  0142    120A    CLRB	0xA,4
+  0143    118A    CLRB	0xA,3
+  0144    2672    CALL	0x672
+242:                              uart_send_number(bx+1);
+  0147    2503    CALL	0x503
+  0148    1903    SZB	0x3,2
+  0149    0AFA    INCR	0x7A
+  014A    120A    CLRB	0xA,4
+  014B    118A    CLRB	0xA,3
+  014C    2632    CALL	0x632
+243:                              uart_send_string("=");
+  014F    3022    LDIA	0x22
+  0150    120A    CLRB	0xA,4
+  0151    118A    CLRB	0xA,3
+  0152    2672    CALL	0x672
+244:                              uart_send_number(vdd_buf[bx]);
+  0155    2471    CALL	0x471
+  0156    120A    CLRB	0xA,4
+  0157    118A    CLRB	0xA,3
+  0158    2632    CALL	0x632
+245:                              uart_send_string(" OPEN");
+  015B    3038    LDIA	0x38
+  015C    2A05    JP	0x205
+246:                          }
+247:                          else
+248:                          {
+249:                              bat_mv = (ALPHA_NUM * vx_mv);
+  015D    1683    SETB	0x3,5
+  015E    0848    LD	A,0x48
+  015F    00F2    LD	0x72,A
+  0160    0849    LD	A,0x49
+  0161    00F3    LD	0x73,A
+  0162    3004    LDIA	0x4
+  0163    24FB    CALL	0x4FB
+  0164    120A    CLRB	0xA,4
+  0165    118A    CLRB	0xA,3
+  0166    27AC    CALL	0x7AC
+  0169    0875    LD	A,0x75
+  016A    1683    SETB	0x3,5
+  016B    00CF    LD	0x4F,A
+  016C    0874    LD	A,0x74
+  016D    00CE    LD	0x4E,A
+  016E    0873    LD	A,0x73
+  016F    00CD    LD	0x4D,A
+  0170    0872    LD	A,0x72
+  0171    00CC    LD	0x4C,A
+250:                              if(bat_mv > (BETA_NUM * (unsigned long)vcc_mv))
+  0172    24EE    CALL	0x4EE
+  0173    120A    CLRB	0xA,4
+  0174    118A    CLRB	0xA,3
+  0175    27AC    CALL	0x7AC
+  0178    1683    SETB	0x3,5
+  0179    084F    LD	A,0x4F
+  017A    0275    SUBA	0x75
+  017B    1D03    SNZB	0x3,2
+  017C    2987    JP	0x187
+  017D    084E    LD	A,0x4E
+  017E    0274    SUBA	0x74
+  017F    1D03    SNZB	0x3,2
+  0180    2987    JP	0x187
+  0181    084D    LD	A,0x4D
+  0182    0273    SUBA	0x73
+  0183    1D03    SNZB	0x3,2
+  0184    2987    JP	0x187
+  0185    084C    LD	A,0x4C
+  0186    0272    SUBA	0x72
+  0187    1803    SZB	0x3,0
+  0188    29D9    JP	0x1D9
+251:                              {
+252:                                  bat_mv = (bat_mv - BETA_NUM * (unsigned long)vcc_mv + CAL_DEN/2) / CAL_DEN;
+  0189    247E    CALL	0x47E
+  018A    120A    CLRB	0xA,4
+  018B    118A    CLRB	0xA,3
+  018C    27AC    CALL	0x7AC
+  018F    0872    LD	A,0x72
+  0190    1683    SETB	0x3,5
+  0191    074C    ADDA	0x4C
+  0192    2513    CALL	0x513
+  0193    120A    CLRB	0xA,4
+  0194    118A    CLRB	0xA,3
+  0195    074D    ADDA	0x4D
+  0196    251E    CALL	0x51E
+  0197    120A    CLRB	0xA,4
+  0198    118A    CLRB	0xA,3
+  0199    074E    ADDA	0x4E
+  019A    2529    CALL	0x529
+  019B    120A    CLRB	0xA,4
+  019C    118A    CLRB	0xA,3
+  019D    074F    ADDA	0x4F
+  019E    249A    CALL	0x49A
+  019F    120A    CLRB	0xA,4
+  01A0    118A    CLRB	0xA,3
+  01A1    2764    CALL	0x764
+  01A4    0827    LD	A,0x27
+  01A5    1683    SETB	0x3,5
+  01A6    00CF    LD	0x4F,A
+  01A7    1283    CLRB	0x3,5
+  01A8    0826    LD	A,0x26
+  01A9    1683    SETB	0x3,5
+  01AA    00CE    LD	0x4E,A
+  01AB    1283    CLRB	0x3,5
+  01AC    0825    LD	A,0x25
+  01AD    1683    SETB	0x3,5
+  01AE    00CD    LD	0x4D,A
+  01AF    1283    CLRB	0x3,5
+  01B0    0824    LD	A,0x24
+  01B1    1683    SETB	0x3,5
+  01B2    00CC    LD	0x4C,A
+253:                                  uart_send_string("B");
+  01B3    305A    LDIA	0x5A
+  01B4    120A    CLRB	0xA,4
+  01B5    118A    CLRB	0xA,3
+  01B6    2672    CALL	0x672
+254:                                  uart_send_number(bx+1);
+  01B9    2503    CALL	0x503
+  01BA    1903    SZB	0x3,2
+  01BB    0AFA    INCR	0x7A
+  01BC    120A    CLRB	0xA,4
+  01BD    118A    CLRB	0xA,3
+  01BE    2632    CALL	0x632
+255:                                  uart_send_string("=");
+  01C1    3022    LDIA	0x22
+  01C2    120A    CLRB	0xA,4
+  01C3    118A    CLRB	0xA,3
+  01C4    2672    CALL	0x672
+256:                                  uart_send_number(vdd_buf[bx]);
+  01C7    2471    CALL	0x471
+  01C8    120A    CLRB	0xA,4
+  01C9    118A    CLRB	0xA,3
+  01CA    2632    CALL	0x632
+257:                                  uart_send_string(" BAT(");
+  01CD    302C    LDIA	0x2C
+  01CE    120A    CLRB	0xA,4
+  01CF    118A    CLRB	0xA,3
+  01D0    2672    CALL	0x672
+258:                                  uart_send_number((unsigned int)bat_mv);
+  01D3    1683    SETB	0x3,5
+  01D4    1303    CLRB	0x3,6
+  01D5    084D    LD	A,0x4D
+  01D6    00FA    LD	0x7A,A
+  01D7    084C    LD	A,0x4C
+  01D8    29FE    JP	0x1FE
+259:                                  uart_send_string("mV)");
+260:                              }
+261:                              else
+262:                              {
+263:                                  uart_send_string("B");
+  01D9    305A    LDIA	0x5A
+  01DA    120A    CLRB	0xA,4
+  01DB    118A    CLRB	0xA,3
+  01DC    2672    CALL	0x672
+264:                                  uart_send_number(bx+1);
+  01DF    2503    CALL	0x503
+  01E0    1903    SZB	0x3,2
+  01E1    0AFA    INCR	0x7A
+  01E2    120A    CLRB	0xA,4
+  01E3    118A    CLRB	0xA,3
+  01E4    2632    CALL	0x632
+265:                                  uart_send_string("=");
+  01E7    3022    LDIA	0x22
+  01E8    120A    CLRB	0xA,4
+  01E9    118A    CLRB	0xA,3
+  01EA    2672    CALL	0x672
+266:                                  uart_send_number(vdd_buf[bx]);
+  01ED    2471    CALL	0x471
+  01EE    120A    CLRB	0xA,4
+  01EF    118A    CLRB	0xA,3
+  01F0    2632    CALL	0x632
+267:                                  uart_send_string(" ???(");
+  01F3    3054    LDIA	0x54
+  01F4    120A    CLRB	0xA,4
+  01F5    118A    CLRB	0xA,3
+  01F6    2672    CALL	0x672
+268:                                  uart_send_number((unsigned int)vx_mv);
+  01F9    1683    SETB	0x3,5
+  01FA    1303    CLRB	0x3,6
+  01FB    0849    LD	A,0x49
+  01FC    00FA    LD	0x7A,A
+  01FD    0848    LD	A,0x48
+  01FE    00F9    LD	0x79,A
+  01FF    120A    CLRB	0xA,4
+  0200    118A    CLRB	0xA,3
+  0201    2632    CALL	0x632
+269:                                  uart_send_string("mV)");
+  0204    304C    LDIA	0x4C
+  0205    120A    CLRB	0xA,4
+  0206    118A    CLRB	0xA,3
+  0207    2672    CALL	0x672
+270:                              }
+271:                          }
+272:                          uart_send_string(" ");
+  020A    304A    LDIA	0x4A
+  020B    120A    CLRB	0xA,4
+  020C    118A    CLRB	0xA,3
+  020D    2672    CALL	0x672
+  0210    1683    SETB	0x3,5
+  0211    1303    CLRB	0x3,6
+  0212    3006    LDIA	0x6
+  0213    0AD8    INCR	0x58
+  0214    0258    SUBA	0x58
+  0215    1C03    SNZB	0x3,0
+  0216    2929    JP	0x129
+273:                      }
+274:                      uart_send_string("\r\n ");
+  0217    3048    LDIA	0x48
+  0218    120A    CLRB	0xA,4
+  0219    118A    CLRB	0xA,3
+  021A    2672    CALL	0x672
+  021D    0064    CLRWDT
+275:                      asm("clrwdt");
+276:              
+277:                      /* === Á¨¨4Ê≠•: ÊâìÂç∞ B7~B12 Á¨¨‰∫åË°å === */
+278:                      for(bx = 6; bx < 12; bx++)
+  021E    3006    LDIA	0x6
+  021F    1683    SETB	0x3,5
+  0220    1303    CLRB	0x3,6
+  0221    00D8    LD	0x58,A
+279:                      {
+280:                          unsigned long bat_mv;
+281:                          unsigned int vx_mv;
+282:              
+283:                          vx_mv = (unsigned long)vdd_buf[bx] * vcc_mv / 4096UL;
+  0222    1003    CLRB	0x3,0
+  0223    24B3    CALL	0x4B3
+  0224    120A    CLRB	0xA,4
+  0225    118A    CLRB	0xA,3
+  0226    27AC    CALL	0x7AC
+  0229    24CB    CALL	0x4CB
+  022A    120A    CLRB	0xA,4
+  022B    118A    CLRB	0xA,3
+  022C    00CB    LD	0x4B,A
+  022D    1283    CLRB	0x3,5
+  022E    0833    LD	A,0x33
+  022F    1683    SETB	0x3,5
+  0230    00CA    LD	0x4A,A
+284:                          if(vx_mv + 200U >= vcc_mv)
+  0231    3EC8    ADDIA	0xC8
+  0232    1283    CLRB	0x3,5
+  0233    00B1    LD	0x31,A
+  0234    1683    SETB	0x3,5
+  0235    084B    LD	A,0x4B
+  0236    24DF    CALL	0x4DF
+  0237    120A    CLRB	0xA,4
+  0238    118A    CLRB	0xA,3
+  0239    1C03    SNZB	0x3,0
+  023A    2A57    JP	0x257
+285:                          {
+286:                              uart_send_string("B");
+  023B    305A    LDIA	0x5A
   023C    120A    CLRB	0xA,4
   023D    118A    CLRB	0xA,3
-  023E    1003    CLRB	0x3,0
-  023F    0D37    RLCA	0x37
-  0240    0D38    RLCA	0x38
-  0241    00BE    LD	0x3E,A
-  0242    083E    LD	A,0x3E
-  0243    1D03    SNZB	0x3,2
-  0244    2A4A    JP	0x24A
-  0245    01B2    CLR	0x32
-  0246    01B3    CLR	0x33
-  0247    01B4    CLR	0x34
-  0248    01B5    CLR	0x35
-  0249    0008    RET
-  024A    2296    CALL	0x296
-  024B    120A    CLRB	0xA,4
-  024C    118A    CLRB	0xA,3
-  024D    3017    LDIA	0x17
-  024E    1003    CLRB	0x3,0
-  024F    0CB8    RRCR	0x38
-  0250    0CB7    RRCR	0x37
-  0251    0CB6    RRCR	0x36
-  0252    3EFF    ADDIA	0xFF
-  0253    1D03    SNZB	0x3,2
-  0254    2A4E    JP	0x24E
-  0255    0836    LD	A,0x36
-  0256    00B9    LD	0x39,A
-  0257    17B3    SETB	0x33,7
-  0258    01B4    CLR	0x34
-  0259    0832    LD	A,0x32
-  025A    00BA    LD	0x3A,A
-  025B    0833    LD	A,0x33
-  025C    00BB    LD	0x3B,A
-  025D    0834    LD	A,0x34
-  025E    00BC    LD	0x3C,A
-  025F    308E    LDIA	0x8E
-  0260    01BD    CLR	0x3D
-  0261    02BE    SUBR	0x3E
-  0262    1FBE    SNZB	0x3E,7
-  0263    2A71    JP	0x271
-  0264    083E    LD	A,0x3E
-  0265    3A80    XORIA	0x80
-  0266    3E8F    ADDIA	0x8F
-  0267    1C03    SNZB	0x3,0
-  0268    2A45    JP	0x245
-  0269    1003    CLRB	0x3,0
-  026A    0CBD    RRCR	0x3D
-  026B    0CBC    RRCR	0x3C
-  026C    0CBB    RRCR	0x3B
-  026D    0CBA    RRCR	0x3A
-  026E    0FBE    SZINCR	0x3E
-  026F    2A69    JP	0x269
-  0270    2A7F    JP	0x27F
-  0271    3018    LDIA	0x18
-  0272    023E    SUBA	0x3E
-  0273    1803    SZB	0x3,0
-  0274    2A45    JP	0x245
-  0275    083E    LD	A,0x3E
-  0276    1903    SZB	0x3,2
-  0277    2A7F    JP	0x27F
-  0278    1003    CLRB	0x3,0
-  0279    0DBA    RLCR	0x3A
-  027A    0DBB    RLCR	0x3B
-  027B    0DBC    RLCR	0x3C
-  027C    0DBD    RLCR	0x3D
-  027D    03BE    DECR	0x3E
-  027E    2A75    JP	0x275
-  027F    0839    LD	A,0x39
-  0280    1903    SZB	0x3,2
-  0281    2A8D    JP	0x28D
-  0282    09BA    COMR	0x3A
-  0283    09BB    COMR	0x3B
-  0284    09BC    COMR	0x3C
-  0285    09BD    COMR	0x3D
-  0286    0ABA    INCR	0x3A
-  0287    1903    SZB	0x3,2
-  0288    0ABB    INCR	0x3B
-  0289    1903    SZB	0x3,2
-  028A    0ABC    INCR	0x3C
-  028B    1903    SZB	0x3,2
-  028C    0ABD    INCR	0x3D
-  028D    083D    LD	A,0x3D
-  028E    00B5    LD	0x35,A
-  028F    083C    LD	A,0x3C
-  0290    00B4    LD	0x34,A
-  0291    083B    LD	A,0x3B
-  0292    00B3    LD	0x33,A
-  0293    083A    LD	A,0x3A
-  0294    00B2    LD	0x32,A
-  0295    0008    RET
-45:               {
-46:               	unsigned char	sign1, exp1;
-47:               	unsigned long	lval;
-48:               
-49:               	if((exp1 = f1_as_mant1 >> 15) == 0)
-50:               		return 0;
-51:               	sign1 = f1_as_mant1 >> 23;
-52:               	f1_as_mant1 |= 0x8000UL;
-53:               	f1_as_mant1 &= 0xFFFFUL;
-54:               	lval = f1_as_mant1;
-55:               	exp1 -= 127+15;
-56:               	if((signed char)exp1 < 0) {
-57:               		if((signed char)exp1 < -15)
-58:               			return 0;
-59:               		do
-60:               			lval >>= 1;
-61:               		while(++exp1 != 0);
-62:               	} else {
-63:               		if(exp1 >= 24)
-64:               			return 0;
-65:               		while(exp1 != 0) {
-66:               			lval <<= 1;
-67:               			exp1--;
-68:               		}
-69:               	}
-70:               	if(sign1)
-71:               		lval = -lval;
-72:               	return lval;
-73:               }
-74:               #endif
+  023E    2672    CALL	0x672
+287:                              uart_send_number(bx+1);
+  0241    2503    CALL	0x503
+  0242    1903    SZB	0x3,2
+  0243    0AFA    INCR	0x7A
+  0244    120A    CLRB	0xA,4
+  0245    118A    CLRB	0xA,3
+  0246    2632    CALL	0x632
+288:                              uart_send_string("=");
+  0249    3022    LDIA	0x22
+  024A    120A    CLRB	0xA,4
+  024B    118A    CLRB	0xA,3
+  024C    2672    CALL	0x672
+289:                              uart_send_number(vdd_buf[bx]);
+  024F    2471    CALL	0x471
+  0250    120A    CLRB	0xA,4
+  0251    118A    CLRB	0xA,3
+  0252    2632    CALL	0x632
+290:                              uart_send_string(" OPEN");
+  0255    3038    LDIA	0x38
+  0256    2AFF    JP	0x2FF
+291:                          }
+292:                          else
+293:                          {
+294:                              bat_mv = (ALPHA_NUM * vx_mv);
+  0257    1683    SETB	0x3,5
+  0258    084A    LD	A,0x4A
+  0259    00F2    LD	0x72,A
+  025A    084B    LD	A,0x4B
+  025B    00F3    LD	0x73,A
+  025C    3004    LDIA	0x4
+  025D    24FB    CALL	0x4FB
+  025E    120A    CLRB	0xA,4
+  025F    118A    CLRB	0xA,3
+  0260    27AC    CALL	0x7AC
+  0263    0875    LD	A,0x75
+  0264    1683    SETB	0x3,5
+  0265    00D3    LD	0x53,A
+  0266    0874    LD	A,0x74
+  0267    00D2    LD	0x52,A
+  0268    0873    LD	A,0x73
+  0269    00D1    LD	0x51,A
+  026A    0872    LD	A,0x72
+  026B    00D0    LD	0x50,A
+295:                              if(bat_mv > (BETA_NUM * (unsigned long)vcc_mv))
+  026C    24EE    CALL	0x4EE
+  026D    120A    CLRB	0xA,4
+  026E    118A    CLRB	0xA,3
+  026F    27AC    CALL	0x7AC
+  0272    1683    SETB	0x3,5
+  0273    0853    LD	A,0x53
+  0274    0275    SUBA	0x75
+  0275    1D03    SNZB	0x3,2
+  0276    2A81    JP	0x281
+  0277    0852    LD	A,0x52
+  0278    0274    SUBA	0x74
+  0279    1D03    SNZB	0x3,2
+  027A    2A81    JP	0x281
+  027B    0851    LD	A,0x51
+  027C    0273    SUBA	0x73
+  027D    1D03    SNZB	0x3,2
+  027E    2A81    JP	0x281
+  027F    0850    LD	A,0x50
+  0280    0272    SUBA	0x72
+  0281    1803    SZB	0x3,0
+  0282    2AD3    JP	0x2D3
+296:                              {
+297:                                  bat_mv = (bat_mv - BETA_NUM * (unsigned long)vcc_mv + CAL_DEN/2) / CAL_DEN;
+  0283    247E    CALL	0x47E
+  0284    120A    CLRB	0xA,4
+  0285    118A    CLRB	0xA,3
+  0286    27AC    CALL	0x7AC
+  0289    0872    LD	A,0x72
+  028A    1683    SETB	0x3,5
+  028B    0750    ADDA	0x50
+  028C    2513    CALL	0x513
+  028D    120A    CLRB	0xA,4
+  028E    118A    CLRB	0xA,3
+  028F    0751    ADDA	0x51
+  0290    251E    CALL	0x51E
+  0291    120A    CLRB	0xA,4
+  0292    118A    CLRB	0xA,3
+  0293    0752    ADDA	0x52
+  0294    2529    CALL	0x529
+  0295    120A    CLRB	0xA,4
+  0296    118A    CLRB	0xA,3
+  0297    0753    ADDA	0x53
+  0298    249A    CALL	0x49A
+  0299    120A    CLRB	0xA,4
+  029A    118A    CLRB	0xA,3
+  029B    2764    CALL	0x764
+  029E    0827    LD	A,0x27
+  029F    1683    SETB	0x3,5
+  02A0    00D3    LD	0x53,A
+  02A1    1283    CLRB	0x3,5
+  02A2    0826    LD	A,0x26
+  02A3    1683    SETB	0x3,5
+  02A4    00D2    LD	0x52,A
+  02A5    1283    CLRB	0x3,5
+  02A6    0825    LD	A,0x25
+  02A7    1683    SETB	0x3,5
+  02A8    00D1    LD	0x51,A
+  02A9    1283    CLRB	0x3,5
+  02AA    0824    LD	A,0x24
+  02AB    1683    SETB	0x3,5
+  02AC    00D0    LD	0x50,A
+298:                                  uart_send_string("B");
+  02AD    305A    LDIA	0x5A
+  02AE    120A    CLRB	0xA,4
+  02AF    118A    CLRB	0xA,3
+  02B0    2672    CALL	0x672
+299:                                  uart_send_number(bx+1);
+  02B3    2503    CALL	0x503
+  02B4    1903    SZB	0x3,2
+  02B5    0AFA    INCR	0x7A
+  02B6    120A    CLRB	0xA,4
+  02B7    118A    CLRB	0xA,3
+  02B8    2632    CALL	0x632
+300:                                  uart_send_string("=");
+  02BB    3022    LDIA	0x22
+  02BC    120A    CLRB	0xA,4
+  02BD    118A    CLRB	0xA,3
+  02BE    2672    CALL	0x672
+301:                                  uart_send_number(vdd_buf[bx]);
+  02C1    2471    CALL	0x471
+  02C2    120A    CLRB	0xA,4
+  02C3    118A    CLRB	0xA,3
+  02C4    2632    CALL	0x632
+302:                                  uart_send_string(" BAT(");
+  02C7    302C    LDIA	0x2C
+  02C8    120A    CLRB	0xA,4
+  02C9    118A    CLRB	0xA,3
+  02CA    2672    CALL	0x672
+303:                                  uart_send_number((unsigned int)bat_mv);
+  02CD    1683    SETB	0x3,5
+  02CE    1303    CLRB	0x3,6
+  02CF    0851    LD	A,0x51
+  02D0    00FA    LD	0x7A,A
+  02D1    0850    LD	A,0x50
+  02D2    2AF8    JP	0x2F8
+304:                                  uart_send_string("mV) ");
+305:                              }
+306:                              else
+307:                              {
+308:                                  uart_send_string("B");
+  02D3    305A    LDIA	0x5A
+  02D4    120A    CLRB	0xA,4
+  02D5    118A    CLRB	0xA,3
+  02D6    2672    CALL	0x672
+309:                                  uart_send_number(bx+1);
+  02D9    2503    CALL	0x503
+  02DA    1903    SZB	0x3,2
+  02DB    0AFA    INCR	0x7A
+  02DC    120A    CLRB	0xA,4
+  02DD    118A    CLRB	0xA,3
+  02DE    2632    CALL	0x632
+310:                                  uart_send_string("=");
+  02E1    3022    LDIA	0x22
+  02E2    120A    CLRB	0xA,4
+  02E3    118A    CLRB	0xA,3
+  02E4    2672    CALL	0x672
+311:                                  uart_send_number(vdd_buf[bx]);
+  02E7    2471    CALL	0x471
+  02E8    120A    CLRB	0xA,4
+  02E9    118A    CLRB	0xA,3
+  02EA    2632    CALL	0x632
+312:                                  uart_send_string(" ???(");
+  02ED    3054    LDIA	0x54
+  02EE    120A    CLRB	0xA,4
+  02EF    118A    CLRB	0xA,3
+  02F0    2672    CALL	0x672
+313:                                  uart_send_number((unsigned int)vx_mv);
+  02F3    1683    SETB	0x3,5
+  02F4    1303    CLRB	0x3,6
+  02F5    084B    LD	A,0x4B
+  02F6    00FA    LD	0x7A,A
+  02F7    084A    LD	A,0x4A
+  02F8    00F9    LD	0x79,A
+  02F9    120A    CLRB	0xA,4
+  02FA    118A    CLRB	0xA,3
+  02FB    2632    CALL	0x632
+314:                                  uart_send_string("mV) ");
+  02FE    3043    LDIA	0x43
+  02FF    120A    CLRB	0xA,4
+  0300    118A    CLRB	0xA,3
+  0301    2672    CALL	0x672
+315:                              }
+316:                          }
+317:                          uart_send_string(" ");
+  0304    304A    LDIA	0x4A
+  0305    120A    CLRB	0xA,4
+  0306    118A    CLRB	0xA,3
+  0307    2672    CALL	0x672
+  030A    1683    SETB	0x3,5
+  030B    1303    CLRB	0x3,6
+  030C    300C    LDIA	0xC
+  030D    0AD8    INCR	0x58
+  030E    0258    SUBA	0x58
+  030F    1C03    SNZB	0x3,0
+  0310    2A23    JP	0x223
+  0311    3012    LDIA	0x12
+318:                      }
+319:              
+320:                  print_ntc:
+321:                      /* NTC(AN18=RC2), VDDÂèÇËÄÉ(Ê∏©Â∫¶ÂÖ¨ÂºèÂü∫‰∫é5VÂàÜÂéãËÆæËÆ°) */
+322:                      test_adc = ADC_Sample(18, 0);
+  0312    01F2    CLR	0x72
+  0313    120A    CLRB	0xA,4
+  0314    118A    CLRB	0xA,3
+  0315    253F    CALL	0x53F
+  0318    1683    SETB	0x3,5
+  0319    00D9    LD	0x59,A
+323:                      if(0xA5 == test_adc)
+  031A    30A5    LDIA	0xA5
+  031B    0659    XORA	0x59
+  031C    1D03    SNZB	0x3,2
+  031D    2C58    JP	0x458
+324:                      {
+325:                          unsigned int ntc_adc = adresult;
+  031E    085B    LD	A,0x5B
+  031F    00D5    LD	0x55,A
+  0320    085A    LD	A,0x5A
+  0321    00D4    LD	0x54,A
+326:              
+327:                          uart_send_string(" NTC=");
+  0322    3032    LDIA	0x32
+  0323    120A    CLRB	0xA,4
+  0324    118A    CLRB	0xA,3
+  0325    2672    CALL	0x672
+328:                          uart_send_number(ntc_adc);
+  0328    1683    SETB	0x3,5
+  0329    1303    CLRB	0x3,6
+  032A    0855    LD	A,0x55
+  032B    00FA    LD	0x7A,A
+  032C    0854    LD	A,0x54
+  032D    00F9    LD	0x79,A
+  032E    120A    CLRB	0xA,4
+  032F    118A    CLRB	0xA,3
+  0330    2632    CALL	0x632
+329:              
+330:                          if(ntc_adc < 100)
+  0333    3000    LDIA	0x0
+  0334    1683    SETB	0x3,5
+  0335    1303    CLRB	0x3,6
+  0336    0255    SUBA	0x55
+  0337    3064    LDIA	0x64
+  0338    1903    SZB	0x3,2
+  0339    0254    SUBA	0x54
+  033A    1803    SZB	0x3,0
+  033B    2B3E    JP	0x33E
+331:                          {
+332:                              uart_send_string(" T=SHORT");
+  033C    3013    LDIA	0x13
+  033D    2C53    JP	0x453
+333:                          }
+334:                          else if(ntc_adc > 3996)
+  033E    300F    LDIA	0xF
+  033F    0255    SUBA	0x55
+  0340    309D    LDIA	0x9D
+  0341    1903    SZB	0x3,2
+  0342    0254    SUBA	0x54
+  0343    1C03    SNZB	0x3,0
+  0344    2B47    JP	0x347
+335:                          {
+336:                              uart_send_string(" T=OPEN");
+  0345    3024    LDIA	0x24
+  0346    2C53    JP	0x453
+337:                          }
+338:                          else
+339:                          {
+340:                              unsigned long rt = (unsigned long)ntc_adc * 10000UL / (4096UL - ntc_adc);
+  0347    1283    CLRB	0x3,5
+  0348    3010    LDIA	0x10
+  0349    01A7    CLR	0x27
+  034A    01A6    CLR	0x26
+  034B    00A5    LD	0x25,A
+  034C    01A4    CLR	0x24
+  034D    1683    SETB	0x3,5
+  034E    0854    LD	A,0x54
+  034F    1283    CLRB	0x3,5
+  0350    00B1    LD	0x31,A
+  0351    1683    SETB	0x3,5
+  0352    0855    LD	A,0x55
+  0353    1283    CLRB	0x3,5
+  0354    00B2    LD	0x32,A
+  0355    01B3    CLR	0x33
+  0356    01B4    CLR	0x34
+  0357    0831    LD	A,0x31
+  0358    02A4    SUBR	0x24
+  0359    0832    LD	A,0x32
+  035A    1C03    SNZB	0x3,0
+  035B    0F32    SZINCA	0x32
+  035C    02A5    SUBR	0x25
+  035D    0833    LD	A,0x33
+  035E    1C03    SNZB	0x3,0
+  035F    0F33    SZINCA	0x33
+  0360    02A6    SUBR	0x26
+  0361    0834    LD	A,0x34
+  0362    1C03    SNZB	0x3,0
+  0363    0F34    SZINCA	0x34
+  0364    02A7    SUBR	0x27
+  0365    1683    SETB	0x3,5
+  0366    0854    LD	A,0x54
+  0367    00F2    LD	0x72,A
+  0368    0855    LD	A,0x55
+  0369    00F3    LD	0x73,A
+  036A    3027    LDIA	0x27
+  036B    01F4    CLR	0x74
+  036C    01F5    CLR	0x75
+  036D    01F9    CLR	0x79
+  036E    01F8    CLR	0x78
+  036F    00F7    LD	0x77,A
+  0370    3010    LDIA	0x10
+  0371    00F6    LD	0x76,A
+  0372    120A    CLRB	0xA,4
+  0373    118A    CLRB	0xA,3
+  0374    27AC    CALL	0x7AC
+  0377    250A    CALL	0x50A
+  0378    120A    CLRB	0xA,4
+  0379    118A    CLRB	0xA,3
+  037A    2764    CALL	0x764
+  037D    0827    LD	A,0x27
+  037E    1683    SETB	0x3,5
+  037F    00C7    LD	0x47,A
+  0380    1283    CLRB	0x3,5
+  0381    0826    LD	A,0x26
+  0382    1683    SETB	0x3,5
+  0383    00C6    LD	0x46,A
+  0384    1283    CLRB	0x3,5
+  0385    0825    LD	A,0x25
+  0386    1683    SETB	0x3,5
+  0387    00C5    LD	0x45,A
+  0388    1283    CLRB	0x3,5
+  0389    0824    LD	A,0x24
+  038A    1683    SETB	0x3,5
+  038B    00C4    LD	0x44,A
+341:                              unsigned int temp_x10;
+342:                              if(rt >= 10000UL)
+  038C    0847    LD	A,0x47
+  038D    1D03    SNZB	0x3,2
+  038E    2B9A    JP	0x39A
+  038F    0846    LD	A,0x46
+  0390    1D03    SNZB	0x3,2
+  0391    2B9A    JP	0x39A
+  0392    3027    LDIA	0x27
+  0393    0245    SUBA	0x45
+  0394    1D03    SNZB	0x3,2
+  0395    2B98    JP	0x398
+  0396    3010    LDIA	0x10
+  0397    0244    SUBA	0x44
+  0398    1C03    SNZB	0x3,0
+  0399    2BDF    JP	0x3DF
+343:                                  temp_x10 = 250U - (unsigned int)((rt - 10000UL) * 10UL / 445UL);
+  039A    30FA    LDIA	0xFA
+  039B    00C2    LD	0x42,A
+  039C    01C3    CLR	0x43
+  039D    2531    CALL	0x531
+  039E    120A    CLRB	0xA,4
+  039F    118A    CLRB	0xA,3
+  03A0    30F0    LDIA	0xF0
+  03A1    00B1    LD	0x31,A
+  03A2    30D8    LDIA	0xD8
+  03A3    00B2    LD	0x32,A
+  03A4    30FF    LDIA	0xFF
+  03A5    00B3    LD	0x33,A
+  03A6    00B4    LD	0x34,A
+  03A7    1683    SETB	0x3,5
+  03A8    0844    LD	A,0x44
+  03A9    1283    CLRB	0x3,5
+  03AA    07B1    ADDR	0x31
+  03AB    1683    SETB	0x3,5
+  03AC    0845    LD	A,0x45
+  03AD    1803    SZB	0x3,0
+  03AE    0F45    SZINCA	0x45
+  03AF    2BB1    JP	0x3B1
+  03B0    2BB3    JP	0x3B3
+  03B1    1283    CLRB	0x3,5
+  03B2    07B2    ADDR	0x32
+  03B3    1683    SETB	0x3,5
+  03B4    0846    LD	A,0x46
+  03B5    1803    SZB	0x3,0
+  03B6    0F46    SZINCA	0x46
+  03B7    2BB9    JP	0x3B9
+  03B8    2BBB    JP	0x3BB
+  03B9    1283    CLRB	0x3,5
+  03BA    07B3    ADDR	0x33
+  03BB    1683    SETB	0x3,5
+  03BC    0847    LD	A,0x47
+  03BD    1803    SZB	0x3,0
+  03BE    0A47    INCA	0x47
+  03BF    1283    CLRB	0x3,5
+  03C0    07B4    ADDR	0x34
+  03C1    0834    LD	A,0x34
+  03C2    00F5    LD	0x75,A
+  03C3    0833    LD	A,0x33
+  03C4    00F4    LD	0x74,A
+  03C5    0832    LD	A,0x32
+  03C6    00F3    LD	0x73,A
+  03C7    0831    LD	A,0x31
+  03C8    00F2    LD	0x72,A
+  03C9    2539    CALL	0x539
+  03CA    120A    CLRB	0xA,4
+  03CB    118A    CLRB	0xA,3
+  03CC    27AC    CALL	0x7AC
+  03CF    250A    CALL	0x50A
+  03D0    120A    CLRB	0xA,4
+  03D1    118A    CLRB	0xA,3
+  03D2    2764    CALL	0x764
+  03D5    0824    LD	A,0x24
+  03D6    1683    SETB	0x3,5
+  03D7    02C2    SUBR	0x42
+  03D8    1283    CLRB	0x3,5
+  03D9    0825    LD	A,0x25
+  03DA    1683    SETB	0x3,5
+  03DB    1C03    SNZB	0x3,0
+  03DC    03C3    DECR	0x43
+  03DD    02C3    SUBR	0x43
+  03DE    2C0E    JP	0x40E
+344:                              else
+345:                                  temp_x10 = 250U + (unsigned int)((10000UL - rt) * 10UL / 445UL);
+  03DF    2531    CALL	0x531
+  03E0    120A    CLRB	0xA,4
+  03E1    118A    CLRB	0xA,3
+  03E2    3027    LDIA	0x27
+  03E3    01F5    CLR	0x75
+  03E4    01F4    CLR	0x74
+  03E5    00F3    LD	0x73,A
+  03E6    3010    LDIA	0x10
+  03E7    00F2    LD	0x72,A
+  03E8    1683    SETB	0x3,5
+  03E9    0844    LD	A,0x44
+  03EA    02F2    SUBR	0x72
+  03EB    0845    LD	A,0x45
+  03EC    1C03    SNZB	0x3,0
+  03ED    0F45    SZINCA	0x45
+  03EE    02F3    SUBR	0x73
+  03EF    0846    LD	A,0x46
+  03F0    1C03    SNZB	0x3,0
+  03F1    0F46    SZINCA	0x46
+  03F2    02F4    SUBR	0x74
+  03F3    0847    LD	A,0x47
+  03F4    1C03    SNZB	0x3,0
+  03F5    0F47    SZINCA	0x47
+  03F6    02F5    SUBR	0x75
+  03F7    2539    CALL	0x539
+  03F8    120A    CLRB	0xA,4
+  03F9    118A    CLRB	0xA,3
+  03FA    27AC    CALL	0x7AC
+  03FD    250A    CALL	0x50A
+  03FE    120A    CLRB	0xA,4
+  03FF    118A    CLRB	0xA,3
+  0400    2764    CALL	0x764
+  0403    0825    LD	A,0x25
+  0404    1683    SETB	0x3,5
+  0405    00C3    LD	0x43,A
+  0406    1283    CLRB	0x3,5
+  0407    0824    LD	A,0x24
+  0408    1683    SETB	0x3,5
+  0409    00C2    LD	0x42,A
+  040A    30FA    LDIA	0xFA
+  040B    07C2    ADDR	0x42
+  040C    1803    SZB	0x3,0
+  040D    0AC3    INCR	0x43
+346:              
+347:                              uart_send_string(" T=");
+  040E    3050    LDIA	0x50
+  040F    120A    CLRB	0xA,4
+  0410    118A    CLRB	0xA,3
+  0411    2672    CALL	0x672
+348:                              uart_send_number(temp_x10 / 10);
+  0414    300A    LDIA	0xA
+  0415    00F2    LD	0x72,A
+  0416    01F3    CLR	0x73
+  0417    1683    SETB	0x3,5
+  0418    1303    CLRB	0x3,6
+  0419    0843    LD	A,0x43
+  041A    00F5    LD	0x75,A
+  041B    0842    LD	A,0x42
+  041C    00F4    LD	0x74,A
+  041D    120A    CLRB	0xA,4
+  041E    118A    CLRB	0xA,3
+  041F    26B3    CALL	0x6B3
+  0422    0873    LD	A,0x73
+  0423    1683    SETB	0x3,5
+  0424    00A5    LD	0x25,A
+  0425    0872    LD	A,0x72
+  0426    00A4    LD	0x24,A
+  0427    0825    LD	A,0x25
+  0428    00FA    LD	0x7A,A
+  0429    0824    LD	A,0x24
+  042A    00F9    LD	0x79,A
+  042B    120A    CLRB	0xA,4
+  042C    118A    CLRB	0xA,3
+  042D    2632    CALL	0x632
+349:                              uart_send_string(".");
+  0430    3058    LDIA	0x58
+  0431    120A    CLRB	0xA,4
+  0432    118A    CLRB	0xA,3
+  0433    2672    CALL	0x672
+350:                              uart_send_number(temp_x10 % 10);
+  0436    300A    LDIA	0xA
+  0437    00F2    LD	0x72,A
+  0438    01F3    CLR	0x73
+  0439    1683    SETB	0x3,5
+  043A    1303    CLRB	0x3,6
+  043B    0843    LD	A,0x43
+  043C    00F5    LD	0x75,A
+  043D    0842    LD	A,0x42
+  043E    00F4    LD	0x74,A
+  043F    120A    CLRB	0xA,4
+  0440    118A    CLRB	0xA,3
+  0441    26DD    CALL	0x6DD
+  0444    0873    LD	A,0x73
+  0445    1683    SETB	0x3,5
+  0446    00A7    LD	0x27,A
+  0447    0872    LD	A,0x72
+  0448    00A6    LD	0x26,A
+  0449    0827    LD	A,0x27
+  044A    00FA    LD	0x7A,A
+  044B    0826    LD	A,0x26
+  044C    00F9    LD	0x79,A
+  044D    120A    CLRB	0xA,4
+  044E    118A    CLRB	0xA,3
+  044F    2632    CALL	0x632
+351:                              uart_send_string("C");
+  0452    305C    LDIA	0x5C
+  0453    120A    CLRB	0xA,4
+  0454    118A    CLRB	0xA,3
+  0455    2672    CALL	0x672
+352:                          }
+353:                      }
+354:              
+355:                      uart_send_string("\r\n VCC=");
+  0458    301C    LDIA	0x1C
+  0459    120A    CLRB	0xA,4
+  045A    118A    CLRB	0xA,3
+  045B    2672    CALL	0x672
+356:                      uart_send_number(vcc_mv);
+  045E    1683    SETB	0x3,5
+  045F    1303    CLRB	0x3,6
+  0460    0857    LD	A,0x57
+  0461    00FA    LD	0x7A,A
+  0462    0856    LD	A,0x56
+  0463    00F9    LD	0x79,A
+  0464    120A    CLRB	0xA,4
+  0465    118A    CLRB	0xA,3
+  0466    2632    CALL	0x632
+357:                      uart_send_string("mV\r\n");
+  0469    303E    LDIA	0x3E
+  046A    120A    CLRB	0xA,4
+  046B    118A    CLRB	0xA,3
+  046C    2672    CALL	0x672
+  046F    0064    CLRWDT
+  0470    283C    JP	0x3C
+358:              
+359:                      asm("clrwdt");
+360:                  }
+361:              }
+362:              
+363:              /*========================================================================
+364:                Á≥ªÁªüÂàùÂßãÂåñ - MOSFETÊ†ÖÊûÅÂÖ®ÈÉ®HIGH(ÂÖ≥Èó≠)
+365:              ========================================================================*/
+366:              void Init_System(void)
+  0FCD    0000    NOP
+  0FCE    0064    CLRWDT
+367:              {
+368:                  asm("nop");
+369:                  asm("clrwdt");
+370:                  OPTION_REG = 0x0F;
+  0FCF    300F    LDIA	0xF
+  0FD0    1283    CLRB	0x3,5
+  0FD1    1303    CLRB	0x3,6
+  0FD2    0081    LD	0x1,A
+  0FD3    0064    CLRWDT
+371:                  asm("clrwdt");
+372:                  OSCCON = 0X70;
+  0FD4    3070    LDIA	0x70
+  0FD5    1283    CLRB	0x3,5
+  0FD6    1303    CLRB	0x3,6
+  0FD7    0094    LD	0x14,A
+373:              
+374:                  WPUA = 0B00000000;
+  0FD8    1683    SETB	0x3,5
+  0FD9    0188    CLR	0x8
+375:                  WPUB = 0B00000000;
+  0FDA    1283    CLRB	0x3,5
+  0FDB    0188    CLR	0x8
+376:                  WPUC = 0B00000000;
+  0FDC    1703    SETB	0x3,6
+  0FDD    0188    CLR	0x8
+377:                  WPUD = 0B00000000;
+  0FDE    0195    CLR	0x15
+378:              
+379:                  /* MOSFETÊ†ÖÊûÅÂÖ®ÈÉ®HIGH(ÂÖ≥Èó≠)
+380:                     PÊ≤üÈÅìAO3401: Gate=High‚ÜíÂÖ≥, Gate=Low‚ÜíÂºÄ
+381:                     RC2(AN18/NTC)ËÆæ‰∏∫Ê®°ÊãüËæìÂÖ• */
+382:                  TRISA = 0xF0;  PORTA = 0x0F;
+  0FDF    30F0    LDIA	0xF0
+  0FE0    1683    SETB	0x3,5
+  0FE1    1303    CLRB	0x3,6
+  0FE2    0085    LD	0x5,A
+  0FE3    300F    LDIA	0xF
+  0FE4    0086    LD	0x6,A
+383:                  TRISB = 0x30;  PORTB = 0x4F;
+  0FE5    3030    LDIA	0x30
+  0FE6    1283    CLRB	0x3,5
+  0FE7    0085    LD	0x5,A
+  0FE8    304F    LDIA	0x4F
+  0FE9    0086    LD	0x6,A
+384:                  TRISC = 0x07;  PORTC = 0x00;  /* RC2,RC1,RC0ËæìÂÖ•; RC2Áî®‰∫éNTC */
+  0FEA    3007    LDIA	0x7
+  0FEB    1703    SETB	0x3,6
+  0FEC    0085    LD	0x5,A
+  0FED    0186    CLR	0x6
+385:                  TRISD = 0xF0;  PORTD = 0x0F;
+  0FEE    30F0    LDIA	0xF0
+  0FEF    0094    LD	0x14,A
+  0FF0    300F    LDIA	0xF
+  0FF1    0087    LD	0x7,A
+386:              
+387:                  CC0CON = 0;
+  0FF2    1683    SETB	0x3,5
+  0FF3    0195    CLR	0x15
+388:                  CC1CON = 0;
+  0FF4    0196    CLR	0x16
+389:              
+390:                  PR2 = 249;
+  0FF5    30F9    LDIA	0xF9
+  0FF6    1283    CLRB	0x3,5
+  0FF7    1303    CLRB	0x3,6
+  0FF8    0091    LD	0x11,A
+391:                  TMR2IF = 0;
+  0FF9    108D    CLRB	0xD,1
+392:                  TMR2IE = 1;
+  0FFA    148E    SETB	0xE,1
+393:                  T2CON = 0B00000100;
+  0FFB    3004    LDIA	0x4
+  0FFC    0093    LD	0x13,A
+394:                  INTCON = 0XC0;
+  0FFD    30C0    LDIA	0xC0
+  0FFE    008B    LD	0xB,A
+  0FFF    0008    RET
+395:              }
+396:              
+397:              void interrupt Isr_Timer(void)
+398:              {
+399:                  if(TMR2IF)
+  07E2    1283    CLRB	0x3,5
+  07E3    1303    CLRB	0x3,6
+  07E4    188D    SZB	0xD,1
+400:                  {
+401:                      TMR2IF = 0;
+  07E5    108D    CLRB	0xD,1
+  07E6    0871    LD	A,0x71
+  07E7    008A    LD	0xA,A
+  07E8    0E70    SWAPA	0x70
+  07E9    0083    LD	0x3,A
+  07EA    0EFE    SWAPR	0x7E
+  07EB    0E7E    SWAPA	0x7E
+  07EC    0009    RETI
+402:                  }
+403:              }
+---- D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwdiv.c ----------------------------------------------------------------------
+1:                // word unsigned division
+2:                
+3:                unsigned int
+4:                #ifdef __PICC__
+5:                #warning TODO: update cgpic and this file to use the other prototype
+6:                __lwdiv(unsigned int divisor, unsigned int dividend)
+  06B3    01F6    CLR	0x76
+  06B4    01F7    CLR	0x77
+  06B5    0872    LD	A,0x72
+  06B6    0473    ORA	0x73
+  06B7    1903    SZB	0x3,2
+  06B8    2ED8    JP	0x6D8
+  06B9    01F8    CLR	0x78
+  06BA    0AF8    INCR	0x78
+  06BB    1BF3    SZB	0x73,7
+  06BC    2EC1    JP	0x6C1
+  06BD    1003    CLRB	0x3,0
+  06BE    0DF2    RLCR	0x72
+  06BF    0DF3    RLCR	0x73
+  06C0    2EBA    JP	0x6BA
+  06C1    1003    CLRB	0x3,0
+  06C2    0DF6    RLCR	0x76
+  06C3    0DF7    RLCR	0x77
+  06C4    0873    LD	A,0x73
+  06C5    0275    SUBA	0x75
+  06C6    1D03    SNZB	0x3,2
+  06C7    2ECA    JP	0x6CA
+  06C8    0872    LD	A,0x72
+  06C9    0274    SUBA	0x74
+  06CA    1C03    SNZB	0x3,0
+  06CB    2ED4    JP	0x6D4
+  06CC    0872    LD	A,0x72
+  06CD    02F4    SUBR	0x74
+  06CE    0873    LD	A,0x73
+  06CF    1C03    SNZB	0x3,0
+  06D0    03F5    DECR	0x75
+  06D1    02F5    SUBR	0x75
+  06D2    1476    SETB	0x76,0
+  06D3    1003    CLRB	0x3,0
+  06D4    0CF3    RRCR	0x73
+  06D5    0CF2    RRCR	0x72
+  06D6    0BF8    SZDECR	0x78
+  06D7    2EC1    JP	0x6C1
+  06D8    0877    LD	A,0x77
+  06D9    00F3    LD	0x73,A
+  06DA    0876    LD	A,0x76
+  06DB    00F2    LD	0x72,A
+  06DC    0008    RET
+7:                #else
+8:                __lwdiv(unsigned int dividend, unsigned int divisor)
+9:                #endif
+10:               {
+11:               	unsigned int	quotient;
+12:               	unsigned char	counter;
+13:               
+14:               	quotient = 0;
+15:               	if(divisor != 0) {
+16:               		counter = 1;
+17:               		while((divisor & 0x8000) == 0) {
+18:               			divisor <<= 1;
+19:               			counter++;
+20:               		}
+21:               		do {
+22:               			quotient <<= 1;
+23:               			if(divisor <= dividend) {
+24:               				dividend -= divisor;
+25:               				quotient |= 1;
+26:               			}
+27:               			divisor >>= 1;
+28:               		} while(--counter != 0);
+29:               	}
+30:               	return quotient;
+31:               }
+---- D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lwmod.c ----------------------------------------------------------------------
+1:                // word unsigned modulus
+2:                
+3:                unsigned int
+4:                #ifdef __PICC__
+5:                #warning TODO: update cgpic and this file to use the other prototype
+6:                __lwmod(unsigned int divisor, unsigned int dividend)
+  06DD    0872    LD	A,0x72
+  06DE    0473    ORA	0x73
+  06DF    1903    SZB	0x3,2
+  06E0    2EFC    JP	0x6FC
+  06E1    01F6    CLR	0x76
+  06E2    0AF6    INCR	0x76
+  06E3    1BF3    SZB	0x73,7
+  06E4    2EE9    JP	0x6E9
+  06E5    1003    CLRB	0x3,0
+  06E6    0DF2    RLCR	0x72
+  06E7    0DF3    RLCR	0x73
+  06E8    2EE2    JP	0x6E2
+  06E9    0873    LD	A,0x73
+  06EA    0275    SUBA	0x75
+  06EB    1D03    SNZB	0x3,2
+  06EC    2EEF    JP	0x6EF
+  06ED    0872    LD	A,0x72
+  06EE    0274    SUBA	0x74
+  06EF    1C03    SNZB	0x3,0
+  06F0    2EF8    JP	0x6F8
+  06F1    0872    LD	A,0x72
+  06F2    02F4    SUBR	0x74
+  06F3    0873    LD	A,0x73
+  06F4    1C03    SNZB	0x3,0
+  06F5    03F5    DECR	0x75
+  06F6    02F5    SUBR	0x75
+  06F7    1003    CLRB	0x3,0
+  06F8    0CF3    RRCR	0x73
+  06F9    0CF2    RRCR	0x72
+  06FA    0BF6    SZDECR	0x76
+  06FB    2EE9    JP	0x6E9
+  06FC    0875    LD	A,0x75
+  06FD    00F3    LD	0x73,A
+  06FE    0874    LD	A,0x74
+  06FF    00F2    LD	0x72,A
+  0700    0008    RET
+7:                #else
+8:                __lwmod(unsigned int dividend, unsigned int divisor)
+9:                #endif
+10:               {
+11:               	unsigned char	counter;
+12:               
+13:               	if(divisor != 0) {
+14:               		counter = 1;
+15:               		while((divisor & 0x8000) == 0) {
+16:               			divisor <<= 1;
+17:               			counter++;
+18:               		}
+19:               		do {
+20:               			if(divisor <= dividend)
+21:               				dividend -= divisor;
+22:               			divisor >>= 1;
+23:               		} while(--counter != 0);
+24:               	}
+25:               	return dividend;
+26:               }
+---- D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\Umul32.c ----------------------------------------------------------------------
+1:                // 32 x 32 bit multiplication with 32 bit result
+2:                #ifdef _PIC18
+3:                #define _Has_hardware_multiply 1
+4:                #else
+5:                #define _Has_hardware_multiply 0
+6:                #endif
+7:                
+8:                #if defined(_PIC14E) || defined(_PIC14EX) || defined(_PIC18)
+9:                #define _Has_large_call_stack 1
+10:               #else
+11:               #define _Has_large_call_stack 0
+12:               #endif
+13:               
+14:               unsigned long
+15:               __lmul(unsigned long multiplier, unsigned long multiplicand)
+  07AC    1283    CLRB	0x3,5
+  07AD    01A0    CLR	0x20
+  07AE    01A1    CLR	0x21
+  07AF    01A2    CLR	0x22
+  07B0    01A3    CLR	0x23
+  07B1    1C72    SNZB	0x72,0
+  07B2    2FC8    JP	0x7C8
+  07B3    0876    LD	A,0x76
+  07B4    1283    CLRB	0x3,5
+  07B5    07A0    ADDR	0x20
+  07B6    0877    LD	A,0x77
+  07B7    1103    CLRB	0x3,2
+  07B8    1803    SZB	0x3,0
+  07B9    3E01    ADDIA	0x1
+  07BA    1D03    SNZB	0x3,2
+  07BB    07A1    ADDR	0x21
+  07BC    0878    LD	A,0x78
+  07BD    1103    CLRB	0x3,2
+  07BE    1803    SZB	0x3,0
+  07BF    3E01    ADDIA	0x1
+  07C0    1D03    SNZB	0x3,2
+  07C1    07A2    ADDR	0x22
+  07C2    0879    LD	A,0x79
+  07C3    1103    CLRB	0x3,2
+  07C4    1803    SZB	0x3,0
+  07C5    3E01    ADDIA	0x1
+  07C6    1D03    SNZB	0x3,2
+  07C7    07A3    ADDR	0x23
+  07C8    1003    CLRB	0x3,0
+  07C9    0DF6    RLCR	0x76
+  07CA    0DF7    RLCR	0x77
+  07CB    0DF8    RLCR	0x78
+  07CC    0DF9    RLCR	0x79
+  07CD    1003    CLRB	0x3,0
+  07CE    0CF5    RRCR	0x75
+  07CF    0CF4    RRCR	0x74
+  07D0    0CF3    RRCR	0x73
+  07D1    0CF2    RRCR	0x72
+  07D2    0875    LD	A,0x75
+  07D3    0474    ORA	0x74
+  07D4    0473    ORA	0x73
+  07D5    0472    ORA	0x72
+  07D6    1D03    SNZB	0x3,2
+  07D7    2FB1    JP	0x7B1
+  07D8    1283    CLRB	0x3,5
+  07D9    0823    LD	A,0x23
+  07DA    00F5    LD	0x75,A
+  07DB    0822    LD	A,0x22
+  07DC    00F4    LD	0x74,A
+  07DD    0821    LD	A,0x21
+  07DE    00F3    LD	0x73,A
+  07DF    0820    LD	A,0x20
+  07E0    00F2    LD	0x72,A
+  07E1    0008    RET
+16:               {
+17:               	unsigned long product;
+18:               
+19:               #define LOWBYTE(x)  (*(unsigned char *)(&x))
+20:               #define LMIDBYTE(x) (*(((unsigned char *)(&x))+1))
+21:               #define HMIDBYTE(x) (*(((unsigned char *)(&x))+2))
+22:               #define HIGHBYTE(x) (*(((unsigned char *)(&x))+3))
+23:               
+24:               #if (_Has_hardware_multiply || _Has_large_call_stack) && defined(__OPTIMIZE_SPEED__)
+25:               	{
+26:               
+27:               #define USE_SHRINK
+28:               
+29:               /*
+30:               a 32-bit multiply can be decomposed into the sum of ten 8-bit multiplies
+31:                            a  b  c  d
+32:               *            e  f  g  h
+33:               -----------------------
+34:                          |         dh
+35:                          |      ch  0
+36:                          |   bh  0  0
+37:                          |ah  0  0  0
+38:                          |      dg  0
+39:                          |   cg  0  0
+40:                          |bg  0  0  0
+41:                        ag| 0  0  0  0 (we ignore this intermediate product
+42:                                        because it does not affect the low 32 bits of the result)
+43:                          |   df  0  0
+44:                          |cf  0  0  0
+45:                        bf| 0  0  0  0 (ignore)
+46:                     af  0| 0  0  0  0 (ignore)
+47:                          |de  0  0  0
+48:                        ce| 0  0  0  0 (ignore)
+49:                     be  0| 0  0  0  0 (ignore)
+50:               +  ae  0  0| 0  0  0  0 (ignore)
+51:               =======================
+52:                */
+53:               		product =  (unsigned int)LOWBYTE(multiplier) * LOWBYTE(multiplicand);
+54:               
+55:               #if defined(USE_MASKS)
+56:               		product += ((unsigned long)
+57:               			     ((unsigned int)LOWBYTE(multiplier) * LMIDBYTE(multiplicand))
+58:               			     +
+59:               			     ((unsigned int)LMIDBYTE(multiplier) * LOWBYTE(multiplicand)))
+60:               			<< 8;
+61:               
+62:               		product += ((unsigned long)
+63:               			    ((unsigned int)LOWBYTE(multiplier) * HMIDBYTE(multiplicand))
+64:               			    +
+65:               			    ((unsigned int)LMIDBYTE(multiplier) * LMIDBYTE(multiplicand))
+66:               			    +
+67:               			    ((unsigned int)HMIDBYTE(multiplier) * LOWBYTE(multiplicand)))
+68:               			<< 16;
+69:               
+70:               		/* cast to smaller type to avoid adding high bits just to discard */
+71:               		product += ((unsigned long)
+72:               			    (unsigned char)
+73:               			    ((unsigned int)LOWBYTE(multiplier) * HIGHBYTE(multiplicand))
+74:               			    +
+75:               			    (unsigned char)
+76:               			    ((unsigned int)LMIDBYTE(multiplier) * HMIDBYTE(multiplicand))
+77:               			    +
+78:               			    (unsigned char)
+79:               			    ((unsigned int)HMIDBYTE(multiplier) * LMIDBYTE(multiplicand))
+80:               			    +
+81:               			    (unsigned char)
+82:               			    ((unsigned int)HIGHBYTE(multiplier) * LOWBYTE(multiplicand)))
+83:               			<< 24;
+84:               
+85:               #elif defined(USE_SHRINK)
+86:               		/* add direct to upper bytes, rather than shift and add all bytes */
+87:               		*((unsigned short long*)(((unsigned char*)&product)+1)) +=
+88:               			((unsigned int)LOWBYTE(multiplier) * LMIDBYTE(multiplicand));
+89:               		*((unsigned short long*)(((unsigned char*)&product)+1)) +=
+90:               			((unsigned int)LMIDBYTE(multiplier) * LOWBYTE(multiplicand));
+91:               
+92:               
+93:               		*((unsigned int*)(((unsigned char*)&product)+2)) +=
+94:               			((unsigned int)LOWBYTE(multiplier) * HMIDBYTE(multiplicand));
+95:               		*((unsigned int*)(((unsigned char*)&product)+2)) +=
+96:               			((unsigned int)LMIDBYTE(multiplier) * LMIDBYTE(multiplicand));
+97:               		*((unsigned int*)(((unsigned char*)&product)+2)) +=
+98:               			((unsigned int)HMIDBYTE(multiplier) * LOWBYTE(multiplicand));
+99:               
+100:              		*(((unsigned char*)&product)+3) +=
+101:              			(unsigned char)
+102:              			((unsigned int)LOWBYTE(multiplier) * HIGHBYTE(multiplicand));
+103:              		*(((unsigned char*)&product)+3) +=
+104:              			(unsigned char)
+105:              			((unsigned int)LMIDBYTE(multiplier) * HMIDBYTE(multiplicand));
+106:              		*(((unsigned char*)&product)+3) +=
+107:              			(unsigned char)
+108:              			((unsigned int)HMIDBYTE(multiplier) * LMIDBYTE(multiplicand));
+109:              		*(((unsigned char*)&product)+3) +=
+110:              			(unsigned char)
+111:              			((unsigned int)HIGHBYTE(multiplier) * LOWBYTE(multiplicand));
+112:              
+113:              #else
+114:              #error No method chosen
+115:              #endif
+116:              	}
+117:              #else
+118:              
+119:              	product = 0;
+120:              	do {
+121:              		if(multiplier & 1)
+122:              			product += multiplicand;
+123:              		multiplicand <<= 1;
+124:              		multiplier >>= 1;
+125:              	} while(multiplier != 0);
+126:              
+127:              #endif
+128:              	return product;
+129:              }
+---- D:\6.software\58.SCMCU_IDE\SCMCU_IDE_V2.00.16\data\sources\common\lldiv.c ----------------------------------------------------------------------
+1:                // long unsigned unsigned division
+2:                
+3:                unsigned long int
+4:                #ifdef __PICC__
+5:                #warning TODO: update cgpic and this file to use the other prototype
+6:                __lldiv(unsigned long int divisor, unsigned long int dividend)
+  0764    01AC    CLR	0x2C
+  0765    01AD    CLR	0x2D
+  0766    01AE    CLR	0x2E
+  0767    01AF    CLR	0x2F
+  0768    0827    LD	A,0x27
+  0769    0426    ORA	0x26
+  076A    0425    ORA	0x25
+  076B    0424    ORA	0x24
+  076C    1903    SZB	0x3,2
+  076D    2FA3    JP	0x7A3
+  076E    01B0    CLR	0x30
+  076F    0AB0    INCR	0x30
+  0770    1BA7    SZB	0x27,7
+  0771    2F78    JP	0x778
+  0772    1003    CLRB	0x3,0
+  0773    0DA4    RLCR	0x24
+  0774    0DA5    RLCR	0x25
+  0775    0DA6    RLCR	0x26
+  0776    0DA7    RLCR	0x27
+  0777    2F6F    JP	0x76F
+  0778    1003    CLRB	0x3,0
+  0779    0DAC    RLCR	0x2C
+  077A    0DAD    RLCR	0x2D
+  077B    0DAE    RLCR	0x2E
+  077C    0DAF    RLCR	0x2F
+  077D    0827    LD	A,0x27
+  077E    022B    SUBA	0x2B
+  077F    1D03    SNZB	0x3,2
+  0780    2F8B    JP	0x78B
+  0781    0826    LD	A,0x26
+  0782    022A    SUBA	0x2A
+  0783    1D03    SNZB	0x3,2
+  0784    2F8B    JP	0x78B
+  0785    0825    LD	A,0x25
+  0786    0229    SUBA	0x29
+  0787    1D03    SNZB	0x3,2
+  0788    2F8B    JP	0x78B
+  0789    0824    LD	A,0x24
+  078A    0228    SUBA	0x28
+  078B    1C03    SNZB	0x3,0
+  078C    2F9D    JP	0x79D
+  078D    0824    LD	A,0x24
+  078E    02A8    SUBR	0x28
+  078F    0825    LD	A,0x25
+  0790    1C03    SNZB	0x3,0
+  0791    0F25    SZINCA	0x25
+  0792    02A9    SUBR	0x29
+  0793    0826    LD	A,0x26
+  0794    1C03    SNZB	0x3,0
+  0795    0F26    SZINCA	0x26
+  0796    02AA    SUBR	0x2A
+  0797    0827    LD	A,0x27
+  0798    1C03    SNZB	0x3,0
+  0799    0F27    SZINCA	0x27
+  079A    02AB    SUBR	0x2B
+  079B    142C    SETB	0x2C,0
+  079C    1003    CLRB	0x3,0
+  079D    0CA7    RRCR	0x27
+  079E    0CA6    RRCR	0x26
+  079F    0CA5    RRCR	0x25
+  07A0    0CA4    RRCR	0x24
+  07A1    0BB0    SZDECR	0x30
+  07A2    2F78    JP	0x778
+  07A3    082F    LD	A,0x2F
+  07A4    00A7    LD	0x27,A
+  07A5    082E    LD	A,0x2E
+  07A6    00A6    LD	0x26,A
+  07A7    082D    LD	A,0x2D
+  07A8    00A5    LD	0x25,A
+  07A9    082C    LD	A,0x2C
+  07AA    00A4    LD	0x24,A
+  07AB    0008    RET
+7:                #else
+8:                __lldiv(unsigned long int dividend, unsigned long int divisor)
+9:                #endif
+10:               {
+11:               	unsigned long int	quotient;
+12:               	unsigned char	counter;
+13:               
+14:               	quotient = 0;
+15:               	if(divisor != 0) {
+16:               		counter = 1;
+17:               		while((divisor & 0x80000000UL) == 0) {
+18:               			divisor <<= 1;
+19:               			counter++;
+20:               		}
+21:               		do {
+22:               			quotient <<= 1;
+23:               			if(divisor <= dividend) {
+24:               				dividend -= divisor;
+25:               				quotient |= 1;
+26:               			}
+27:               			divisor >>= 1;
+28:               		} while(--counter != 0);
+29:               	}
+30:               	return quotient;
+31:               }
 ---- stringtab ------------------------------------------------------------------
+  0701    3007    LDIA	0x7
+  0702    008A    LD	0xA,A
+  0703    0804    LD	A,0x4
+  0704    0A84    INCR	0x4
+  0705    0782    ADDR	0x2
+  0706    3400    RET	0x0
 ---- reset_enter ------------------------------------------------------------------
   0000    120A    CLRB	0xA,4
   0001    118A    CLRB	0xA,3
@@ -1235,14 +2211,11 @@
   000D    118A    CLRB	0xA,3
   000E    280F    JP	0xF
 ---- start_initialization ------------------------------------------------------------------
-  000F    01FA    CLR	0x7A
-  0010    01FB    CLR	0x7B
-  0011    1283    CLRB	0x3,5
-  0012    1303    CLRB	0x3,6
-  0013    01C4    CLR	0x44
-  0014    01C5    CLR	0x45
-  0015    01C6    CLR	0x46
-  0016    01C7    CLR	0x47
+  000F    1683    SETB	0x3,5
+  0010    1303    CLRB	0x3,6
+  0011    01D9    CLR	0x59
+  0012    01DA    CLR	0x5A
+  0013    01DB    CLR	0x5B
 ---- interrupt_function_enter ----------------------------------------------------------
   0004    00FE    LD	0x7E,A
   0005    0E03    SWAPA	0x3
@@ -1251,40 +2224,323 @@
   0008    00F1    LD	0x71,A
   0009    120A    CLRB	0xA,4
   000A    118A    CLRB	0xA,3
-  000B    2ACC    JP	0x2CC
+  000B    2FE2    JP	0x7E2
 ---- common_function ------------------------------------------------------------------
-  0017    0183    CLR	0x3
-  0018    120A    CLRB	0xA,4
-  0019    118A    CLRB	0xA,3
-  001A    29CC    JP	0x1CC
-  00FA    00F4    LD	0x74,A
-  00FB    01F5    CLR	0x75
-  00FC    01F6    CLR	0x76
-  00FD    0873    LD	A,0x73
-  00FE    02A3    SUBR	0x23
-  00FF    0874    LD	A,0x74
-  0100    1C03    SNZB	0x3,0
-  0101    0F74    SZINCA	0x74
-  0102    02A4    SUBR	0x24
-  0103    0875    LD	A,0x75
-  0104    1C03    SNZB	0x3,0
-  0105    0F75    SZINCA	0x75
-  0106    02A5    SUBR	0x25
-  0107    0876    LD	A,0x76
-  0108    0008    RET
-  0109    01A3    CLR	0x23
-  010A    01A4    CLR	0x24
-  010B    01A5    CLR	0x25
-  010C    01A6    CLR	0x26
-  010D    01A7    CLR	0x27
-  010E    01A8    CLR	0x28
-  010F    01A9    CLR	0x29
-  0110    01AA    CLR	0x2A
-  0111    0008    RET
-  0296    0832    LD	A,0x32
-  0297    00B6    LD	0x36,A
-  0298    0833    LD	A,0x33
-  0299    00B7    LD	0x37,A
-  029A    0834    LD	A,0x34
-  029B    00B8    LD	0x38,A
-  029C    0008    RET
+  0014    0183    CLR	0x3
+  0015    120A    CLRB	0xA,4
+  0016    118A    CLRB	0xA,3
+  0017    2818    JP	0x18
+  0471    1683    SETB	0x3,5
+  0472    1303    CLRB	0x3,6
+  0473    1003    CLRB	0x3,0
+  0474    0D58    RLCA	0x58
+  0475    3EAA    ADDIA	0xAA
+  0476    0084    LD	0x4,A
+  0477    1383    CLRB	0x3,7
+  0478    0800    LD	A,0x0
+  0479    00F9    LD	0x79,A
+  047A    0A84    INCR	0x4
+  047B    0800    LD	A,0x0
+  047C    00FA    LD	0x7A,A
+  047D    0008    RET
+  047E    1283    CLRB	0x3,5
+  047F    3003    LDIA	0x3
+  0480    01A7    CLR	0x27
+  0481    01A6    CLR	0x26
+  0482    00A5    LD	0x25,A
+  0483    30E8    LDIA	0xE8
+  0484    00A4    LD	0x24,A
+  0485    30F4    LDIA	0xF4
+  0486    00B1    LD	0x31,A
+  0487    3001    LDIA	0x1
+  0488    00B2    LD	0x32,A
+  0489    01B3    CLR	0x33
+  048A    01B4    CLR	0x34
+  048B    1683    SETB	0x3,5
+  048C    0856    LD	A,0x56
+  048D    00F2    LD	0x72,A
+  048E    0857    LD	A,0x57
+  048F    00F3    LD	0x73,A
+  0490    30FF    LDIA	0xFF
+  0491    01F4    CLR	0x74
+  0492    01F5    CLR	0x75
+  0493    00F9    LD	0x79,A
+  0494    00F8    LD	0x78,A
+  0495    30FD    LDIA	0xFD
+  0496    00F7    LD	0x77,A
+  0497    3079    LDIA	0x79
+  0498    00F6    LD	0x76,A
+  0499    0008    RET
+  049A    1283    CLRB	0x3,5
+  049B    00B8    LD	0x38,A
+  049C    0835    LD	A,0x35
+  049D    07B1    ADDR	0x31
+  049E    0836    LD	A,0x36
+  049F    1803    SZB	0x3,0
+  04A0    0F36    SZINCA	0x36
+  04A1    07B2    ADDR	0x32
+  04A2    0837    LD	A,0x37
+  04A3    1803    SZB	0x3,0
+  04A4    0F37    SZINCA	0x37
+  04A5    07B3    ADDR	0x33
+  04A6    0838    LD	A,0x38
+  04A7    1803    SZB	0x3,0
+  04A8    0A38    INCA	0x38
+  04A9    07B4    ADDR	0x34
+  04AA    0834    LD	A,0x34
+  04AB    00AB    LD	0x2B,A
+  04AC    0833    LD	A,0x33
+  04AD    00AA    LD	0x2A,A
+  04AE    0832    LD	A,0x32
+  04AF    00A9    LD	0x29,A
+  04B0    0831    LD	A,0x31
+  04B1    00A8    LD	0x28,A
+  04B2    0008    RET
+  04B3    0D58    RLCA	0x58
+  04B4    3EAA    ADDIA	0xAA
+  04B5    0084    LD	0x4,A
+  04B6    1383    CLRB	0x3,7
+  04B7    0800    LD	A,0x0
+  04B8    1283    CLRB	0x3,5
+  04B9    00B1    LD	0x31,A
+  04BA    0A84    INCR	0x4
+  04BB    0800    LD	A,0x0
+  04BC    00B2    LD	0x32,A
+  04BD    0831    LD	A,0x31
+  04BE    00F2    LD	0x72,A
+  04BF    0832    LD	A,0x32
+  04C0    00F3    LD	0x73,A
+  04C1    01F4    CLR	0x74
+  04C2    01F5    CLR	0x75
+  04C3    1683    SETB	0x3,5
+  04C4    0856    LD	A,0x56
+  04C5    00F6    LD	0x76,A
+  04C6    0857    LD	A,0x57
+  04C7    00F7    LD	0x77,A
+  04C8    01F8    CLR	0x78
+  04C9    01F9    CLR	0x79
+  04CA    0008    RET
+  04CB    0872    LD	A,0x72
+  04CC    00B3    LD	0x33,A
+  04CD    0873    LD	A,0x73
+  04CE    00B4    LD	0x34,A
+  04CF    0874    LD	A,0x74
+  04D0    00B5    LD	0x35,A
+  04D1    0875    LD	A,0x75
+  04D2    00B6    LD	0x36,A
+  04D3    300C    LDIA	0xC
+  04D4    1003    CLRB	0x3,0
+  04D5    0CB6    RRCR	0x36
+  04D6    0CB5    RRCR	0x35
+  04D7    0CB4    RRCR	0x34
+  04D8    0CB3    RRCR	0x33
+  04D9    3EFF    ADDIA	0xFF
+  04DA    1D03    SNZB	0x3,2
+  04DB    2CD4    JP	0x4D4
+  04DC    0834    LD	A,0x34
+  04DD    1683    SETB	0x3,5
+  04DE    0008    RET
+  04DF    1803    SZB	0x3,0
+  04E0    3E01    ADDIA	0x1
+  04E1    1283    CLRB	0x3,5
+  04E2    00B2    LD	0x32,A
+  04E3    1683    SETB	0x3,5
+  04E4    0857    LD	A,0x57
+  04E5    1283    CLRB	0x3,5
+  04E6    0232    SUBA	0x32
+  04E7    1D03    SNZB	0x3,2
+  04E8    0008    RET
+  04E9    1683    SETB	0x3,5
+  04EA    0856    LD	A,0x56
+  04EB    1283    CLRB	0x3,5
+  04EC    0231    SUBA	0x31
+  04ED    0008    RET
+  04EE    0856    LD	A,0x56
+  04EF    00F2    LD	0x72,A
+  04F0    0857    LD	A,0x57
+  04F1    00F3    LD	0x73,A
+  04F2    3002    LDIA	0x2
+  04F3    01F4    CLR	0x74
+  04F4    01F5    CLR	0x75
+  04F5    01F9    CLR	0x79
+  04F6    01F8    CLR	0x78
+  04F7    00F7    LD	0x77,A
+  04F8    3087    LDIA	0x87
+  04F9    00F6    LD	0x76,A
+  04FA    0008    RET
+  04FB    01F4    CLR	0x74
+  04FC    01F5    CLR	0x75
+  04FD    01F9    CLR	0x79
+  04FE    01F8    CLR	0x78
+  04FF    00F7    LD	0x77,A
+  0500    3087    LDIA	0x87
+  0501    00F6    LD	0x76,A
+  0502    0008    RET
+  0503    1683    SETB	0x3,5
+  0504    1303    CLRB	0x3,6
+  0505    0858    LD	A,0x58
+  0506    00F9    LD	0x79,A
+  0507    01FA    CLR	0x7A
+  0508    0AF9    INCR	0x79
+  0509    0008    RET
+  050A    0875    LD	A,0x75
+  050B    00AB    LD	0x2B,A
+  050C    0874    LD	A,0x74
+  050D    00AA    LD	0x2A,A
+  050E    0873    LD	A,0x73
+  050F    00A9    LD	0x29,A
+  0510    0872    LD	A,0x72
+  0511    00A8    LD	0x28,A
+  0512    0008    RET
+  0513    1283    CLRB	0x3,5
+  0514    00B5    LD	0x35,A
+  0515    3000    LDIA	0x0
+  0516    1803    SZB	0x3,0
+  0517    3001    LDIA	0x1
+  0518    0773    ADDA	0x73
+  0519    01B7    CLR	0x37
+  051A    1803    SZB	0x3,0
+  051B    0AB7    INCR	0x37
+  051C    1683    SETB	0x3,5
+  051D    0008    RET
+  051E    1283    CLRB	0x3,5
+  051F    00B6    LD	0x36,A
+  0520    1803    SZB	0x3,0
+  0521    0AB7    INCR	0x37
+  0522    0874    LD	A,0x74
+  0523    0737    ADDA	0x37
+  0524    01B8    CLR	0x38
+  0525    1803    SZB	0x3,0
+  0526    0AB8    INCR	0x38
+  0527    1683    SETB	0x3,5
+  0528    0008    RET
+  0529    1283    CLRB	0x3,5
+  052A    00B7    LD	0x37,A
+  052B    1803    SZB	0x3,0
+  052C    0AB8    INCR	0x38
+  052D    0875    LD	A,0x75
+  052E    0738    ADDA	0x38
+  052F    1683    SETB	0x3,5
+  0530    0008    RET
+  0531    1283    CLRB	0x3,5
+  0532    3001    LDIA	0x1
+  0533    01A7    CLR	0x27
+  0534    01A6    CLR	0x26
+  0535    00A5    LD	0x25,A
+  0536    30BD    LDIA	0xBD
+  0537    00A4    LD	0x24,A
+  0538    0008    RET
+  0539    300A    LDIA	0xA
+  053A    00F6    LD	0x76,A
+  053B    01F7    CLR	0x77
+  053C    01F8    CLR	0x78
+  053D    01F9    CLR	0x79
+  053E    0008    RET
+  0623    00F4    LD	0x74,A
+  0624    01F5    CLR	0x75
+  0625    01F6    CLR	0x76
+  0626    0873    LD	A,0x73
+  0627    02A3    SUBR	0x23
+  0628    0874    LD	A,0x74
+  0629    1C03    SNZB	0x3,0
+  062A    0F74    SZINCA	0x74
+  062B    02A4    SUBR	0x24
+  062C    0875    LD	A,0x75
+  062D    1C03    SNZB	0x3,0
+  062E    0F75    SZINCA	0x75
+  062F    02A5    SUBR	0x25
+  0630    0876    LD	A,0x76
+  0631    0008    RET
+  0707    3442    RET	0x42
+  0708    3431    RET	0x31
+  0709    342D    RET	0x2D
+  070A    3442    RET	0x42
+  070B    3431    RET	0x31
+  070C    3432    RET	0x32
+  070D    3420    RET	0x20
+  070E    3441    RET	0x41
+  070F    3444    RET	0x44
+  0710    3443    RET	0x43
+  0711    3420    RET	0x20
+  0712    3454    RET	0x54
+  0713    3465    RET	0x65
+  0714    3473    RET	0x73
+  0715    3474    RET	0x74
+  0716    340D    RET	0xD
+  0717    340A    RET	0xA
+  0718    3400    RET	0x0
+  0719    3420    RET	0x20
+  071A    3454    RET	0x54
+  071B    343D    RET	0x3D
+  071C    3453    RET	0x53
+  071D    3448    RET	0x48
+  071E    344F    RET	0x4F
+  071F    3452    RET	0x52
+  0720    3454    RET	0x54
+  0721    3400    RET	0x0
+  0722    340D    RET	0xD
+  0723    340A    RET	0xA
+  0724    3420    RET	0x20
+  0725    3456    RET	0x56
+  0726    3443    RET	0x43
+  0727    3443    RET	0x43
+  0728    343D    RET	0x3D
+  0729    3400    RET	0x0
+  072A    3420    RET	0x20
+  072B    3454    RET	0x54
+  072C    343D    RET	0x3D
+  072D    344F    RET	0x4F
+  072E    3450    RET	0x50
+  072F    3445    RET	0x45
+  0730    344E    RET	0x4E
+  0731    3400    RET	0x0
+  0732    3420    RET	0x20
+  0733    3442    RET	0x42
+  0734    3441    RET	0x41
+  0735    3454    RET	0x54
+  0736    3428    RET	0x28
+  0737    3400    RET	0x0
+  0738    3420    RET	0x20
+  0739    344E    RET	0x4E
+  073A    3454    RET	0x54
+  073B    3443    RET	0x43
+  073C    343D    RET	0x3D
+  073D    3400    RET	0x0
+  073E    3420    RET	0x20
+  073F    344F    RET	0x4F
+  0740    3450    RET	0x50
+  0741    3445    RET	0x45
+  0742    344E    RET	0x4E
+  0743    3400    RET	0x0
+  0744    346D    RET	0x6D
+  0745    3456    RET	0x56
+  0746    340D    RET	0xD
+  0747    340A    RET	0xA
+  0748    3400    RET	0x0
+  0749    346D    RET	0x6D
+  074A    3456    RET	0x56
+  074B    3429    RET	0x29
+  074C    3420    RET	0x20
+  074D    3400    RET	0x0
+  074E    340D    RET	0xD
+  074F    340A    RET	0xA
+  0750    3420    RET	0x20
+  0751    3400    RET	0x0
+  0752    346D    RET	0x6D
+  0753    3456    RET	0x56
+  0754    3429    RET	0x29
+  0755    3400    RET	0x0
+  0756    3420    RET	0x20
+  0757    3454    RET	0x54
+  0758    343D    RET	0x3D
+  0759    3400    RET	0x0
+  075A    3420    RET	0x20
+  075B    343F    RET	0x3F
+  075C    345B    RET	0x5B
+  075D    3400    RET	0x0
+  075E    342E    RET	0x2E
+  075F    3400    RET	0x0
+  0760    3442    RET	0x42
+  0761    3400    RET	0x0
+  0762    3443    RET	0x43
+  0763    3400    RET	0x0

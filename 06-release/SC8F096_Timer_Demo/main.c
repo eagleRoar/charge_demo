@@ -1,494 +1,562 @@
 /*-------------------------------------------
-  L1211 12槽充电器 - 主程序入口
-  包含: 系统初始化、主循环、Timer0中断服务、引脚模拟/数字切换
-  扫描机制: 每250us(Timer0)扫描一个槽位, 三阶段扫描(ADC->充电处理->LED更新)
-  主循环: 空闲等待UART数据回环测试
+  L1211 12槽充电器 - 主程序
+  MCU: SC8F096AD832 QFN32 @ 16MHz
+  功能: 系统初始化 + Timer0 ISR(3阶段扫描/软件PWM) + 主循环
+  版本: 2026/06/29 <V2.1> 修复ADC+UART, 恢复完整充电管理
 -------------------------------------------*/
 #include "config.h"
-#pragma warning disable 752
-#pragma warning disable 373
 
 /*========================================================================
-  全局变量定义
+  全局变量定义 (符合config.h extern声明)
 ========================================================================*/
-volatile unsigned int power_ad;          /* 电源电压(mV), 每1s更新一次 */
+/* 扫描状态机 */
+volatile unsigned char g_scanIndex = 0;         /* 当前扫描槽位索引(0~11) */
+volatile unsigned char g_scanPhase = 0;         /* 当前扫描阶段: 0=ADC采集, 1=LED, 2=控制 */
+volatile unsigned int  g_vcc_mv = 5000;         /* 系统电压(mV), VREF反推, Print_SystemStatus更新 */
+volatile bit g_doAdcSample = 0;                 /* ADC采样请求标志: ISR置1, 主循环处理 */
+volatile bit g_adcBusy = 0;                     /* ADC忙标志: 主循环采样中, ISR不重复请求 */
 
-/* 系统计时变量 */
-unsigned int  g_timerTick = 0;           /* Timer0中断计数器(125us/tick) */
-unsigned int  g_systemTick = 0;          /* 扫描轮次计数器(每轮+1, 222轮=1秒) */
-unsigned char g_scanIndex = 0;           /* 当前扫描槽位索引(0~11循环) */
-unsigned char g_scanPhase = 0;           /* 当前扫描阶段: 0=ADC采样, 1=充电处理, 2=扫描完成/收尾 */
-unsigned int  g_powerOnTimer = 0;        /* 上电自检计时器 */
-unsigned char g_powerOnPhase = 0;        /* 上电自检阶段: 0=全亮, 1=保持, 2=正常 */
-#if UART_PRINT_EN
-volatile bit   g_printFlag = 0;          /* 打印标志: ISR置1, 主循环清0并调用Print_Status */
-#endif
+/* PWM控制 */
+volatile unsigned char g_pwmDuty = 0;           /* PWM占空比(0~PWM_MAX) */
+volatile unsigned char g_pwmCounter = 0;        /* PWM计数器(ISR自增) */
+signed int g_cvIntegral = 0;                    /* CV PI积分累加器 */
 
-/* PWM/CC-CV 控制变量 */
-volatile unsigned char g_pwmDuty = 0;       /* 当前PWM占空比(0~PWM_MAX) */
-volatile unsigned char g_pwmCounter = 0;    /* PWM计数器, ISR中0~31循环 */
-signed int g_cvIntegral = 0;                /* CV PI积分累加器 */
+/* 系统计时 */
+volatile unsigned int  g_powerOnTimer = 0;      /* 上电自检计时器 */
+volatile unsigned char g_powerOnPhase = 0;      /* 上电自检阶段: 0→1→2 */
 
-/* NTC读温状态机变量 (解决C12=22uF导致RC5建立时间过长的问题) */
-unsigned char g_tempPhase = 0;              /* NTC读温状态: 0=等待间隔, 1=RC5建立中 */
-unsigned int  g_tempSettleCnt = 0;          /* NTC建立等待计数器(扫描轮数) */
-unsigned int  g_tempReadRoundCnt = 0;       /* 温度读取间隔计数器(扫描轮数) */
+/* NTC温度读取状态机(ISR中计时, 主循环中执行ADC) */
+volatile unsigned char g_tempPhase = 0;         /* 0=等待间隔, 1=建立中 */
+volatile unsigned int  g_tempSettleCnt = 0;     /* NTC建立等待计数器(轮) */
+volatile unsigned int  g_tempReadRoundCnt = 0;  /* 温度读取间隔计数器(轮) */
+volatile bit g_doNtcRead = 0;                   /* NTC读取请求标志 */
 
-/* NTC 调试变量 */
-unsigned int  g_ntcDebugAdc = 0;            /* ISR状态机NTC读取快照 */
-unsigned char g_ntcDebugPhase = 0;          /* NTC调试阶段快照 */
-unsigned int  g_ntcDebugSettleCnt = 0;      /* NTC建立计数器快照 */
-unsigned int  g_ntcDiagAdc = 0;             /* 阻塞式NTC读(LDO参考,600ms延时) */
-unsigned int  g_ntcDiagVdd = 0;             /* 阻塞式NTC读(VDD参考,对比LDO) */
-unsigned int  g_ntcDiagChk = 0;             /* 阻塞式高通道AN28读(验证CHS4) */
+/* UART打印 */
+volatile bit g_printFlag = 0;
+volatile unsigned int  g_printTick = 0;
 
-/*========================================================================
-  ROM只读配置表
-========================================================================*/
-/* 12槽BxAD ADC通道映射表
-   每个槽位对应一个独立的ADC采样通道, BxAD引脚为纯模拟输入 */
+/* DEBUG: 状态机追踪 */
+volatile unsigned char g_dbgSlot = 0;             /* 状态变化的槽位 */
+volatile unsigned char g_dbgOldState = 0;         /* 跳转前的旧状态 */
+volatile unsigned char g_dbgNewState = 0;         /* 跳转后的新状态 */
+volatile unsigned char g_dbgNewType = 0;          /* 新电池类型 */
+volatile unsigned int  g_dbgVoltage = 0;          /* 当前电压值 */
+volatile bit g_dbgDetectFlag = 0;                 /* 状态变化标志, 主循环处理 */
+
+/* ADC通道映射表(ROM) */
 const unsigned char s_adcChannels[BATTERY_SLOTS] = {
-	ADC_CH_B1AD,  /* B1 电压采样: AN17 */
-	ADC_CH_B2AD,  /* B2 电压采样: AN16 */
-	ADC_CH_B3AD,  /* B3 电压采样: AN12 */
-	ADC_CH_B4AD,  /* B4 电压采样: AN13 */
-	ADC_CH_B5AD,  /* B5 电压采样: AN5  */
-	ADC_CH_B6AD,  /* B6 电压采样: AN4  */
-	ADC_CH_B7AD,  /* B7 电压采样: AN28 */
-	ADC_CH_B8AD,  /* B8 电压采样: AN29 */
-	ADC_CH_B9AD,  /* B9 电压采样: AN27 */
-	ADC_CH_B10AD, /* B10 电压采样: AN26 */
-	ADC_CH_B11AD, /* B11 电压采样: AN7  */
-	ADC_CH_B12AD  /* B12 电压采样: AN6  */
+	ADC_CH_B1AD,   /* B1  = AN17 (RC1) */
+	ADC_CH_B2AD,   /* B2  = AN16 (RC0) */
+	ADC_CH_B3AD,   /* B3  = AN12 (RB4) */
+	ADC_CH_B4AD,   /* B4  = AN13 (RB5) */
+	ADC_CH_B5AD,   /* B5  = AN5  (RA5) */
+	ADC_CH_B6AD,   /* B6  = AN4  (RA4) */
+	ADC_CH_B7AD,   /* B7  = AN28 (高通道) */
+	ADC_CH_B8AD,   /* B8  = AN29 (高通道) */
+	ADC_CH_B9AD,   /* B9  = AN27 (高通道) */
+	ADC_CH_B10AD,  /* B10 = AN26 (高通道) */
+	ADC_CH_B11AD,  /* B11 = AN7  (RA7) */
+	ADC_CH_B12AD   /* B12 = AN6  (RA6) */
 };
 
 /*========================================================================
   函数: System_Init
-  功能: 系统初始化, 配置所有外设
-  流程:
-    1. 配置系统时钟(16MHz内部RC振荡器)
-    2. 初始化所有GPIO端口(输出高电平, MOSFET默认关闭)
-    3. 关闭所有模拟功能(需要时动态切换)
-    4. 配置ADC模块(参考电压/时钟)
-    5. 配置UART(9600bps, 8N1)
-    6. 配置Timer0(250us周期, 16MHz/4/250=16, 256-16=240→预装TMR0=6)
-    7. 使能中断(GIE/PEIE/T0IE)
-    8. 初始化控制引脚和槽位数据
+  功能: 系统初始化 - 时钟/GPIO/ANSEL/ADC/UART/Timer0
+  引脚状态: MOSFET全部关闭(Gate=High), ADC输入高阻, LED灭
+  参考: 09-test GPIO已验证配置
 ========================================================================*/
 void System_Init(void)
 {
 	unsigned char i;
 
-	/* --- 看门狗复位 ---
-	   WDT默认使能(配置字设定), 需第一时间喂狗防止后续延时导致复位 */
+	/* 1. 时钟: 16MHz内部RC */
 	asm("nop");
 	asm("clrwdt");
+	OSCCON = 0x72;
 
-	/* --- 系统时钟配置: 16MHz内部RC ---
-	   延时依赖准确的系统时钟, 必须先配置OSCCON */
-	OSCCON = 0x72;          /* 内部16MHz, 软件模式 */
-	OPTION_REG = 0x00;      /* PSA=0(Timer0), PS2:PS0=000 → 1:2分频 */
-	asm("clrwdt");
+	/* 2. GPIO初始化: MOSFET Gate=High(关闭AO3401 P沟道)
+	   TRIS=1→输入(模拟引脚), TRIS=0→输出(数字控制) */
+	TRISA = 0xF0;  PORTA = 0x0F;   /* RA4-7模拟输入, RA0-3=High(B1/B2/B5/B6关) */
+	TRISB = 0x30;  PORTB = 0x4F;   /* RB4-5输入, RB6(EN)=1, RB7(PWM)=0, RB0-3=High */
+	TRISC = 0x07;  PORTC = 0x00;   /* RC0-2模拟输入(B2AD/B1AD/NTC), RC3-5输出低 */
+	TRISD = 0xF0;  PORTD = 0x0F;   /* RD4-7模拟输入, RD0-3=High(B12/B7/B11/B8关) */
 
-	/* --- ICSP烧录保护延时 ---
-	   RC4/RC5复用为ICSP DAT/CLK和LED IO2/IO1, 上电时若MCU抢先初始化GPIO
-	   会驱动RC4/RC5输出低电平, 与烧录器信号冲突导致编程失败
-	   延时10ms确保烧录器有足够时间拉高VPP(WDT超时短, 100ms会触发复位) */
-	__delay_ms(10);
+	/* 3. 弱上拉/下拉全关 */
+	WPUA = 0x00;  WPDA = 0x00;
+	WPUB = 0x00;  WPDB = 0x00;
+	WPUC = 0x00;
+	WPUD = 0x00;
 
-	/* --- PORTA初始化 ---
-	   RA0=B1, RA1=B2, RA2=B6, RA3=B5: 输出高(关闭充电)
-	   RA4=AN4(B6AD): 模拟输入(ADC采样)
-	   RA5=AN5(B5AD): 模拟输入(ADC采样)
-	   RA6=AN6(B12AD): 模拟输入(ADC采样)
-	   RA7=AN7(B11AD): 模拟输入(ADC采样)
-	   初始值: TRISA=0B11110000(RA4-7输入), PORTA=0B00001111 */
-	TRISA = 0B11110000;     /* RA4-7输入(ADC采样), RA0-3输出 */
-	PORTA = 0B00001111;     /* B1-B6 MOSFET全部关闭(高), RA4-7输入 */
-	WPUA = 0B00000000;      /* 关闭弱上拉 */
-	WPDA = 0B00000000;      /* 关闭弱下拉 */
-	IOCA = 0B00000000;      /* 关闭电平变化中断 */
+	/* 4. 中断边沿全关 */
+	IOCA = 0x00;  IOCB = 0x00;
 
-	/* --- PORTB初始化 ---
-	   RB0=B9, RB1=B10, RB2=B4, RB3=B3: 输出高(关闭充电)
-	   RB4=UART RX: 输入
-	   RB5=AN13(B4AD): 模拟输入(ADC采样)
-	   RB6=EN: 输出高(使能主电源Q3)
-	   RB7=PWM(VT_PWM1): 输出低(关闭PWM)
-	   初始值: TRISB=0B00110000(RB4-5输入), PORTB=0B01001111 */
-	TRISB = 0B00110000;     /* RB4-5输入, RB6(EN)/RB7(PWM)/RB0-3输出 */
-	PORTB = 0B01001111;     /* EN=1(RB6), PWM关(RB7=0), B9-B3 MOSFET全部关闭(高) */
-	WPUB = 0B00000000;      /* 关闭弱上拉 */
-	WPDB = 0B00000000;      /* 关闭弱下拉 */
-	IOCB = 0B00000000;      /* 关闭电平变化中断 */
-
-	/* --- PORTC初始化 ---
-	   RC0=AN16(B2AD): 模拟输入(ADC采样)
-	   RC1=AN17(B1AD): 模拟输入(ADC采样)
-	   RC2=CD IO2: 输出低(关闭充电组2 B7-B12)
-	   RC3=CD IO1: 输出低(关闭充电组1 B1-B6)
-	   RC4=LED IO2/CLK: 输出低(LED关闭)
-	   RC5=LED IO1/DAT/NTC: 输出低(LED关闭)
-	   初始值: 0B00000000 = 全部输出低 */
-	TRISC = 0B00000011;     /* RC0-1输入(B2AD/B1AD), RC2-5输出 */
-	PORTC = 0B00000000;     /* CD1/CD2=0关闭, LED全部关闭 */
-	WPUC = 0B00000000;      /* 关闭弱上拉 */
-	/* SC8F096只有WPDA/WPDB, 无WPDC/WPDD */
-
-	/* --- PORTD初始化 ---
-	   RD0=B12, RD1=B7, RD2=B11, RD3=B8: 输出高(关闭充电)
-	   RD4=AN26(B10AD), RD5=AN27(B9AD): 模拟输入
-	   RD6=AN28(B7AD),  RD7=AN29(B8AD): 模拟输入
-	   初始值: TRISD=0B11110000(RD4-7输入), PORTD=0B00001111 */
-	TRISD = 0B11110000;     /* RD4-7输入(ADC采样), RD0-3输出 */
-	PORTD = 0B00001111;     /* RD0-3 MOSFET全部关闭(高电平) */
-	WPUD = 0B00000000;      /* 关闭弱上拉 */
-
-	/* --- 配置BxAD模拟输入引脚 ---
-	   ANSEL0: RA4(B6AD), RA5(B5AD), RA6(B12AD), RA7(B11AD)
-	   ANSEL1: RB4(B3AD)-UART时关闭, RB5(B4AD)
-	   ANSEL2: RC0(B2AD), RC1(B1AD)
-	   ANSEL3: RD4(B10AD), RD5(B9AD), RD6(B7AD), RD7(B8AD) */
-	ANSEL0 = 0xF0;      /* RA4-7: B6AD/B5AD/B12AD/B11AD */
-#if UART_PRINT_EN
-	ANSEL1 = 0x20;      /* RB5: B4AD (RB4=UART RX, 不使能模拟) */
-#else
-	ANSEL1 = 0x30;      /* RB4-5: B3AD/B4AD */
-#endif
-	ANSEL2 = 0x03;      /* RC0-1: B2AD/B1AD */
-	ANSEL3 = 0xF0;      /* RD4-7: B10AD/B9AD/B7AD/B8AD(AN26-AN29) */
-
-	/* --- 比较器关闭 --- */
+	/* 5. 比较器全关 */
 	CC0CON = 0;
 	CC1CON = 0;
 
-	/* --- ADC模块配置 ---
-	   ADCON0=0x41: ADCS<1:0>=01→FHSI/32(500kHz), CHS=AN0, ADON=1
-	   ADCON1=0: 右对齐, 参考电压=VDD=5V */
-	ADCON0 = 0X41;
-	ADCON1 = 0;
+	/* 6. ANSEL: 模拟输入引脚配置
+	   AN4=RA4, AN5=RA5, AN6=RA6, AN7=RA7 → ANSEL0
+	   AN12=RB4, AN13=RB5                → ANSEL1
+	   AN16=RC0, AN17=RC1, AN18=RC2(NTC) → ANSEL2
+	   AN26=RD2, AN27=RD3, AN28=RD4, AN29=RD5 → ANSEL3 */
+	ANSEL0 = 0xF0;   /* RA4-7: B6AD/B5AD/B12AD/B11AD */
+	ANSEL1 = 0x30;   /* RB4-5: B3AD/B8AD */
+	ANSEL2 = 0x07;   /* RC0-1: B2AD/B1AD, RC2: NTC(AN18) */
+	ANSEL3 = 0x3C;   /* RD2-5: B10AD/B9AD/B7AD/B4AD */
 
-	/* --- UART1配置 ---
-	   波特率: 16MHz/(16*(103+1)) = 9615 ≈ 9600bps
-	   TXSTA1=0xA0: 异步模式, 8位, 发送使能
-	   RCSTA1=0x90: 串口使能, 8位接收 */
-	TXSTA1 = 0B10100000;
-	RCSTA1 = 0B10010000;
-	SPBRG1 = 103;           /* 9600bps @ 16MHz */
+	/* 7. ADC模块初始化 (Fosc/32, Tad=2μs) */
+	AD_Init();
 
-	/* --- Timer0配置 ---
-	   OPTION_REG=0x00:
-	     T0CS=0 → 内部指令周期时钟(FCPU), FCPU=FSYS/4(4T模式)
-	     PSA=0 → 预分频分配给Timer0, PS2:PS0=000 → 1:2分频
-	   时钟推导:
-	     FSYS=16MHz, FCPU=FSYS/4=4MHz, 指令周期=0.25us
-	     TMR0时钟=FCPU/2(分频)=2MHz, 每tick=0.5us
-	     TMR0预装6→计数至256溢出=250tick, 中断周期=250×0.5us=125us */
-	TMR0 = 6;               /* 预装值, 250tick后溢出(250×0.5us=125us) */
-	T0IF = 0;               /* 清除Timer0中断标志 */
-	T0IE = 1;               /* 使能Timer0中断 */
+	/* 8. 软件UART初始化 (RC4, 9600bps) */
+	uart_init();
 
-	/* --- 中断使能 --- */
-	PEIE = 1;               /* 外设中断使能 */
+	/* 9. Timer0配置: 125μs周期
+	   Fosc=16MHz, Tcy=0.25μs, 预分频1:2
+	   TMR0 reload = 256 - 125μs/(0.25μs×2) = 256 - 250 = 6
+	   OPTION_REG: T0LSE_EN=0(正常模式), T0CS=0, PSA=0, PS2:0=000(1:2)
+	   注意: SC8F096的OPTION_REG bit7是T0LSE_EN, 不是标准PIC的RBPU! */
+	OPTION_REG = 0x00;      /* T0LSE_EN=0(正常), T0CS=0, PSA=0, PS2:0=000(1:2) */
+	TMR0 = 6;
+	T0IF = 0;
+	INTCON = 0xE0;          /* 一次写入: GIE=1, PEIE=1, T0IE=1, 其余清零 */
 
-	GIE = 1;                /* 全局中断使能 */
+	/* 10. 初始状态: 所有充电关闭, PWM=0 */
+	g_pwmDuty = 0;
+	g_pwmCounter = 0;
+	PIN_CD1 = 0;
+	PIN_CD2 = 0;
+	PIN_EN = 1;             /* 主电源使能(Q3 4435) */
+	PIN_PWM = 0;
 
-	/* --- 控制引脚初始状态 --- */
-	PIN_EN = 1;             /* 主电源使能(高电平使能Q3) */
-	PIN_PWM = 0;            /* PWM初始=0, ISR中软件生成125Hz/32级PWM波形 */
-	PIN_CD1 = 0;            /* 充电组1关闭 */
-	PIN_CD2 = 0;            /* 充电组2关闭 */
-	PIN_LED_IO1 = 0;        /* LED电源1关闭 */
-	PIN_LED_IO2 = 0;        /* LED电源2关闭 */
-
-	/* --- 初始化所有槽位数据 --- */
-	for(i = 0; i < BATTERY_SLOTS; i++)
+	/* 11. 初始化槽位数据 */
+	for(i = 0; i < 12; i++)
 	{
-		GSLOT(i)->state = CHG_IDLE;             /* 初始状态: 空闲 */
-		GSLOT(i)->type = BAT_TYPE_UNKNOWN;      /* 电池类型: 未知 */
-		GSLOT(i)->voltage = 0;                  /* 电压清零 */
-		GSLOT(i)->chargeTimer = 0;              /* 充电计时器清零 */
-		GSLOT(i)->ledState = LED_OFF;           /* LED关闭 */
-		GSLOT(i)->blinkTimer = 0;               /* 闪烁计时器清零 */
-		GSLOT(i)->blinkPhase = 0;               /* 闪烁相位清零 */
-		GSLOT(i)->stableCnt = 0;                /* 稳定计数器清零 */
-		GSLOT(i)->activatePulseCnt = 0;         /* 激活脉冲计数清零 */
+		g_slot[i].state = CHG_IDLE;
+		g_slot[i].type = BAT_TYPE_UNKNOWN;
+		g_slot[i].voltage = 0;
+		g_slot[i].chargeTimer = 0;
+		g_ccBlocks[i] = 0;
+		g_ovCnt[i] = 0;
 	}
+	g_blinkTick = 0;
 
-	/* --- 系统变量初始化 --- */
-	g_scanIndex = 0;        /* 从槽位0开始扫描 */
-	g_scanPhase = 0;        /* 从阶段0开始 */
-	g_systemTick = 0;       /* 系统秒计数器清零 */
-	g_timerTick = 0;        /* Timer0计数器清零 */
-	g_powerOnTimer = 0;     /* 上电计时器清零 */
-	g_powerOnPhase = 0;     /* 上电阶段: 0=全亮自检 */
-	g_tempProtect = 0;      /* 温度保护关闭 */
-	g_temperature = 25;     /* 默认温度25度 */
-	g_tempPhase = 0;        /* NTC读温状态机: 空闲 */
-	g_tempSettleCnt = 0;    /* 建立计数器清零 */
-	g_tempReadRoundCnt = 0; /* 读取间隔计数器清零 */
+	/* 12. 开全局中断(已在INTCON中设置) */
 }
 
 /*========================================================================
-  函数: main
-  功能: 主程序入口
-  流程:
-    1. 调用System_Init()初始化所有外设
-    2. 发送0x55 0xAA作为UART调试标记
-    3. 主循环: 清看门狗, 处理UART回环数据
-  说明: 所有核心功能(充电管理/ADC扫描/LED控制)均在Timer0中断中执行
+  Timer0 中断服务程序
+  周期: ~125μs (Timer0重载值6, 预分频1:2)
+  功能:
+    1. 软件PWM生成(RB7, 250Hz, 32级分辨率)
+    2. 3阶段扫描状态机: Phase0(请求ADC) → Phase1(LED更新) → Phase2(控制)
+    3. NTC温度读取状态机(仅计时, ADC由主循环执行)
+    4. UART打印触发(每秒一次)
+  说明: ADC采集放在主循环中执行(耗时~680μs), ISR仅设置请求标志
 ========================================================================*/
-void main(void)
+void interrupt Isr_Timer(void)
 {
-	System_Init();
-
-	/* 发送调试标记: 0x55 0xAA, 表示系统启动完成 */
-	//TXREG1 = 0x55;
-	//while(TRMT1 == 0);      /* 等待发送完成 */
-	//TXREG1 = 0xAA;
-	//while(TRMT1 == 0);
-	uart_send_string("start...\r\n");
-
-	/* --- NTC 阻塞式诊断读取 (仅执行一次) ---
-	   等待上电LED自检完成后, 用长延时(600ms)直接读NTC
-	   与ISR状态机读取结果对比, 判断是建立时间不足还是其他问题
-	   关中断避免ISR同时操作RC5造成冲突
-	   注意: WDT超时很短, 必须每 ~5ms 喂一次狗, 禁用 __delay_ms(100) */
-	{
-		unsigned char ntcDiagDone = 0;
-		while(!ntcDiagDone)
-		{
-			asm("clrwdt");
-#if UART_PRINT_EN
-			if(g_printFlag)
-			{
-				g_printFlag = 0;
-				Print_Status();
-			}
-#endif
-			/* 等待上电自检完成后再做诊断 */
-			if(g_powerOnPhase >= 2)
-			{
-				unsigned char k;
-				ntcDiagDone = 1;
-				GIE = 0;            /* 关中断, 避免ISR冲突 */
-				/* 切换 RC5 为模拟输入 */
-				ANSEL2 |= 0x20;     /* RC5/AN21 使能模拟 */
-				TRISC |= 0x20;      /* RC5 设为输入(高阻) */
-				/* 阻塞等待 C12 充电: 120次×5ms=600ms, 每5ms喂狗 */
-				for(k = 0; k < 120; k++)
-				{
-					__delay_ms(5);
-					asm("clrwdt");
-				}
-				/* 测试1: 读NTC(LDO=3V参考) */
-				test_adc = ADC_Sample(ADC_CH_NTC, 7);
-				if(0xA5 == test_adc)
-					g_ntcDiagAdc = adresult;
-				else
-					g_ntcDiagAdc = 0xFFFF;
-				/* 测试2: 读NTC(VDD参考, 无LDO) */
-				test_adc = ADC_Sample(ADC_CH_NTC, 0);
-				if(0xA5 == test_adc)
-					g_ntcDiagVdd = adresult;
-				else
-					g_ntcDiagVdd = 0xFFFF;
-				/* 测试3: 读AN28(B7AD高通道, 验证CHS4) */
-				test_adc = ADC_Sample(ADC_CH_B7AD, 7);
-				if(0xA5 == test_adc)
-					g_ntcDiagChk = adresult;
-				else
-					g_ntcDiagChk = 0xFFFF;
-				/* 恢复 RC5 为数字输出 */
-				ANSEL2 &= ~0x20;
-				TRISC &= ~0x20;
-				PIN_LED_IO1 = 0;
-				GIE = 1;            /* 重开中断 */
-				uart_send_string("NTC diag done\r\n");
-			}
-		}
-	}
-
-	/* 主循环: 持续运行, 实际逻辑在中断中执行 */
-	while(1)
-	{
-		asm("clrwdt");       /* 喂狗 */
-
-#if UART_PRINT_EN
-		/* ISR每秒置位, 在主循环中打印(不在ISR中阻塞, 避免WDT复位) */
-		if(g_printFlag)
-		{
-			g_printFlag = 0;
-			Print_Status();
-		}
-#endif
-
-	}
-}
-
-/*========================================================================
-  函数: Interrupt_Isr (中断服务程序)
-  功能: 处理Timer0定时中断
-  Timer0中断(125us):
-    扫描12个槽位, 每中断处理一个槽位的一个阶段
-    三阶段扫描: Phase0=ADC采样 -> Phase1=充电处理+LED -> Phase2=温度/充电控制
-    12槽*3阶段=36次中断*125us=4.5ms完成一轮完整扫描
-========================================================================*/
-void interrupt Interrupt_Isr(void)
-{
-	/* Timer0中断: 125us周期, 核心扫描驱动
-	   注意: ISR耗时可能超过125us周期, 主循环可能被持续抢占,
-	   因此在ISR中也需要喂狗防止WDT复位 */
+	/* --- Timer0中断处理 --- */
 	if(T0IF)
 	{
-		TMR0 += 6;                  /* 重装Timer0, 保持125us周期(250tick×0.5us) */
-		T0IF = 0;                   /* 清除中断标志 */
-		g_timerTick++;              /* 中断计数+1 */
-		asm("clrwdt");              /* ISR内喂狗(ADC耗时可能>125us周期) */
+		T0IF = 0;
+		TMR0 = 6;                   /* 重载125μs周期 */
+		asm("clrwdt");              /* 喂狗 */
 
-		/* === 软件PWM生成(RB7/VT_PWM1, 250Hz, 32级占空比) ===
-		   PWM周期=32×125us=4ms, 频率=250Hz
-		   每Timer0中断递增计数器, 0~31循环
-		   计数器 < 占空比 → 输出高(PIN_PWM=1), 否则输出低 */
+		/* === 1. 软件PWM生成(RB7, 250Hz, 4ms周期) === */
 		g_pwmCounter++;
 		if(g_pwmCounter >= PWM_RESOLUTION)
 			g_pwmCounter = 0;
-		PIN_PWM = (g_pwmCounter < g_pwmDuty) ? 1 : 0;
 
-		/* 上电自检阶段: 执行LED自检序列 */
+		/* 输出PWM波形 */
+		if(g_pwmDuty > 0 && g_pwmCounter < g_pwmDuty)
+			PIN_PWM = 1;
+		else
+			PIN_PWM = 0;
+
+		/* === 2. 上电自检序列(前2秒) === */
 		if(g_powerOnPhase < 2)
 		{
-			PowerOnLedSequence();
+			PowerOnLedSequence();   /* 该函数仅仅作为延时2秒稳定电路，没有其他功能 */
+			return;                 /* 自检期间不执行扫描 */
 		}
-		/* 正常扫描阶段 */
-		else
+
+		/* === 3. 3阶段扫描状态机 === */
+		switch(g_scanPhase)
 		{
-			switch(g_scanPhase)
+		case 0:  /* Phase0: 请求ADC采集当前槽电压
+		           关闭当前槽MOSFET, 设标志让主循环执行ADC_Sample */
+			if(!g_adcBusy && !g_doAdcSample)
 			{
-			/* --- Phase 0: ADC电压采样(BxAD专用模拟引脚, 无需模式切换) --- */
-			case 0:
-				GSLOT(g_scanIndex)->voltage = 
-					ADC_ReadChannel(s_adcChannels[g_scanIndex]);
-				g_scanPhase = 1;
-				break;
-
-			/* --- Phase 1: 充电状态机处理 + LED更新 ---
-			   1. 调用充电状态机处理当前槽位
-			   2. 更新当前槽位LED状态 */
-			case 1:
-				ChargeProcess_Slot(g_scanIndex);
-				Update_LED_Slot(g_scanIndex);
-				g_scanPhase = 2;
-				break;
-
-			/* --- Phase 2: 扫描收尾(仅在槽位0时执行) ---
-			   1. 读取NTC温度(与LED IO1共用RC5, 分时复用, 状态机控制)
-			   2. LED闪烁处理
-			   3. 充电组控制输出(Charging_Control + CCCV_Control)
-			   4. 槽位索引+1, 循环到下一个槽位
-			   5. 每1秒: 读取电源电压 + 打印状态 */
-			case 2:
-				/* 在槽位0扫描完成后处理温度(每轮一次) */
-				if(g_scanIndex == 0)
-				{
-					/* NTC 读温状态机:
-					   RC5 平时作为数字输出驱低(LED IO1), C12 放电至 ~0V
-					   切换为模拟输入后, C12(22uF) 需通过 R48||R_ntc 充电:
-					   τ=5KΩ×22uF=110ms, 5τ≈550ms → 需要 ~60 轮建立
-					   状态 0: 等待 TEMP_READ_INTERVAL 轮后再启动测温
-					   状态 1: RC5 已切换为模拟, 计数器递增, 满 NTC_SETTLE_ROUNDS 后读温 */
-					switch(g_tempPhase)
-					{
-					case 0:  /* 等待间隔: RC5 正常作为 LED IO1 数字输出 */
-						g_tempReadRoundCnt++;
-						if(g_tempReadRoundCnt >= TEMP_READ_INTERVAL)
-						{
-							g_tempReadRoundCnt = 0;
-							/* 切换 RC5 为模拟输入, 开始建立等待 */
-							ANSEL2 |= 0x20;     /* RC5/AN21 使能模拟 */
-							TRISC |= 0x20;      /* RC5 设为输入(高阻) */
-							g_tempPhase = 1;
-							g_tempSettleCnt = 0;
-						}
-						break;
-
-					case 1:  /* 建立中: 等待 C12 充电到 NTC 分压值 */
-						g_tempSettleCnt++;
-						if(g_tempSettleCnt >= NTC_SETTLE_ROUNDS)
-						{
-							/* 建立完成, 读取温度 */
-							Read_Temperature();
-							/* 保存调试快照 */
-							g_ntcDebugAdc = g_ntcAdc;
-							g_ntcDebugPhase = g_tempPhase;
-							g_ntcDebugSettleCnt = g_tempSettleCnt;
-							/* 恢复 RC5 为数字输出(LED 控制) */
-							ANSEL2 &= ~0x20;
-							TRISC &= ~0x20;
-							PIN_LED_IO1 = 0;    /* 恢复 LED 关闭状态 */
-							g_tempPhase = 0;    /* 回到等待间隔状态 */
-						}
-						break;
-					}
-
-					/* LED闪烁计时处理 */
-					Led_BlinkProcess();
-					/* 充电组控制输出(含温度保护判断) */
-					Charging_Control();
-					/* CC-CV恒流恒压PWM占空比调节 */
-					CCCV_Control();
-				}
-
-				/* 切换到下一个槽位 */
-				g_scanIndex++;
-				if(g_scanIndex >= BATTERY_SLOTS)
-				{
-					g_scanIndex = 0;        /* 12槽扫完, 回到槽位0 */
-					g_systemTick++;         /* 系统秒计数器+1 */
-				}
-				g_scanPhase = 0;            /* 回到Phase 0开始下一槽 */
-
-				/* 每秒任务: 12槽×3阶段=36次中断/轮, 36×125us=4.5ms/轮
-				   1000ms/4.5ms≈222轮/秒 */
-				if(g_systemTick >= TICK_PER_SEC)
-				{
-					g_systemTick = 0;
-
-					/* 读取1.2V内部参考电压, 计算VDD电源电压 */
-					test_adc = ADC_Sample(ADC_CH_VREF, 0);
-					if(0xA5 == test_adc)
-					{
-						volatile unsigned long power_temp;
-						/* 电源电压(mV) = POWER_RATIO / ADC值 */
-						power_temp = (unsigned long)((POWER_RATIO)/adresult);
-						power_ad = (unsigned int)(power_temp);
-					}
-					else
-					{
-						/* ADC参考电压采样失败, 复位ADC(下次启动自动重新初始化) */
-						ADCON0 = 0;
-						ADCON1 = 0;
-					}
-
-#if UART_PRINT_EN
-					/* 通知主循环打印(不在ISR中调用, 避免UART阻塞导致WDT复位) */
-					g_printFlag = 1;
-#endif
-				}
-				break;
-
-			default:
-				g_scanPhase = 0;
-				break;
+				SLOT_CHARGE_OFF(g_scanIndex);
+				g_doAdcSample = 1;      /* 主循环检测此标志后执行ADC */
 			}
+			/* 不切换阶段, 等待主循环完成ADC后再推进 */
+			break;
+
+		case 1:  /* Phase1: LED状态更新(ADC已完成, 电压已存入slot) */
+			Update_LED_Slot(g_scanIndex);
+			/* 根据充电状态恢复MOSFET(在Phase2的Charging_Control中统一处理) */
+			g_scanPhase = 2;  		/* 当执行完ADC采集之后，跳转到这个阶段，之后推进到控制阶段 */
+			break;
+
+		case 2:  /* Phase2: 系统级控制(仅槽0执行) */
+			if(g_scanIndex == 0)
+			{
+				/* 实时VCC采样: 每次扫描周期(~80ms)更新, 供IMP_CHECK做NiMH VCC塌陷检测 */
+				if(!g_adcBusy)
+				{
+					g_adcBusy = 1;
+					test_adc = ADC_Sample(ADC_CH_VREF, 0);
+					if(ADC_OK == test_adc)
+					{
+						unsigned long pt = POWER_RATIO / adresult;
+						g_vcc_mv = (unsigned int)pt;
+					}
+					g_adcBusy = 0;
+				}
+
+				Charging_Control();     /* 12路MOSFET使能更新 */
+				CCCV_Control();         /* CC-CV PWM占空比调节 */
+				Led_BlinkProcess();     /* LED闪烁计时 */
+
+				/* === NTC温度读取状态机 === */
+			{
+				if(g_tempPhase == 0)
+				{
+					g_tempReadRoundCnt++;
+					if(g_tempReadRoundCnt >= TEMP_READ_INTERVAL)
+					{
+						g_tempReadRoundCnt = 0;
+						g_tempPhase = 1;
+						g_tempSettleCnt = 0;
+					}
+				}
+				else
+				{
+					g_tempSettleCnt++;
+					if(g_tempSettleCnt >= NTC_SETTLE_ROUNDS)
+					{
+						g_doNtcRead = 1;
+						g_tempSettleCnt = 0;
+						g_tempPhase = 0;
+					}
+				}
+			}
+
+			/* === UART打印触发(每秒一次) === */
+			if(++g_printTick >= TICK_PER_SEC)
+			{
+				g_printTick = 0;
+				g_printFlag = 1;
+			}
+			}
+
+			/* 推进到下一个槽位 */
+			if(++g_scanIndex >= BATTERY_SLOTS)
+				g_scanIndex = 0;
+			g_scanPhase = 0;
+			break;
+
+		default:
+			g_scanPhase = 0;
+			break;
 		}
 	}
-
-
 }
 
-/* 包含其他模块文件(编译时合并到同一个翻译单元) */
-#include "adc_drv.c"
-#include "charge_mgr.c"
-#include "led.c"
-#include "uart_dbg.c"
+/*========================================================================
+  函数: Do_AdcSample
+  功能: 执行ADC采样并存入槽位电压
+  说明: 从主循环调用, 在ISR Phase0设置g_doAdcSample后执行
+  使用VDD参考(与09-test完全一致)
+========================================================================*/
+void Do_AdcSample(void)
+{
+	unsigned char ch = s_adcChannels[g_scanIndex];
+	unsigned char ty = S_TYPE(g_scanIndex);
+	unsigned char st = S_STATE(g_scanIndex);
+
+	/* 延时等待Bx节点稳定到电池开路电压
+	   ISR Phase0已关闭MOSFET, Bx节点从PWM驱动电压恢复到开路电压需要时间
+	   线性锂电池(无charger IC拉载): MOSFET导通时BxAD电容被PWM充电至近VCC,
+	   关断后电容通过高阻路径放电, 100μs远不够(实测读到伪OPEN=4091),
+	   延长至500μs确保电容放至电池真实电压
+	   充电状态(MOSFET刚被关闭): ACTIVATE/PRECHARGE/CC/CV/IMP_CHECK */
+	if(ty == BAT_TYPE_LINEAR_LI &&
+	   (st == CHG_ACTIVATE || st == CHG_PRECHARGE ||
+	    st == CHG_CC_CHARGE || st == CHG_CV_CHARGE ||
+	    st == CHG_IMP_CHECK))
+		__delay_us(500);
+	else
+		__delay_us(100);
+
+	test_adc = ADC_Sample(ch, 0);           /* VDD参考, 与09-test一致 */
+
+	if(ADC_OK == test_adc)
+		g_slot[g_scanIndex].voltage = adresult;
+	else
+		g_slot[g_scanIndex].voltage = 0;
+
+	g_scanPhase = 1;                        /* 推进到LED更新阶段 */
+}
+
+/*========================================================================
+  函数: Do_NtcRead
+  功能: 执行NTC ADC读取并更新温度
+  说明: RC2/AN18为NTC专用模拟引脚, 无需分时复用
+        与09-test一致: VDD参考, 直接ADC_Sample(18, 0)
+========================================================================*/
+void Do_NtcRead(void)
+{
+	Read_Temperature();
+}
+
+/*========================================================================
+  函数: Print_NtcTemp
+  功能: 打印NTC温度(每秒一次, 独立于系统状态打印)
+========================================================================*/
+void Print_NtcTemp(void)
+{
+	uart_send_string("NTC=");
+	uart_send_number(g_temperature / 10U);
+	uart_send_string(".");
+	uart_send_number(g_temperature % 10U);
+	uart_send_string("C\r\n");
+}
+
+/*========================================================================
+  函数: Print_SystemStatus
+  功能: 打印12槽系统状态(每秒一次)
+  输出: VCC=电压 T=温度 B1~B12 ADC值/电池mV/状态
+  移植自09-test: 双参数线性标定公式计算电池mV
+========================================================================*/
+/* B2-B12打印开关: 0=仅B1详细, 1=全部12槽 */
+#define PRINT_ALL_SLOTS     0
+/* B1-B6打印开关: 1=B1~B6逐行打印 */
+#define PRINT_B1_B6         1
+
+void Print_SystemStatus(void)
+{
+	unsigned char i;
+	unsigned int vcc_mv;
+
+	uart_send_string("\r\n== L1211 12CH CHARGER ==\r\n");
+
+	/* VCC测量(内部1.2V参考反推) */
+	test_adc = ADC_Sample(ADC_CH_VREF, 0);
+	if(ADC_OK == test_adc)
+	{
+		unsigned long pt = POWER_RATIO / adresult;
+		vcc_mv = (unsigned int)pt;
+	}
+	else
+		vcc_mv = 5000;
+
+	g_vcc_mv = vcc_mv;
+
+	uart_send_string("VCC=");
+	uart_send_number(vcc_mv);
+	uart_send_string("mV T=");
+	uart_send_number(g_temperature / 10U);
+	uart_send_string(".");
+	uart_send_number(g_temperature % 10U);
+	uart_send_string("C IMP_LOCK=");
+	uart_send_number(g_impCheckSlot == 0xFF ? 0xFFU : (unsigned int)g_impCheckSlot);
+	uart_send_string("\r\n");
+
+#if PRINT_B1_B6
+	/* B1-B6逐行打印(每个槽独立一行, 便于观察) */
+	for(i = 0; i < 6; i++)
+#elif PRINT_ALL_SLOTS
+	/* 12槽全部打印 */
+	for(i = 0; i < 12; i++)
+#else
+	/* 仅B1详细调试 */
+	for(i = 0; i < 1; i++)
+#endif
+	{
+		unsigned int v = S_VOLT(i);
+		unsigned char s = S_STATE(i);
+
+#if PRINT_ALL_SLOTS && !PRINT_B1_B6
+		/* 换行: 每6个槽一行 */
+		if(i == 6) uart_send_string("\r\n");
+#endif
+
+		uart_send_char('B');
+		uart_send_number((unsigned int)i + 1U);
+		uart_send_char('=');
+		uart_send_number(v);
+
+		/* 电池mV校准(与09-test一致):
+		   vx_mv = ADC * VCC / 4096 → BxAD引脚mV
+		   bat_mv = (1159 * vx_mv - 647 * VCC) / 1000 */
+		{
+			unsigned long vx_mv = (unsigned long)v * (unsigned long)vcc_mv / 4096UL;
+			if(vx_mv + 200U >= (unsigned long)vcc_mv)
+			{
+				uart_send_string(" OPEN");
+			}
+			else
+			{
+				unsigned long bat_mv_long = ALPHA_NUM * vx_mv;
+				if(bat_mv_long > (BETA_NUM * (unsigned long)vcc_mv))
+				{
+					bat_mv_long = (bat_mv_long - BETA_NUM * (unsigned long)vcc_mv + CAL_DEN/2UL) / CAL_DEN;
+					uart_send_string(" BAT(");
+					uart_send_number((unsigned int)bat_mv_long);
+					uart_send_string("mV)");
+				}
+				/* else: 电压过低(无电池/短路), 不显示mV */
+			}
+		}
+
+		/* 状态缩写 */
+		uart_send_char(' ');
+		switch(s)
+		{
+		case CHG_IDLE:       uart_send_string("[IDLE]"); break;
+		case CHG_DETECT:     uart_send_string("[DET]");  break;
+		case CHG_ACTIVATE:   uart_send_string("[ACT]");  break;
+		case CHG_PRECHARGE:  uart_send_string("[PRE]");  break;
+		case CHG_CC_CHARGE:  uart_send_string("[CC]");   break;
+		case CHG_CV_CHARGE:  uart_send_string("[CV]");   break;
+		case CHG_FULL:       uart_send_string("[FULL]"); break;
+		case CHG_ERROR:
+		{
+			unsigned char t = S_TYPE(i);
+			if(t == BAT_TYPE_NIMH || t == BAT_TYPE_DRY)
+				uart_send_string("[Dry/NiMH ERR]");
+			else if(t == BAT_TYPE_LI_ION)
+				uart_send_string("[Li-ion ERR]");
+			else if(t == BAT_TYPE_LINEAR_LI)
+				uart_send_string("[Linear Li ERR]");
+			else
+				uart_send_string("[ERR]");
+			break;
+		}
+		case CHG_IMP_CHECK:  uart_send_string("[IMP]");  break;
+		default:             uart_send_string("[???]");  break;
+		}
+
+		/* 打印 ct(chargeTimer) 和 ty(电池类型) 用于调试 */
+		uart_send_string(" ct=");
+		uart_send_number(S_TIMER(i));
+		uart_send_string(" ty=");
+		uart_send_number(S_TYPE(i));
+
+#if PRINT_B1_B6
+		uart_send_string("\r\n");
+#endif
+	}
+	uart_send_string("\r\n");
+}
+
+/*========================================================================
+  函数: Print_DetectLog
+  功能: 打印电池类型检测日志(检测到各类电池时调用)
+========================================================================*/
+void Print_DetectLog(void)
+{
+	uart_send_char('B');
+	uart_send_number((unsigned int)g_detectLogSlot + 1U);
+
+	if(g_detectLogType == BAT_TYPE_NIMH)
+		uart_send_string(": NiMH detected! Not charging.\r\n");
+	else if(g_detectLogType == BAT_TYPE_DRY)
+		uart_send_string(": Dry/NiMH detected! Not charging.\r\n");
+	else if(g_detectLogType == BAT_TYPE_LINEAR_LI)
+		uart_send_string(": Linear Li detected! Charging.\r\n");
+}
+
+/*========================================================================
+  主函数
+  流程:
+    1. System_Init() - 初始化所有模块, 启动Timer0 ISR
+    2. 上电自检2秒(ISR中处理, 绿灯→红灯→正常)
+    3. 主循环:
+       - ADC采样(g_doAdcSample标志)
+       - NTC温度读取(g_doNtcRead标志)
+       - UART状态打印(g_printFlag标志)
+       - 喂狗
+========================================================================*/
+void main(void)
+{
+	/* ICSP烧录保护延时 */
+	__delay_ms(10);
+	asm("clrwdt");
+
+	/* 系统初始化 */
+	System_Init();
+
+	/* 等待上电自检完成(ISR中处理) */
+	uart_send_string("L1211 Charger V2.1\r\n");
+	uart_send_string("Init...\r\n");
+
+	/* 主循环 */
+	while(1)
+	{
+		asm("clrwdt");
+
+		/* --- ADC采样: ISR Phase0请求, 主循环执行 --- */
+		if(g_doAdcSample)
+		{
+			g_doAdcSample = 0;
+			g_adcBusy = 1;
+			Do_AdcSample();
+			ChargeProcess_Slot(g_scanIndex);
+
+			/* --- 槽位0状态变化调试输出(追踪每次状态跳转) --- */
+			if(g_dbgDetectFlag)
+			{
+				g_dbgDetectFlag = 0;
+			uart_send_string("DBG: slot=");
+			uart_send_number(g_dbgSlot);
+			uart_send_string(" old=");
+			uart_send_number(g_dbgOldState);
+			uart_send_string(" new=");
+			uart_send_number(g_dbgNewState);
+			uart_send_string(" ty=");
+			uart_send_number(g_dbgNewType);
+			uart_send_string(" V=");
+			uart_send_number(g_dbgVoltage);
+			uart_send_string("\r\n");
+			}
+
+			g_adcBusy = 0;
+		}
+
+		/* --- NTC温度读取: ISR建立完成后触发 --- */
+		if(g_doNtcRead)
+		{
+			g_doNtcRead = 0;
+			g_adcBusy = 1;
+			Do_NtcRead();
+			g_adcBusy = 0;
+		}
+
+		/* --- UART打印: 每秒触发一次 --- */
+		if(g_printFlag)
+		{
+			g_printFlag = 0;
+			Print_SystemStatus();
+			Print_NtcTemp();
+		}
+
+		/* --- 电池检测日志: NiMH/干电池识别时打印 --- */
+		if(g_detectLogFlag)
+		{
+			g_detectLogFlag = 0;
+			Print_DetectLog();
+		}
+	}
+}
+
+/*========================================================================
+  合并编译: 以下模块通过#include方式并入main.c
+  SCMCU IDE单文件编译模式下, 所有.c文件需合并为一个翻译单元
+========================================================================*/
+#include "adc_drv.c"       /* ADC驱动: adresult, test_adc, ADC_Sample, AD_Init */
+#include "uart_dbg.c"      /* 软件UART: uart_init, uart_send_char/string/number */
+#include "charge_mgr.c"    /* 充电管理: g_temperature, Read_Temperature, ChargeProcess_Slot, CCCV_Control, Charging_Control */
+#include "led.c"           /* LED控制: Update_LED_Slot, Led_BlinkProcess, PowerOnLedSequence */

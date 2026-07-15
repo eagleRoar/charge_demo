@@ -1,0 +1,20 @@
+DETECT ct=200 初始电压 > 2900?
+├─ YES ──► g_capFlag 置位 (标记"可能是电容放电")
+│         │
+│         └─ 稳定检测循环:
+│            │
+│            ├─ 电压持续下降(<50/10ms) ──► 重置稳定计数，继续等
+│            │
+│            ├─ 电压稳定 连续 20 ticks ──► g_highVFlag 置位
+│            │   │                        (真锂电特征: 能维持高压)
+│            │   │
+│            │   ├─ 等待电容放电 ≤ 2900 ──► 清除 capFlag → IMP_CHECK
+│            │   │
+│            │   └─ 2秒后仍 > 2900 + g_highVFlag ──► amb_shortcut
+│            │       真锂电 → AMBIGUOUS → IMP_CHECK 最后确认
+│            │
+│            └─ 门禁: 初始电压≤2900 但后续异常跳升>2900
+│               (IMP_CHECK排队噪声/串扰) ──► ct=0 重置DETECT
+│
+└─ NO (初始 ≤ 2900) ──► 稳定后 Detect_BatteryType(v)
+                         正常走 AMBIGUOUS/LI_ION 路径

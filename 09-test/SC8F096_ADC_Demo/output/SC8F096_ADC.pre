@@ -2,7 +2,7 @@
 # 1 "E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_ADC_Demo\SC8F096_ADC.c"
 
 
-# 4
+# 11
 #pragma warning disable 752
 #pragma warning disable 373
 
@@ -1530,33 +1530,49 @@ extern unsigned char __resetbits;
 extern __bit __powerdown;
 extern __bit __timeout;
 
-# 15 "E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_ADC_Demo\SC8F096_ADC.c"
+# 28 "E:\1.workspace\7.other\17.charge_demo\charge_demo\09-test\SC8F096_ADC_Demo\SC8F096_ADC.c"
 volatile unsigned int adresult;
-volatile unsigned int result;
 volatile unsigned char test_adc;
-volatile unsigned int power_ad;
+
+
+const unsigned char bx_ch[12] = {
+17,
+16,
+12,
+13,
+5,
+4,
+28,
+29,
+27,
+26,
+7,
+6
+};
 
 unsigned char ADC_Sample(unsigned char adch, unsigned char adldo);
-void DelayXms(unsigned char x);
-unsigned char ADC_Result(unsigned char adch);
-void Init_System();
-void AD_Init();
+void Init_System(void);
+void sw_uart_init(void);
+void uart_send_char(unsigned char c);
+void uart_send_string(const unsigned char *str);
+void uart_send_number(unsigned int num);
 
-# 46
+# 61
 unsigned char ADC_Sample(unsigned char adch, unsigned char adldo)
 {
 volatile unsigned long adsum = 0;
 volatile unsigned int admin = 0, admax = 0;
 volatile unsigned int ad_temp = 0;
 
-if ((!LDO_EN) && (adldo & 0x04) )
-{
 
+if((!LDO_EN) && (adldo & 0x04))
+{
 ADCON1 = adldo;
 _delay((unsigned long)((100)*(16000000/4000000.0)));
 }
 else
 ADCON1 = adldo;
+
 
 if(adch & 0x10)
 {
@@ -1565,104 +1581,280 @@ adch &= 0x0f;
 }
 else
 CHS4 = 0;
-unsigned char i = 0;
-for (i = 0; i < 10; i++)
+
+unsigned char i;
+for(i = 0; i < 34; i++)
 {
-ADCON0 = (unsigned char)(0X41 | (adch << 2));
-asm("nop");
-asm("nop");
-asm("nop");
-asm("nop");
+ADCON0 = (unsigned char)(0x81 | (adch << 2));
+_delay((unsigned long)((5)*(16000000/4000000.0)));
 GODONE = 1;
 
 unsigned char j = 0;
-while (GODONE)
+while(GODONE)
 {
 _delay((unsigned long)((2)*(16000000/4000000.0)));
-
-if (0 == (--j))
-return 0;
+if(0 == (--j)) return 0;
 }
 
 ad_temp = (unsigned int)((ADRESH << 4) + (ADRESL >> 4));
 
-if (0 == admax)
+if(0 == admax)
 {
 admax = ad_temp;
 admin = ad_temp;
 }
-else if (ad_temp > admax)
+else if(ad_temp > admax)
 admax = ad_temp;
-else if (ad_temp < admin)
+else if(ad_temp < admin)
 admin = ad_temp;
 
 adsum += ad_temp;
 }
+
 adsum -= admax;
-if (adsum >= admin)
+if(adsum >= admin)
 adsum -= admin;
 else
 adsum = 0;
 
-adresult = adsum >> 3;
-
-adsum = 0;
-admin = 0;
-admax = 0;
+adresult = adsum >> 5;
 return 0xA5;
-
 }
 
-# 120
-void main()
+# 127
+void sw_uart_init(void)
+{
+TRISC &= ~0x10;
+ANSEL2 &= ~0x10;
+RC4 = 1;
+}
+
+void uart_send_char(unsigned char c)
+{
+unsigned char i;
+GIE = 0;
+RC4 = 0;
+_delay((unsigned long)((104)*(16000000/4000000.0)));
+for(i = 0; i < 8; i++)
+{
+if(c & 0x01) RC4 = 1; else RC4 = 0;
+_delay((unsigned long)((104)*(16000000/4000000.0)));
+c >>= 1;
+}
+RC4 = 1;
+_delay((unsigned long)((104)*(16000000/4000000.0)));
+GIE = 1;
+}
+
+void uart_send_string(const unsigned char *str)
+{
+while(*str) uart_send_char(*str++);
+}
+
+void uart_send_number(unsigned int num)
+{
+unsigned char buf[6];
+unsigned char i = 0, j;
+if(num == 0) { uart_send_char('0'); return; }
+while(num > 0) { buf[i++] = '0' + (num % 10); num /= 10; }
+for(j = i; j > 0; j--) uart_send_char(buf[j-1]);
+}
+
+# 168
+void main(void)
 {
 Init_System();
-AD_Init();
+sw_uart_init();
 
-while (1)
+ADCON0 = 0x41;
+
+# 183
+ANSEL0 |= 0xF0;
+ANSEL1 |= 0x03;
+ANSEL2 |= 0x07;
+ANSEL3 |= 0x3C;
+
+uart_send_string("B1-B12 ADC Test\r\n");
+
+unsigned int tick = 0;
+unsigned int vcc_mv;
+unsigned char bx;
+
+
+unsigned int vdd_buf[12];
+
+while(1)
 {
+asm("clrwdt");
+_delay((unsigned long)((10)*(16000000/4000.0)));
+tick++;
+if(tick % 200 != 0) continue;
 asm("clrwdt");
 
 
-TRISB7 = 1;
-ANSEL1 |= 0X80;
-test_adc = ADC_Sample(15, 7);
-if (0xA5 == test_adc)
-{
-
-}
-else
-{
-ADCON0 = 0;
-ADCON1 = 0;
-_delay((unsigned long)((100)*(16000000/4000000.0)));
-}
-
+vcc_mv = 5000;
 test_adc = ADC_Sample(31, 0);
-if (0xA5 == test_adc)
+if(0xA5 == test_adc)
 {
-volatile unsigned long power_temp;
+unsigned long pt = (unsigned long)((4096UL*1.2*1000)) / adresult;
+vcc_mv = (unsigned int)pt;
+}
 
-power_temp = (unsigned long)(((4096UL*1.2*1000))/adresult);
-power_ad = (unsigned int)(power_temp);
+
+
+ADC_Sample(17, 0); vdd_buf[0] = adresult;
+ADC_Sample(12, 0); vdd_buf[2] = adresult;
+ADC_Sample(13, 0); vdd_buf[3] = adresult;
+ADC_Sample(5, 0); vdd_buf[4] = adresult;
+ADC_Sample(7, 0); vdd_buf[5] = adresult;
+ADC_Sample(6, 0); vdd_buf[6] = adresult;
+ADC_Sample(4, 0); vdd_buf[7] = adresult;
+ADC_Sample(28, 0); vdd_buf[8] = adresult;
+ADC_Sample(29, 0); vdd_buf[9] = adresult;
+ADC_Sample(27, 0); vdd_buf[10] = adresult;
+ADC_Sample(26, 0); vdd_buf[11] = adresult;
+
+asm("clrwdt");
+ADC_Sample(16, 0);
+vdd_buf[1] = adresult;
+
+
+for(bx = 0; bx < 6; bx++)
+{
+unsigned long bat_mv;
+unsigned int vx_mv;
+
+vx_mv = (unsigned long)vdd_buf[bx] * vcc_mv / 4096UL;
+if(vx_mv + 200U >= vcc_mv)
+{
+uart_send_string("B");
+uart_send_number(bx+1);
+uart_send_string("=");
+uart_send_number(vdd_buf[bx]);
+uart_send_string(" OPEN");
 }
 else
 {
-ADCON0 = 0;
-ADCON1 = 0;
-_delay((unsigned long)((100)*(16000000/4000000.0)));
+bat_mv = (1159UL * vx_mv);
+if(bat_mv > (647UL * (unsigned long)vcc_mv))
+{
+bat_mv = (bat_mv - 647UL * (unsigned long)vcc_mv + 1000UL/2) / 1000UL;
+uart_send_string("B");
+uart_send_number(bx+1);
+uart_send_string("=");
+uart_send_number(vdd_buf[bx]);
+uart_send_string(" BAT(");
+uart_send_number((unsigned int)bat_mv);
+uart_send_string("mV)");
 }
+else
+{
+uart_send_string("B");
+uart_send_number(bx+1);
+uart_send_string("=");
+uart_send_number(vdd_buf[bx]);
+uart_send_string(" ?[");
+uart_send_number((unsigned int)vx_mv);
+uart_send_string("mV)");
+}
+}
+uart_send_string(" ");
+}
+uart_send_string("\r\n ");
+asm("clrwdt");
 
 
+for(bx = 6; bx < 12; bx++)
+{
+unsigned long bat_mv;
+unsigned int vx_mv;
+
+vx_mv = (unsigned long)vdd_buf[bx] * vcc_mv / 4096UL;
+if(vx_mv + 200U >= vcc_mv)
+{
+uart_send_string("B");
+uart_send_number(bx+1);
+uart_send_string("=");
+uart_send_number(vdd_buf[bx]);
+uart_send_string(" OPEN");
+}
+else
+{
+bat_mv = (1159UL * vx_mv);
+if(bat_mv > (647UL * (unsigned long)vcc_mv))
+{
+bat_mv = (bat_mv - 647UL * (unsigned long)vcc_mv + 1000UL/2) / 1000UL;
+uart_send_string("B");
+uart_send_number(bx+1);
+uart_send_string("=");
+uart_send_number(vdd_buf[bx]);
+uart_send_string(" BAT(");
+uart_send_number((unsigned int)bat_mv);
+uart_send_string("mV) ");
+}
+else
+{
+uart_send_string("B");
+uart_send_number(bx+1);
+uart_send_string("=");
+uart_send_number(vdd_buf[bx]);
+uart_send_string(" ?[");
+uart_send_number((unsigned int)vx_mv);
+uart_send_string("mV) ");
+}
+}
+uart_send_string(" ");
+}
+
+print_ntc:
+
+test_adc = ADC_Sample(18, 0);
+if(0xA5 == test_adc)
+{
+unsigned int ntc_adc = adresult;
+
+uart_send_string(" NTC=");
+uart_send_number(ntc_adc);
+
+if(ntc_adc < 100)
+{
+uart_send_string(" T=SHORT");
+}
+else if(ntc_adc > 3996)
+{
+uart_send_string(" T=OPEN");
+}
+else
+{
+unsigned long rt = (unsigned long)ntc_adc * 10000UL / (4096UL - ntc_adc);
+unsigned int temp_x10;
+if(rt >= 10000UL)
+temp_x10 = 250U - (unsigned int)((rt - 10000UL) * 10UL / 445UL);
+else
+temp_x10 = 250U + (unsigned int)((10000UL - rt) * 10UL / 445UL);
+
+uart_send_string(" T=");
+uart_send_number(temp_x10 / 10);
+uart_send_string(".");
+uart_send_number(temp_x10 % 10);
+uart_send_string("C");
 }
 }
 
-# 170
-void Init_System()
+uart_send_string("\r\n VCC=");
+uart_send_number(vcc_mv);
+uart_send_string("mV\r\n");
+
+asm("clrwdt");
+}
+}
+
+# 366
+void Init_System(void)
 {
 asm("nop");
 asm("clrwdt");
-OPTION_REG = 0;
+OPTION_REG = 0x0F;
 asm("clrwdt");
 OSCCON = 0X70;
 
@@ -1671,47 +1863,26 @@ WPUB = 0B00000000;
 WPUC = 0B00000000;
 WPUD = 0B00000000;
 
-TRISA = 0B00000000;
-TRISB = 0B00000000;
-TRISC = 0B00000000;
-TRISD = 0B00000000;
-
-PORTA = 0B00000000;
-PORTB = 0B00000000;
-PORTC = 0B00000000;
-PORTD = 0B00000000;
+# 382
+TRISA = 0xF0; PORTA = 0x0F;
+TRISB = 0x30; PORTB = 0x4F;
+TRISC = 0x07; PORTC = 0x00;
+TRISD = 0xF0; PORTD = 0x0F;
 
 CC0CON = 0;
 CC1CON = 0;
 
-
-
 PR2 = 249;
 TMR2IF = 0;
 TMR2IE = 1;
-
 T2CON = 0B00000100;
 INTCON = 0XC0;
 }
 
-# 215
-void interrupt Isr_Timer()
+void interrupt Isr_Timer(void)
 {
-if (TMR2IF)
+if(TMR2IF)
 {
 TMR2IF = 0;
-
 }
-
-}
-
-# 234
-void AD_Init()
-{
-
-# 264
-ADCON0 = 0X41;
-
-# 281
-ADCON1 = 0;
 }

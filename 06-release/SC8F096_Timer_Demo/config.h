@@ -25,7 +25,7 @@
     注: B1~B12为纯数字输出(仅控制MOSFET开关), ADC采样由独立BxAD引脚完成
     B1AD    : RC1/AN17      B1电压采样(独立ADC通道, 不受MOSFET状态影响)
     B2AD    : RC0/AN16      B2电压采样
-    B3AD    : RB4/AN12      B3电压采样(与UART RX共用, 调试时注意)
+    B3AD    : RB4/AN12      B3电压采样
     B4AD    : RB5/AN13      B4电压采样
     B5AD    : RA5/AN5       B5电压采样
     B6AD    : RA4/AN4       B6电压采样
@@ -35,21 +35,24 @@
     B10AD   : AN26          B10电压采样(高通道, 模拟专用)
     B11AD   : RA7/AN7       B11电压采样
     B12AD   : RA6/AN6       B12电压采样
-    NTC     : RC5/AN21      温度检测(CMFA103J3950HANT,10K上拉)
-    LED IO1    : RC5/AN21      LED电源控制1(与NTC分时复用,与DAT共用)
-    LED IO2    : RC4/AN20      LED电源控制2(与CLK共用)
+    NTC     : RC2/AN18      温度检测(CMFA103J3950HANT,10K上拉至VDD)
+    LED IO1    : RC5/AN21      LED电源控制1(与DAT共用)
+    LED IO2    : RC4/AN20      LED电源控制2(与CLK/UART TX共用)
     PWM        : RB7/AN15      PWM总控输出(pin8)
     CD IO1     : RC3/AN19      充电组控制1(B1-B6组)
-    CD IO2     : RC2/AN18      充电组控制2(B7-B12组)
+    CD IO2     : RC5/AN21      充电组控制2(B7-B12组)
     EN         : RB6/AN14      主电源使能(Q3 4435)
-    UART TX    : RB3           UART发送(调试用,与B3共用RB3)
-    UART RX    : RB4           UART接收
-    CLK/DAT    : RC4/RC5       ICSP调试接口(与LED IO2/LED IO1共用RC4/RC5)
+    SW UART TX : RC4/AN20      UART发送(软件模拟9600bps, 复用CLK引脚, 仅TX)
 -------------------------------------------*/
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
 #include <sc.h>
+
+/* 抑制良性编译器警告(8-bit MCU通用类型转换) */
+#pragma warning disable 752   /* conversion to shorter data type */
+#pragma warning disable 765   /* degenerate unsigned comparison */
+#pragma warning disable 764   /* mismatched comparison */
 
 /* --- 系统时钟配置 --- */
 #ifndef _XTAL_FREQ
@@ -58,8 +61,19 @@
 
 /* --- 电源电压检测参数 --- */
 /* 电源电压 = ADC值 * 1.2V(内部参考) / 4096 * 1000(转mV) */
-#define POWER_RATIO        (4096UL*1.2*1000)
+#define POWER_RATIO        (4096UL * 1200UL)   /* 4096 * 1.2 * 1000 = VREF反推VCC */
+
+/* --- 电池电压双参数线性标定 ---
+   标定点: ADC=1885→1.33V(NiMH), ADC=3307→1.55V(恒压锂) @VCC≈5070mV
+   公式: V_BAT_mV = (124 * V_BxAD_mV + 206 * VCC_mV) / 1000
+   验证: NiMH 1.33V→1331mV, 恒压锂 1.55V→1552mV
+   ⚠TODO: 低压区(<1.0V)外推不可靠, 需补充深度过放恒压锂标定点 */
+#define ALPHA_NUM           124UL    /* α * 1000 */
+#define BETA_NUM            206UL    /* β * 1000 (注意: 公式改为加法, β为正) */
+#define CAL_DEN             1000UL
 #define UART_PRINT_EN      1       /* UART调试输出开关: 1=启用, 0=禁用 */
+#define SW_TX              RC4     /* 软件UART TX引脚(复用CLK, 9600bps) */
+#define BIT_TIME           104     /* 9600bps @16MHz */
 
 /* --- 充电槽位数量 --- */
 #define BATTERY_SLOTS      12      /* 12路独立充电槽位 */
@@ -77,16 +91,22 @@
 #define CHG_CV_CHARGE      5       /* 恒压充电: 到达满电后保持10min */
 #define CHG_FULL           6       /* 充满: 充电完成, 绿灯常亮 */
 #define CHG_ERROR          7       /* 错误: 异常状态, 红灯闪烁 */
+#define CHG_IMP_CHECK      8       /* 阻抗检测: 短脉冲MOSFET测量内阻 */
+#define CHG_NIMH_WATCH     9       /* [废弃] 已简化, 不再使用 */
 
 /*========================================================================
   电池类型枚举
   通过开路电压判断电池类型, 决定是否充电
 ========================================================================*/
-#define BAT_TYPE_UNKNOWN   0       /* 未知类型 */
-#define BAT_TYPE_LI_ION    1       /* 锂电池: 正常充电 */
-#define BAT_TYPE_NIMH      2       /* 镍氢电池: 不充电, 报错 */
-#define BAT_TYPE_DRY       3       /* 干电池: 不充电, 报错 */
-#define BAT_TYPE_SHORT     4       /* 短路: 不充电, 报错 */
+#define BAT_TYPE_UNKNOWN     0       /* 未知类型 */
+#define BAT_TYPE_LI_ION      1       /* 恒压锂电池(含charger IC): 正常充电 */
+#define BAT_TYPE_NIMH        2       /* 镍氢电池: 不充电, 报错 */
+#define BAT_TYPE_DRY         3       /* 干电池: 不充电, 报错 */
+#define BAT_TYPE_SHORT       4       /* 短路: 不充电, 报错 */
+#define BAT_TYPE_AMBIGUOUS   5       /* 模糊: 电压在镍氢范围, 需阻抗+监视判断 */
+#define BAT_TYPE_LINEAR_LI   6       /* 线性锂电池(无charger IC): 正常充电, 
+                                       在IMP_CHECK中VCC不塌但电压稳定, 
+                                       区别于碳性去极化大跳变 */
 
 /*========================================================================
   LED状态枚举
@@ -99,18 +119,37 @@
 
 /*========================================================================
   电压阈值(ADC原始值)
-  参考电压: LDO=3V, 12位ADC(0~4095), 电池分压比1/11
-  实际电池电压 = ADC值 * 3V / 4096 * 11
-  例如: ADC_V_FULL=188 -> 电池电压 = 188*3/4096*11 = 1.52V
+  标定: V_BAT = (124×BxAD_mV + 206×VCC_mV)/1000, 反推 ADC = (1000×V_BAT/VCC - 206)×4096/124
+  基准 VCC=5070mV (典型值)
+  空槽: Bx被100K上拉到VCC, ADC≈4095
+  ⚠TODO: 低压阈值(SHORT/ACTIVATE/PRE_MIN/PRE_MAX)仅2点标定外推, 需补采标定点修正
 ========================================================================*/
-#define ADC_V_FULL          188    /* 1.52V: 锂电池满电电压 */
-#define ADC_V_OVER          198    /* 1.60V: 过充保护阈值 */
-#define ADC_V_PRE_MIN       62     /* 0.50V: 预充下限 */
-#define ADC_V_PRE_MAX       124    /* 1.00V: 预充上限, 进入恒流充电 */
-#define ADC_V_ACTIVATE      12     /* 0.10V: 激活阈值, 低于此值需脉冲激活 */
-#define ADC_V_SHORT         5      /* 0.04V: 短路判断阈值 */
-#define ADC_V_NIMH_LOW      136    /* 1.10V: 镍氢电池电压下限 */
-#define ADC_V_NIMH_HIGH     161    /* 1.30V: 镍氢电池电压上限 */
+#define ADC_V_FULL          3100   /*  1.52V 满电阈值(CV切入), 公式: bat_mV≈1518 */
+#define ADC_V_OVER          3850   /*  1.64V 过压保护, 恒压锂charger IC高阻抗特性导致
+                                       ADC读数偏高(实测~3766), 3850留足裕量同时
+                                       低于OPEN(3990), 确保真实过压仍可检出 */
+#define ADC_V_OPEN          3990   /*  空槽判为开路(ADC=4095≈VCC) */
+
+/* TODO: 低压阈值基于2点标定外推, 准确性有限, 需补充低压标定点后修正 */
+#define ADC_V_PRE_MIN       1200   /* ~0.70V 预充下限(估算值) */
+#define ADC_V_PRE_MAX       2700   /* ~1.00V 预充上限(估算值, 达到后进入CC) */
+#define ADC_V_ACTIVATE       750   /* ~0.30V 激活阈值(估算值, 过放电池) */
+#define ADC_V_SHORT          500   /* ~0.00V 短路阈值(估算值) */
+
+/* ── NiMH 电压窗口(基于 1.33V NiMH 标定点: ADC=1885) ── */
+#define ADC_V_NIMH_LOW      1015   /* ~1.20V NiMH电压范围下限 */
+#define ADC_V_NIMH_MAX      2900   /* NiMH开路电压上限(~1.45V@VCC=5V时ADC≈2775, 留余量)
+                                      高于此值的电池不进入IMP_CHECK, 直接作LI_ION处理
+                                      碳性/碱性若漏入CC, PEAK_DROP会在数秒内纠正 */
+#define ADC_V_NIMH_HIGH     ADC_V_OVER  /* 扩展至过压上限, 覆盖碳性/碱性~1.60V */
+
+/* --- DETECT路由用校准mV阈值(替代原始ADC判断) ---
+   ⚠TODO: 2点标定公式在低压区外推不可靠, bat_mv最低约1.0V
+   导致ACTIVATE(100mV)/PRECHARGE(900mV)阈值暂时无法触发
+   低压电池将直接进入CC_CHARGE, 需补采标定点后修正 */
+#define BAT_MV_ACTIVATE      100    /* 0.10V: 激活阈值(脉冲激活过放电池) [暂不可达] */
+#define BAT_MV_PRECHARGE     900    /* 0.90V: 低于此值进入预充电 [暂不可达] */
+#define BAT_MV_FULL         1520    /* 1.52V: 满电阈值(DETECT中检测到满电直接进CV) */
 
 /*========================================================================
   充电时间阈值
@@ -121,9 +160,21 @@
 #define TICK_PER_SEC        100         /* 1秒对应的扫描tick数(校准值) */
 #define TIME_ACTIVATE_MAX   (60 * TICK_PER_SEC)            /* 激活超时: 60秒 */
 #define TIME_PRECHARGE_MAX  (300 * TICK_PER_SEC)           /* 预充超时: 300秒(5分钟) */
-#define TIME_CHARGE_MAX     (10800 * TICK_PER_SEC)         /* 充电超时: 10800秒(3小时) */
-#define TIME_DETECT_WAIT    (2 * TICK_PER_SEC)             /* 检测等待: 2秒 */
+#define TIME_CHARGE_MAX     (10800UL * TICK_PER_SEC)       /* 充电超时: 10800秒(3h), 16bit溢出→由CC_BLOCK机制实现 */
+#define TIME_DETECT_WAIT    (2 * TICK_PER_SEC)             /* 检测等待: 2秒(初始) */
+#define TIME_DETECT_SETTLE  (8 * TICK_PER_SEC)             /* 高内阻电池额外稳定等待: 最多8秒 */
+#define DETECT_SETTLE_DROP  50                             /* 稳定判定: ADC下降<50视为已稳定 */
 #define TIME_CV_HOLD        (600 * TICK_PER_SEC)           /* CV恒压保持: 600秒(10分钟) */
+
+#define CC_BLOCK_TICKS      (600 * TICK_PER_SEC)   /* CC超时分块: 10分钟tick数(60000<65535) */
+#define CC_MAX_BLOCKS       18                     /* 18块=180分钟=3小时 */
+
+#define OV_DEBOUNCE_CNT     5                      /* 过压消抖次数: 连续N次过压才报ERROR */
+#define DETECT_LOW_DEBOUNCE 5                      /* DETECT低电压消抖: 连续N次读到低ADC才判UNKNOWN */
+
+/* CC/CV电压跌落重判: 充电中电压从峰值跌落超过此阈值 → 回DETECT重新判断
+   B1 NiMH接触不良实测: ADC从3949(误判为LI_ION)跌至1899(真实NiMH), 跌落2050 */
+#define PEAK_DROP_THRESH    500     /* ADC跌落阈值: >500counts≈610mV 触发重判 */
 
 /*========================================================================
   CC-CV 充电控制参数
@@ -138,6 +189,11 @@
 #define CC_DUTY_TARGET      25     /* CC目标占空比(25/32≈78%) */
 #define CC_DUTY_RAMP_STEP   3      /* 软启动每步增量 */
 
+/* PRECHARGE预充阶段: 低占空比(仅ACTIVATE/PRECHARGE槽位, 无CC槽时生效)
+   8/32=25%, 避免78%PWM对高内阻深度过放电池造成充电异常 */
+#define PRE_DUTY_TARGET     8      /* 预充目标占空比(8/32=25%) */
+#define PRE_DUTY_INITIAL    5      /* 预充初始占空比(5/32≈16%), 软启动起点 */
+
 /* CV恒压阶段: PI闭环控制参数
    error = ADC_V_FULL - 当前电压
    duty += error * CV_KP / CV_DIV
@@ -145,6 +201,20 @@
 #define CV_KP               4      /* 比例系数 */
 #define CV_KI               1      /* 积分系数 */
 #define CV_KI_LIMIT         200    /* 积分限幅, 防止积分饱和 */
+
+/* --- 调试配置 --- */
+#define NIMH_DETECT_ENABLE  1       /* 1=识别镍氢/干电池并拒充, 0=所有电池按锂电池处理 */
+
+/*========================================================================
+  多阶段电池识别参数(NIMH_DETECT_ENABLE=1时生效)
+  流程: 电压分区 → 阻抗脉冲(区分干电池/NiMH/Li-ion)
+  ========================================================================*/
+/* 脉冲方向检测: 短暂导通MOSFET(1tick≈9ms), 判断电特性
+   NiMH: 极低内阻→B1AD被拉至近VCC→ADC飙至≥3990(且脉冲前<3990)
+   Li-ion: 充电管理芯片切模式→电压小幅上升
+   干电池: 高内阻→B1AD无飙升, 电压不上升 */
+#define IMP_PULSE_TICKS     1       /* 脉冲持续tick数(1轮≈9ms) */
+#define IMP_NOISE_THRESH     50      /* 电压上升判定阈值: 碳性电池噪声~40, 锂电激活>100 */
 
 /*========================================================================
   温度保护阈值
@@ -154,21 +224,14 @@
 #define TEMP_STOP           60      /* 停止充电温度 */
 #define TEMP_RESUME         50      /* 恢复充电温度 */
 
-/*========================================================================
-  NTC ADC 建立时间配置 (C12 = 22uF 并接在 RC5 与 GND 之间)
-  RC5 引脚分时复用: LED IO1(数字输出, 平时驱低) / NTC(模拟输入, 测温时切换)
-  拓扑: VDD → R48(10K) → RC5/AN21 → NTC1(CMFA103J3950HANT, 10K@25C) → GND
-                                        └── C12(22uF) → GND
-  当 RC5 从数字输出(驱低)切换到模拟输入(高阻)后, C12 需要通过 R48||R_ntc 充电:
-    - 室温下 R48||R_ntc ≈ 5KΩ,  τ = 5KΩ × 22uF = 110ms
-    - 充电到 96% 需要 ~3.3τ ≈ 360ms
-    - 充电到 99% 需要 ~5τ ≈ 550ms
-  扫描轮周期: 12槽 × 3阶段 × 125us ≈ 4.5ms/轮 → 取整约 9ms/轮(ISR耗时拉长)
-  NTC_SETTLE_ROUNDS = 60 → 60 × 9ms = 540ms > 5τ, 保证 ADC 采样精度
-  TEMP_READ_INTERVAL = 200 → 约 1.8s 读一次温度(温度变化缓慢, 无需高频读取)
-========================================================================*/
-#define NTC_SETTLE_ROUNDS    60      /* NTC建立等待轮数(60轮≈540ms>5τ) */
-#define TEMP_READ_INTERVAL   200     /* 温度读取间隔(200轮≈1.8s) */
+/* VCC 低压保护: 电源过载时 VCC 跌落 → 关闭所有充电防止 ADC 读数异常连锁误判
+   B1 NiMH 被误判为 LI_ION 时实测 VCC 从 5061mV 跌至 4032mV (跌落>1000mV) */
+#define VCC_UVLO_STOP       4400    /* VCC低于此值(mV): 停止所有充电 */
+#define VCC_UVLO_RESUME     4600    /* VCC高于此值(mV): 恢复充电(200mV回差) */
+
+/* NTC ADC配置 (RC5分时复用LED/NTC, C12=22uF滤波, τ≈110ms, 5τ≈550ms) */
+#define NTC_SETTLE_ROUNDS    60
+#define TEMP_READ_INTERVAL   200
 
 /*========================================================================
   ADC通道定义
@@ -177,7 +240,7 @@
 ========================================================================*/
 #define ADC_CH_B1AD         17    /* B1AD: RC1/AN17 */
 #define ADC_CH_B2AD         16    /* B2AD: RC0/AN16 */
-#define ADC_CH_B3AD         12    /* B3AD: RB4/AN12(与UART RX共用) */
+#define ADC_CH_B3AD         12    /* B3AD: RB4/AN12 */
 #define ADC_CH_B4AD         13    /* B4AD: RB5/AN13 */
 #define ADC_CH_B5AD         5     /* B5AD: RA5/AN5 */
 #define ADC_CH_B6AD         4     /* B6AD: RA4/AN4 */
@@ -187,8 +250,10 @@
 #define ADC_CH_B10AD        26    /* B10AD: AN26(高通道, 模拟专用) */
 #define ADC_CH_B11AD        7     /* B11AD: RA7/AN7 */
 #define ADC_CH_B12AD        6     /* B12AD: RA6/AN6 */
-#define ADC_CH_NTC          21    /* NTC: RC5/AN21 */
+#define ADC_CH_NTC          18    /* NTC: RC2/AN18, VDD参考 */
 #define ADC_CH_VREF         31    /* 内部1.2V参考电压(用于计算VDD) */
+
+#define ADC_OK              0xA5  /* ADC采样完成标志: 移位累加32次后返回 */
 
 /*========================================================================
   GPIO引脚宏定义
@@ -196,8 +261,8 @@
 /* 总控引脚 */
 #define PIN_PWM             RB7     /* PWM总控输出(VT_PWM1, pin8=RB7/AN15) */
 #define PIN_CD1             RC3     /* 充电组控制1(B1-B6) */
-#define PIN_CD2             RC2     /* 充电组控制2(B7-B12) */
-#define PIN_LED_IO1         RC5     /* LED电源控制1(与NTC分时复用RC5) */
+#define PIN_CD2             RC5     /* 充电组控制2(B7-B12) */
+#define PIN_LED_IO1         RC5     /* LED电源控制1(与CD2分时复用RC5) */
 #define PIN_LED_IO2         RC4     /* LED电源控制2 */
 #define PIN_EN              RB6     /* 主电源使能(Q3 4435) */
 
@@ -208,7 +273,7 @@
    B9=RB0/AN8  B10=RB1/AN9 B11=RD2/AN24 B12=RD0/AN22 */
 #define PIN_B1_CTRL         RA0     /* B1: RA0 */
 #define PIN_B2_CTRL         RA1     /* B2: RA1 */
-#define PIN_B3_CTRL         RB3     /* B3: RB3(与UART TX共用) */
+#define PIN_B3_CTRL         RB3     /* B3: RB3 */
 #define PIN_B4_CTRL         RB2     /* B4: RB2 */
 #define PIN_B5_CTRL         RA3     /* B5: RA3 */
 #define PIN_B6_CTRL         RA2     /* B6: RA2 */
@@ -257,59 +322,51 @@
 /*========================================================================
   数据结构定义
 ========================================================================*/
-/* 单槽电池状态结构体(12字节)
-   注: 为节省RAM, stableCnt和activatePulseCnt使用unsigned char */
+/* 核心充电状态结构体(6字节) - 仅包含状态机必需字段 */
 typedef struct {
-	unsigned char type;             /* 电池类型(BAT_TYPE_xxx) */
 	unsigned char state;            /* 充电状态(CHG_xxx) */
-	unsigned char ledState;         /* LED状态(LED_xxx) */
+	unsigned char type;             /* 电池类型(BAT_TYPE_xxx) */
 	unsigned int  voltage;          /* 当前ADC电压值 */
 	unsigned int  chargeTimer;      /* 充电计时器(tick) */
-	unsigned int  blinkTimer;       /* LED闪烁计时器(tick) */
-	unsigned char blinkPhase;       /* LED闪烁相位(0/1交替) */
-	unsigned char stableCnt;        /* 稳定计数器 */
-	unsigned char activatePulseCnt; /* 激活脉冲计数 */
 } BatterySlot_t;
+
+/* LED闪烁: 全局统一计数器, 所有ERROR槽共用, 替代原3个per-slot数组节省35B RAM */
+extern unsigned char g_blinkTick;
 
 /*========================================================================
   全局变量声明(extern)
   定义分散在各模块.c文件中, 避免单Bank内存不足
 ========================================================================*/
 extern volatile unsigned int adresult;      /* ADC采样结果(去极值平均后) */
-extern volatile unsigned int power_ad;      /* 电源电压(mV) */
 extern volatile unsigned char test_adc;     /* ADC采样状态标记 */
 
-/* 槽位数据: 拆分为两个6元素数组, 分别放入不同RAM Bank
-   每数组72字节(6*12), 可放入Bank0(96字节)和Bank1(80字节) */
-extern BatterySlot_t g_slot0[6];            /* B1-B6 槽位数据 */
-extern BatterySlot_t g_slot1[6];            /* B7-B12 槽位数据 */
+extern volatile BatterySlot_t g_slot[12];
 
-/* 透明访问宏: 根据索引自动选择对应数组 */
-#define GSLOT(idx) (((idx) < 6) ? &g_slot0[(idx)] : &g_slot1[(idx)-6])
+#define S_STATE(i) g_slot[(unsigned char)(i)].state
+#define S_TYPE(i)  g_slot[(unsigned char)(i)].type
+#define S_VOLT(i)  g_slot[(unsigned char)(i)].voltage
+#define S_TIMER(i) g_slot[(unsigned char)(i)].chargeTimer
 
 /* 系统计时变量 */
-extern unsigned int  g_timerTick;           /* Timer0中断计数(250us/tick) */
-extern unsigned int  g_systemTick;          /* 系统秒计数(4000tick=1s) */
-extern unsigned int  g_ntcAdc;             /* NTC ADC原始值 */
-extern unsigned char g_temperature;         /* 当前温度(摄氏度) */
+extern unsigned int g_temperature;          /* 当前温度(0.1°C), 存储temp_x10 */
 extern unsigned char g_tempProtect;         /* 温度保护标志: 1=保护中, 0=正常 */
-extern unsigned char g_scanIndex;           /* 当前扫描槽位索引(0-11) */
-extern unsigned char g_scanPhase;           /* 当前扫描阶段(0/1/2) */
-extern unsigned int  g_powerOnTimer;        /* 上电自检计时器 */
-extern unsigned char g_powerOnPhase;        /* 上电自检阶段(0/1/2) */
+extern unsigned char g_ccBlocks[12];        /* CC阶段10分钟块计数 */
+extern unsigned char g_ovCnt[12];           /* 过压消抖计数器 */
+/* g_slotRefV[12]: 槽位参考电压(DETECT初始值+CC/CV峰值), g_capFlag: 电容虚高标记, g_impData: IMP_CHECK共享数据 */
+extern unsigned char g_impCheckSlot;        /* IMP_CHECK串行锁: 0xFF=空闲, 其他=持有锁的槽号 */
+extern volatile unsigned char g_scanIndex;   /* 当前扫描槽位索引(0-11) */
+extern volatile unsigned char g_scanPhase;   /* 当前扫描阶段(0/1/2) */
+extern volatile unsigned int  g_vcc_mv;       /* 系统电压(mV), 由VREF反推, ISR定期更新 */
+extern volatile unsigned int  g_powerOnTimer;  /* 上电自检计时器 */
+extern volatile unsigned char g_powerOnPhase;  /* 上电自检阶段(0/1/2) */
 
 /* NTC读温状态机变量 */
-extern unsigned char g_tempPhase;           /* NTC读温状态: 0=等待间隔, 1=建立中 */
-extern unsigned int  g_tempSettleCnt;       /* NTC建立等待计数器(轮) */
-extern unsigned int  g_tempReadRoundCnt;    /* 温度读取间隔计数器(轮) */
+extern volatile unsigned char g_tempPhase;     /* NTC读温状态: 0=等待间隔, 1=建立中 */
+extern volatile unsigned int  g_tempSettleCnt; /* NTC建立等待计数器(轮) */
+extern volatile unsigned int  g_tempReadRoundCnt; /* 温度读取间隔计数器(轮) */
 
-/* NTC调试变量 */
-extern unsigned int  g_ntcDebugAdc;         /* ISR状态机NTC读取快照 */
-extern unsigned char g_ntcDebugPhase;       /* NTC调试阶段快照 */
-extern unsigned int  g_ntcDebugSettleCnt;   /* NTC建立计数器快照 */
-extern unsigned int  g_ntcDiagAdc;          /* 阻塞式NTC读(LDO参考,600ms延时) */
-extern unsigned int  g_ntcDiagVdd;          /* 阻塞式NTC读(VDD参考,对比LDO) */
-extern unsigned int  g_ntcDiagChk;          /* 阻塞式高通道AN28读(验证CHS4) */
+extern volatile bit g_doAdcSample;          /* ADC采样请求标志 */
+extern volatile bit g_adcBusy;              /* ADC忙标志: 主循环采样中, ISR不重复请求 */
 
 /* PWM/CC-CV 控制变量 */
 extern volatile unsigned char g_pwmDuty;       /* 当前PWM占空比(0~PWM_MAX) */
@@ -317,7 +374,12 @@ extern volatile unsigned char g_pwmCounter;    /* PWM计数器(ISR中递增, 0~3
 extern signed int g_cvIntegral;                /* CV PI积分累加器 */
 
 /* UART通信变量 */
-extern volatile bit g_printFlag;            /* 打印标志: ISR置1, 主循环检查 */
+extern volatile bit g_printFlag;
+
+/* 电池检测日志变量(charge_mgr.c中设置, main.c中打印) */
+extern volatile bit g_detectLogFlag;        /* 检测日志标志: 检测到NiMH/干电池时置1 */
+extern volatile unsigned char g_detectLogSlot;   /* 检测日志槽位(0~11) */
+extern volatile unsigned char g_detectLogType;   /* 检测日志电池类型(BAT_TYPE_NIMH/DRY) */
 
 /* 只读配置表(存放于ROM) */
 extern const unsigned char s_adcChannels[BATTERY_SLOTS];   /* 12槽BxAD ADC通道映射表 */
@@ -331,10 +393,9 @@ void System_Init(void);                     /* 系统初始化(时钟/IO/ADC/UAR
 /* ADC驱动 */
 void AD_Init(void);                         /* ADC模块初始化 */
 unsigned char ADC_Sample(unsigned char adch, unsigned char adldo);  /* ADC单次采样(去极值平均) */
-unsigned int  ADC_ReadChannel(unsigned char ch);                    /* 读取指定ADC通道 */
 
 /* 充电管理 */
-unsigned char Read_Temperature(void);       /* 读取NTC温度(摄氏度) */
+unsigned int Read_Temperature(void);        /* 读取NTC温度(0.1°C), 返回temp_x10 */
 unsigned char Detect_BatteryType(unsigned int voltage); /* 根据电压判断电池类型 */
 void ChargeProcess_Slot(unsigned char idx); /* 单槽充电状态机处理 */
 void Charging_Control(void);                /* 12路充电使能控制(含温度保护) */
@@ -347,10 +408,10 @@ void PowerOnLedSequence(void);              /* 上电LED自检序列 */
 
 /* UART调试输出 */
 #if UART_PRINT_EN
+void uart_init(void);                       /* 软件UART初始化(RC4) */
 void uart_send_char(unsigned char c);       /* 发送单字符 */
 void uart_send_string(const unsigned char *str); /* 发送字符串 */
 void uart_send_number(unsigned int num);    /* 发送数字 */
-void Print_Status(void);                    /* 打印系统状态 */
 #endif
 
 #endif

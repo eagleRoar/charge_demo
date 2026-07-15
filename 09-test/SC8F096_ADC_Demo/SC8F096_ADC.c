@@ -1,282 +1,403 @@
 /**********************************************************
-AD¼ì²â·¶Àı³ÌĞò
+12æ§½ ADC é‡‡é›†æµ‹è¯• - åŒå‚æ•°çº¿æ€§æ ‡å®š
+SC8F096, 16MHz, UART TX=RC4(J1-CLK), 9600bps
+æ¥çº¿: J1-CLK(RC4) â†’ USB-TTLæ¨¡å—RX, J1-GND â†’ æ¨¡å—GND
+æ³¨æ„: çƒ§å½•å®Œå¿…é¡»æ‹”æ‰çƒ§å½•å™¨, å†æ¥ä¸²å£æ¨¡å—
+
+æ ‡å®šç‚¹: ADC=3345â†’1.52V, ADC=3457â†’1.68V (ä¸‡ç”¨è¡¨å¯¹ç…§)
+å…¬å¼: V_BAT = (1159*V_B1AD - 647*VCC) / 1000
+       Î±=1.159, Î²=0.647 (åŒå‚æ•°çº¿æ€§æ‹Ÿåˆ, æ¯”å åŠ å®šç†æ›´å»åˆå®æµ‹)
 **********************************************************/
 #pragma warning disable 752
-#pragma warning disable 373			//ÆÁ±Îµô±àÒëµÄ1¸ö¾¯¸æ
+#pragma warning disable 373
 #include <sc.h>
 
 #ifndef _XTAL_FREQ
-#define _XTAL_FREQ 16000000			//16MHz,Ê¹ÓÃÄÚÖÃÑÓÊ±º¯Êı±ØĞë¶¨ÒåÖ÷Æµ£¬
-									//ÈçÓÃFCPU_DIVÑ¡Ôñ2T£¬Ôò¶¨Ê±¸³Öµ¼õ°ë
+#define _XTAL_FREQ 16000000
 #endif
 
-#define     POWER_RATIO  	(4096UL*1.2*1000)
+#define     POWER_RATIO      (4096UL*1.2*1000)
+#define     SW_TX            RC4
+#define     BIT_TIME         104     /* 9600bps */
+
+/* åŒå‚æ•°çº¿æ€§æ ‡å®š: BAT = (Î±*V_B1AD - Î²*VCC), Î±=1.159, Î²=0.647 */
+#define     ALPHA_NUM        1159UL   /* Î± * 1000 */
+#define     BETA_NUM          647UL   /* Î² * 1000 */
+#define     CAL_DEN           1000UL
 
 volatile unsigned int adresult;
-volatile unsigned int result;
 volatile unsigned char test_adc;
-volatile unsigned int power_ad;
+
+/* B1..B12å¯¹åº”çš„ADCé€šé“å· (B1-B5å·²éªŒè¯, B6-B12é€šè¿‡å¡æ§½å®æµ‹æ ¡æ­£) */
+const unsigned char bx_ch[12] = {
+    17,  /* B1=AN17 (éªŒè¯OK) */
+    16,  /* B2=AN16 (éªŒè¯OK) */
+    12,  /* B3=AN12 (éªŒè¯OK) */
+    13,  /* B4=AN13 (éªŒè¯OK) */
+    5,   /* B5=AN5  (éªŒè¯OK) */
+    4,   /* B6=AN4  (å®æµ‹: ç‰©ç†B6â†’åŸæ˜¾ç¤ºB8) */
+    28,  /* B7=AN28 (å®æµ‹: ç‰©ç†B7â†’åŸæ˜¾ç¤ºB9) */
+    29,  /* B8=AN29 (å®æµ‹: ç‰©ç†B8â†’åŸæ˜¾ç¤ºB10) */
+    27,  /* B9=AN27 (å®æµ‹: ç‰©ç†B9â†’åŸæ˜¾ç¤ºB11) */
+    26,  /* B10=AN26(å®æµ‹: ç‰©ç†B10â†’åŸæ˜¾ç¤ºB12) */
+    7,   /* B11=AN7 (å®æµ‹: ç‰©ç†B11â†’åŸæ˜¾ç¤ºB6) */
+    6    /* B12=AN6 (å®æµ‹: ç‰©ç†B12â†’åŸæ˜¾ç¤ºB7) */
+};
 
 unsigned char ADC_Sample(unsigned char adch, unsigned char adldo);
-void DelayXms(unsigned char x);
-unsigned char ADC_Result(unsigned char adch);
-void Init_System();
-void AD_Init();
+void Init_System(void);
+void sw_uart_init(void);
+void uart_send_char(unsigned char c);
+void uart_send_string(const unsigned char *str);
+void uart_send_number(unsigned int num);
 
-#define _DEBUG			//µ÷ÊÔ³ÌĞòÓÃ
-
-/**********************************************************
-º¯ÊıÃû³Æ£ºAD_Sample
-º¯Êı¹¦ÄÜ£ºAD¼ì²â
-Èë¿Ú²ÎÊı£ºadch - ¼ì²âÍ¨µÀ
-³ö¿Ú²ÎÊı£ºÎŞ
-±¸    ×¢£º²ÉÑùÍ¨µÀĞè×ÔĞĞÉèÖÃÎªÊäÈë¿Ú
-	      ²ÉÑù10´Î,È¡ÖĞ¼ä°Ë´ÎµÄÆ½¾ùÖµÎª²ÉÑù½á¹û´æÓÚadresultÖĞ
-
-	      adch ÎªÊäÈëADÍ¨µÀ 0-15£¬31
-             31  ¼ì²âÄÚ²¿1.2V
-	
- 		  adldo =5,¿ªÆôÄÚ²¿LDO 2V ×÷ÎªADC ²Î¿¼
- 		  adldo =6,¿ªÆôÄÚ²¿LDO 2.4V ×÷ÎªADC ²Î¿¼
-		  adldo =7,¿ªÆôÄÚ²¿LDO 3V ×÷ÎªADC ²Î¿¼
- 		  adldo =0,VDD ×÷ÎªADC ²Î¿¼
- 		  AD×ª»»½á¹û×ó¶ÔÆë
- 		  ADC²Î¿¼µçÑ¹´ÓVDDÇĞ»»µ½LDOÊ±ĞèÒªÑÓÊ±100usÒÔÉÏ£¬²ÅÄÜ½øĞĞAD×ª»»
-**********************************************************/
-unsigned char ADC_Sample(unsigned char adch, unsigned char adldo) 
+/*========================================================================
+  ADCé‡‡æ · - å‚è€ƒå®˜æ–¹ä»£ç æ¨¡å¼: ADCON0å¾ªç¯å†…å†™å…¥ + 100Î¼så‚è€ƒåˆ‡æ¢å»¶æ—¶
+  å»æå€¼å¹³å‡: 34æ¬¡é‡‡æ ·, å»min/maxå32æ¬¡>>5å¹³å‡
+  adch: é€šé“å·(0~31), adldo: bit2=1â†’LDO=3V, =0â†’VDDå‚è€ƒ
+  æ—¶é’Ÿ: ADCS=10=Fosc/32, Tad=2Î¼s@16MHz
+  æ³¨: VDDâ†’LDOå‚è€ƒåˆ‡æ¢éœ€100Î¼så»¶æ—¶, CHS4ç”¨ä½æ“ä½œè€ŒéADCON1|=0x40
+========================================================================*/
+unsigned char ADC_Sample(unsigned char adch, unsigned char adldo)
 {
-	volatile unsigned long adsum = 0;
-	volatile unsigned int admin = 0, admax = 0;
-	volatile unsigned int ad_temp = 0;
+    volatile unsigned long adsum = 0;
+    volatile unsigned int admin = 0, admax = 0;
+    volatile unsigned int ad_temp = 0;
 
-	if ((!LDO_EN) && (adldo & 0x04) ) 
-	{
-								//Èç¹ûAD²Î¿¼´ÓVDD»»µ½ÄÚ²¿LDO£¬ĞèÒªÑÓÊ±100USÒÔÉÏ
-		ADCON1 = adldo;			//×ó¶ÔÆë,ADÖµÈ¡12Î»
-		__delay_us(100);		//IDEÄÚÖÃÑÓÊ±º¯Êı£¬ÑÓÊ±100us
-	} 
-	else
-		ADCON1 = adldo;			//Èç¹ûADCON1.7(ADFM)=1ÎªÓÒ¶ÔÆë£¬,ADÖµÈ¡10Î»
+    /* ADCå‚è€ƒç”µå‹ä»VDDåˆ‡æ¢åˆ°LDOæ—¶, éœ€è¦å»¶æ—¶100usä»¥ä¸Š(å®˜æ–¹å‚è€ƒä»£ç æ³¨é‡Š) */
+    if((!LDO_EN) && (adldo & 0x04))
+    {
+        ADCON1 = adldo;
+        __delay_us(100);
+    }
+    else
+        ADCON1 = adldo;
 
-	if(adch & 0x10) 
-	{
-		CHS4 = 1;
-		adch &= 0x0f;
-	}
-	else
-		CHS4 = 0;
-	unsigned char i = 0;
-	for (i = 0; i < 10; i++) 
-	{
-		ADCON0 = (unsigned char)(0X41 | (adch << 2));	//16·ÖÆµ£¬Èç¹ûÖ÷ÆµÎª16M£¬Ôò±ØĞëÑ¡16·ÖÆµ»òÒÔÉÏ
-		asm("nop");
-		asm("nop");
-		asm("nop");
-		asm("nop");				//Ñ¡ÔñÍ¨µÀºóĞèÑÓÊ±1uSÒÔÉÏ
-		GODONE = 1;				//¿ªÊ¼×ª»»
+    /* CHS4ä½: AN16~AN31éœ€è¦ç½®1 */
+    if(adch & 0x10)
+    {
+        CHS4 = 1;
+        adch &= 0x0f;
+    }
+    else
+        CHS4 = 0;
 
-		unsigned char j = 0;
-		while (GODONE) 
-		{
-			__delay_us(2);		//ÑÓÊ±2us(±àÒëÆ÷ÄÚÖÃº¯Êı)
+    unsigned char i;
+    for(i = 0; i < 34; i++)
+    {
+        ADCON0 = (unsigned char)(0x81 | (adch << 2));  /* Fosc/32, Tad=2Î¼s */
+        __delay_us(5);           /* é‡‡é›†æ—¶é—´5Î¼s */
+        GODONE = 1;              /* å¯åŠ¨è½¬æ¢ */
 
-			if (0 == (--j))		//ÑÓÊ±0.5msÈÔÃ»ÓĞAD×ª»»½áÊø£¬Ìø³ö³ÌĞò
-			return 0;
-		}
+        unsigned char j = 0;
+        while(GODONE)
+        {
+            __delay_us(2);
+            if(0 == (--j)) return 0;
+        }
 
-		ad_temp = (unsigned int)((ADRESH << 4) + (ADRESL >> 4));	//¼ÆËã12Î»ADÖµ
+        ad_temp = (unsigned int)((ADRESH << 4) + (ADRESL >> 4));  /* 12ä½ADå€¼ */
 
-		if (0 == admax) 
-		{
-			admax = ad_temp;
-			admin = ad_temp;
-		} 
-		else if (ad_temp > admax)
-			admax = ad_temp;				//AD²ÉÑù×î´óÖµ
-		else if (ad_temp < admin)
-			admin = ad_temp;				//AD²ÉÑù×îĞ¡Öµ
+        if(0 == admax)
+        {
+            admax = ad_temp;
+            admin = ad_temp;
+        }
+        else if(ad_temp > admax)
+            admax = ad_temp;
+        else if(ad_temp < admin)
+            admin = ad_temp;
 
-		adsum += ad_temp;
-	}
-		adsum -= admax;
-		if (adsum >= admin)
-			adsum -= admin;
-		else
-			adsum = 0;
+        adsum += ad_temp;
+    }
 
-		adresult = adsum >> 3;		//8´ÎÆ½¾ùÖµ×÷Îª×îÖÕ½á¹û
+    adsum -= admax;
+    if(adsum >= admin)
+        adsum -= admin;
+    else
+        adsum = 0;
 
-		adsum = 0;
-		admin = 0;
-		admax = 0;
-		return 0xA5;
-		
+    adresult = adsum >> 5;       /* 32æ¬¡å¹³å‡ */
+    return 0xA5;
 }
 
-
-/***********************************************************
-mainÖ÷º¯Êı
-***********************************************************/
-void main() 
+/*========================================================================
+  è½¯ä»¶UART
+========================================================================*/
+void sw_uart_init(void)
 {
-	Init_System();
-	AD_Init();
-
-	while (1) 
-	{
-		asm("clrwdt");
-
-#ifdef _DEBUG
-		TRISB7 = 1;							//²âÊÔAN15¶ÔÓ¦µÄIOÉèÎªÊäÈë,
-		ANSEL1 |= 0X80;						//²âÊÔAN15¶ÔÓ¦µÄIOÉèÎªÄ£ÄâÊäÈë
-		test_adc = ADC_Sample(15, 7);		//²âÊÔAN15¿ÚµÄADÖµ£¬²Î¿¼µçÑ¹3V
-		if (0xA5 == test_adc)				//²âÊÔÍê³É£¬ÈçÒòÆäËûÔ­Òòµ¼ÖÂAD×ª»»Ã»ÓĞÍê³É£¬Ôò²»´¦Àí
-		{
-			
-		}
-		else
-		{
-			ADCON0 = 0;						//Èç¹û×ª»»Ã»ÓĞÍê³É£¬Ğè³õÊ¼»¯ADCON0,1
-			ADCON1 = 0;				
-			__delay_us(100);				//ÑÓÊ±100us(±àÒëÆ÷ÄÚÖÃº¯Êı)
-		}
-
-		test_adc = ADC_Sample(31, 0);		//²âÊÔÄÚ²¿»ù×¼1.2VÏà¶ÔµçÔ´µÄADÖµ
-		if (0xA5 == test_adc)
-		{
-			volatile unsigned long power_temp;
-			
-			power_temp = (unsigned long)((POWER_RATIO)/adresult);		//1.2*4096/AD=VDD£¬²ÎÊı·Å´ó1000±¶ 
-			power_ad = (unsigned int)(power_temp);		//Í¨¹ıÄÚ²¿»ù×¼µçÑ¹ÍÆ³öĞ¾Æ¬VDDµçÑ¹
-		}	
-		else
-		{
-			ADCON0 = 0;						//Èç¹û×ª»»Ã»ÓĞÍê³É£¬Ğè³õÊ¼»¯ADCON0,1
-			ADCON1 = 0;				
-			__delay_us(100);				//ÑÓÊ±100us(±àÒëÆ÷ÄÚÖÃº¯Êı)
-		}
-
-#endif
-	}
+    TRISC &= ~0x10;
+    ANSEL2 &= ~0x10;
+    SW_TX = 1;
 }
 
-/**********************************************************
-º¯ÊıÃû³Æ£ºInit_System
-º¯Êı¹¦ÄÜ£ºÏµÍ³³õÊ¼»¯
-Èë¿Ú²ÎÊı£ºÎŞ
-³ö¿Ú²ÎÊı£ºÎŞ
-±¸    ×¢£º
-**********************************************************/
-void Init_System() 
+void uart_send_char(unsigned char c)
 {
-	asm("nop");
-	asm("clrwdt");
-	OPTION_REG = 0;					//Ô¤·ÖÆµ¸øTMR0 £¬Timer0Ê¹ÓÃÄÚ²¿Ê±ÖÓFocs/4£¬Ô¤·ÖÆµ±ÈÎª1:2
-	asm("clrwdt");
-	OSCCON = 0X70;					//ÄÚ²¿Õñµ´Æ÷8M
-
-	WPUA = 0B00000000;				//ÅäÖÃÉÏÀ­£¬1ÎªÊ¹ÄÜÉÏÀ­
-	WPUB = 0B00000000;
-	WPUC = 0B00000000;
-	WPUD = 0B00000000;
-
-	TRISA = 0B00000000;				//ÅäÖÃIO×´Ì¬£¬0ÎªÊä³ö£¬1ÎªÊäÈë
-	TRISB = 0B00000000;
-	TRISC = 0B00000000;
-	TRISD = 0B00000000;
-
-	PORTA = 0B00000000;
-	PORTB = 0B00000000;
-	PORTC = 0B00000000;
-	PORTD = 0B00000000;
-	
-	CC0CON = 0;					//¹Ø±Õ CC0¡¢CC1 µÄÏÂÀ­µç×è
-	CC1CON = 0;
-
-//---------------------------------------
-//125usÖĞ¶Ï³õÊ¼»¯
-	PR2 = 249;					//Éè¶¨Timer³õÊ¼Öµ£¬¶¨Ê±ÖÜÆÚÊÇ250*4/8M=125uS
-	TMR2IF = 0;
-	TMR2IE = 1;					//Ê¹ÄÜTimer2Òç³öÖĞ¶Ï
-
-	T2CON = 0B00000100;			//¿ªÆôTimer2,ÉèÖÃTMR2µÄ·ÖÆµ±ÈÎª1:1
-	INTCON = 0XC0;				//¿ªÆô×ÜÖĞ¶Ï
+    unsigned char i;
+    GIE = 0;
+    SW_TX = 0;
+    __delay_us(BIT_TIME);
+    for(i = 0; i < 8; i++)
+    {
+        if(c & 0x01) SW_TX = 1; else SW_TX = 0;
+        __delay_us(BIT_TIME);
+        c >>= 1;
+    }
+    SW_TX = 1;
+    __delay_us(BIT_TIME);
+    GIE = 1;
 }
 
-/***********************************************************
-ÖĞ¶Ï·şÎñº¯Êı
-º¯ÊıÃû³Æ£ºIsr_Timer()
-º¯Êı¹¦ÄÜ£ºÖĞ¶Ï´¦Àíº¯Êı
-Èë¿Ú²ÎÊı£º
-³ö¿Ú²ÎÊı£º
-±¸    ×¢£º125US¶¨Ê±2ÖĞ¶Ï
-			ËùÓĞÖĞ¶Ï¶¼ÊÇÔÚÕâ¸öº¯ÊıÀïÃæ´¦Àí
-***********************************************************/
-void interrupt Isr_Timer() 
+void uart_send_string(const unsigned char *str)
 {
-	if (TMR2IF) 
-	{			//ÈôÖ»Ê¹ÄÜÁËÒ»¸öÖĞ¶ÏÔ´,¿ÉÒÔÂÔÈ¥ÅĞ¶Ï
-		TMR2IF = 0;
-
-	}
-
+    while(*str) uart_send_char(*str++);
 }
 
-/***********************************************************
-ÖĞ¶Ï·şÎñº¯Êı
-º¯ÊıÃû³Æ£ºAD_Init()
-º¯Êı¹¦ÄÜ£ºAD³õÊ¼»¯´¦Àíº¯Êı
-Èë¿Ú²ÎÊı£º
-³ö¿Ú²ÎÊı£º
-±¸    ×¢£ºµÚÒ»´Î´ò¿ªADÔÊĞíÎ»ADON£¬ĞèÑÓÊ±20uSÒÔÉÏ²ÅÄÜ½øÈëAD²ÉÑù
-			Èçºó¼Ì³ÌĞò²»¹Ø±ÕADON£¬Ôò²»ĞèÒªÑÓÊ±
-***********************************************************/
-void AD_Init() 
+void uart_send_number(unsigned int num)
 {
-	/*********** ADCON0 ****************************
-		Bit7~Bit6  ADCS<1:0>:  AD×ª»»Ê±ÖÓÑ¡ÔñÎ»¡£
-			00=  F HSI /16
-			01=  F HSI /32
-			10=  F HSI /64
-			11=  F HSI /128
-		Bit5~Bit2  CHS<3:0>:  Ä£ÄâÍ¨µÀÑ¡ÔñÎ»¡£ÓëADCON1¼Ä´æÆ÷CHS4×éºÏCHS<3:0>
-			CHS<4:0>: 
-			00000=  AN0
-			00001=  AN1
-			00010=  AN2
-			00011=  AN3
-			00100=  AN4
-			00101=  AN5
-			¡­ 
-			11100=  AN28
-			11101=  AN29
-			11110=  OPAÊä³ö
-			11111=  1.2V£¨¹Ì¶¨²Î¿¼µçÑ¹£©
-			ÆäËû=  ±£Áô
-		Bit1  GO/DONE: AD×ª»»×´Ì¬Î»¡£
-			1=  AD×ª»»ÕıÔÚ½øĞĞ¡£½«¸ÃÎ»ÖÃ1Æô¶¯AD×ª»»¡£µ±AD×ª»»Íê³ÉÒÔºó£¬¸ÃÎ»ÓÉÓ²¼ş×Ô¶¯ÇåÁã¡£
-				µ±GO/DONEÎ»´Ó1±ä0»òADIF´Ó0±ä1Ê±£¬ĞèÖÁÉÙµÈ´ıÁ½¸öTADÊ±¼ä£¬²ÅÄÜÔÙ´ÎÆô¶¯AD×ª»»¡£
-			0=  AD×ª»»Íê³É/»ò²»ÔÚ½øĞĞÖĞ¡£
-		Bit0  ADON:  ADCÊ¹ÄÜÎ»¡£
-			1=  Ê¹ÄÜADC£»
-			0=  ½ûÖ¹ADC£¬²»ÏûºÄ¹¤×÷µçÁ÷¡£
-	*********************************************/
-	ADCON0 = 0X41;		//ADON¿ªÆô£¬AD²ÉÑùÊ±¼äÑ¡ÎªFSYS/32
-	
-	/*********** ADCON1 ****************************
-		Bit7  ADFM:  AD×ª»»½á¹û¸ñÊ½Ñ¡ÔñÎ»£»
-			1=  ÓÒ¶ÔÆë£»
-			0=  ×ó¶ÔÆë¡£
-		Bit6  CHS4:  Í¨µÀÑ¡ÔñÎ»
-		Bit5~Bit3  Î´ÓÃ 
-		Bit2  LDO_EN:  ÄÚ²¿²Î¿¼µçÑ¹Ê¹ÄÜÎ»¡£
-			1=  Ê¹ÄÜADCÄÚ²¿LDO²Î¿¼µçÑ¹£»
-				µ±Ñ¡ÔñÄÚ²¿LDO×÷²Î¿¼µçÑ¹Ê±£¬ADC×î´óÓĞĞ§¾«¶ÈÎª8Î»¡£
-			0=  VDD×÷ÎªADC²Î¿¼µçÑ¹¡£
-		Bit1~Bit0  LDO_SEL<1:0>:  ²Î¿¼µçÑ¹Ñ¡ÔñÎ»
-			0X=  2.0V
-			10=  2.4V
-			11=  3.0V
-	*********************************************/
-	ADCON1 = 0;
+    unsigned char buf[6];
+    unsigned char i = 0, j;
+    if(num == 0) { uart_send_char('0'); return; }
+    while(num > 0) { buf[i++] = '0' + (num % 10); num /= 10; }
+    for(j = i; j > 0; j--) uart_send_char(buf[j-1]);
+}
+
+/*========================================================================
+  main
+========================================================================*/
+void main(void)
+{
+    Init_System();
+    sw_uart_init();
+
+    ADCON0 = 0x41;
+
+    /* ANSEL: è®¾ä¸ºæ¨¡æ‹Ÿè¾“å…¥çš„å¼•è„š
+       AN4=RA4, AN5=RA5, AN6=RA6, AN7=RA7     â†’ ANSEL0
+       AN12=RB0, AN13=RB1                       â†’ ANSEL1
+       AN16=RC0(B2AD), AN17=RC1(B1AD)           â†’ ANSEL2
+       AN26=RD2, AN27=RD3                       â†’ ANSEL3
+       AN28=RD4, AN29=RD5                       â†’ ANSEL3
+       æ³¨æ„: RD2/RD3 åŒæ—¶æ˜¯ B11/B8 MOSFETæ …æ, ä¹Ÿæ˜¯ B10AD/B9AD ADCè¾“å…¥
+             è¿™é‡Œè®¾ä¸ºæ¨¡æ‹Ÿè¾“å…¥åä¼šè¦†ç›–è¾“å‡ºçŠ¶æ€, éœ€è¦åæœŸå¤„ç† */
+    ANSEL0 |= 0xF0;     /* AN4~7=RA4~7 */
+    ANSEL1 |= 0x03;     /* AN12~13=RB0~1 */
+    ANSEL2 |= 0x07;     /* AN16~17=RC0~1, AN18=RC2(NTC) */
+    ANSEL3 |= 0x3C;     /* AN26~29=RD2~5 */
+
+    uart_send_string("B1-B12 ADC Test\r\n");
+
+    unsigned int tick = 0;
+    unsigned int vcc_mv;
+    unsigned char bx;
+
+    /* VDD-onlyè¯Šæ–­: å…¨é€šé“VDDå‚è€ƒ, æ’é™¤LDOåˆ‡æ¢å¹²æ‰° */
+    unsigned int vdd_buf[12];
+
+    while(1)
+    {
+        asm("clrwdt");
+        __delay_ms(10);
+        tick++;
+        if(tick % 200 != 0) continue;  /* 2ç§’ä¸€æ¬¡ */
+        asm("clrwdt");
+
+        /* === è¯Šæ–­: è¯»å–VCC === */
+        vcc_mv = 5000;
+        test_adc = ADC_Sample(31, 0);
+        if(0xA5 == test_adc)
+        {
+            unsigned long pt = (unsigned long)(POWER_RATIO) / adresult;
+            vcc_mv = (unsigned int)pt;
+        }
+
+        /* === é‡‡é›†: B2(AN16)æ”¾æœ€åè¯», é¿å…å…¶ç”µæ± å½±å“åç»­é€šé“ === */
+        /* å…ˆè¯»B1, B3~B12(è·³è¿‡B2) */
+        ADC_Sample(17, 0);  vdd_buf[0] = adresult;   /* B1=AN17 */
+        ADC_Sample(12, 0);  vdd_buf[2] = adresult;   /* B3=AN12 */
+        ADC_Sample(13, 0);  vdd_buf[3] = adresult;   /* B4=AN13 */
+        ADC_Sample(5, 0);   vdd_buf[4] = adresult;   /* B5=AN5 */
+        ADC_Sample(4, 0);   vdd_buf[5] = adresult;   /* B6=AN4 */
+        ADC_Sample(28, 0);  vdd_buf[6] = adresult;   /* B7=AN28 */
+        ADC_Sample(29, 0);  vdd_buf[7] = adresult;   /* B8=AN29 */
+        ADC_Sample(27, 0);  vdd_buf[8] = adresult;   /* B9=AN27 */
+        ADC_Sample(26, 0);  vdd_buf[9] = adresult;   /* B10=AN26 */
+        ADC_Sample(7, 0);   vdd_buf[10] = adresult;  /* B11=AN7 */
+        ADC_Sample(6, 0);   vdd_buf[11] = adresult;  /* B12=AN6 */
+        /* B2(AN16)æœ€åè¯», ä¸å½±å“ä»»ä½•å…¶ä»–é€šé“ */
+        asm("clrwdt");
+        ADC_Sample(16, 0);
+        vdd_buf[1] = adresult;
+
+        /* === ç¬¬3æ­¥: æ‰“å° B1~B6 ç¬¬ä¸€è¡Œ === */
+        for(bx = 0; bx < 6; bx++)
+        {
+            unsigned long bat_mv;
+            unsigned int vx_mv;
+
+            vx_mv = (unsigned long)vdd_buf[bx] * vcc_mv / 4096UL;
+            if(vx_mv + 200U >= vcc_mv)
+            {
+                uart_send_string("B");
+                uart_send_number(bx+1);
+                uart_send_string("=");
+                uart_send_number(vdd_buf[bx]);
+                uart_send_string(" OPEN");
+            }
+            else
+            {
+                bat_mv = (ALPHA_NUM * vx_mv);
+                if(bat_mv > (BETA_NUM * (unsigned long)vcc_mv))
+                {
+                    bat_mv = (bat_mv - BETA_NUM * (unsigned long)vcc_mv + CAL_DEN/2) / CAL_DEN;
+                    uart_send_string("B");
+                    uart_send_number(bx+1);
+                    uart_send_string("=");
+                    uart_send_number(vdd_buf[bx]);
+                    uart_send_string(" BAT(");
+                    uart_send_number((unsigned int)bat_mv);
+                    uart_send_string("mV)");
+                }
+                else
+                {
+                    uart_send_string("B");
+                    uart_send_number(bx+1);
+                    uart_send_string("=");
+                    uart_send_number(vdd_buf[bx]);
+                    uart_send_string(" ???(");
+                    uart_send_number((unsigned int)vx_mv);
+                    uart_send_string("mV)");
+                }
+            }
+            uart_send_string(" ");
+        }
+        uart_send_string("\r\n ");
+        asm("clrwdt");
+
+        /* === ç¬¬4æ­¥: æ‰“å° B7~B12 ç¬¬äºŒè¡Œ === */
+        for(bx = 6; bx < 12; bx++)
+        {
+            unsigned long bat_mv;
+            unsigned int vx_mv;
+
+            vx_mv = (unsigned long)vdd_buf[bx] * vcc_mv / 4096UL;
+            if(vx_mv + 200U >= vcc_mv)
+            {
+                uart_send_string("B");
+                uart_send_number(bx+1);
+                uart_send_string("=");
+                uart_send_number(vdd_buf[bx]);
+                uart_send_string(" OPEN");
+            }
+            else
+            {
+                bat_mv = (ALPHA_NUM * vx_mv);
+                if(bat_mv > (BETA_NUM * (unsigned long)vcc_mv))
+                {
+                    bat_mv = (bat_mv - BETA_NUM * (unsigned long)vcc_mv + CAL_DEN/2) / CAL_DEN;
+                    uart_send_string("B");
+                    uart_send_number(bx+1);
+                    uart_send_string("=");
+                    uart_send_number(vdd_buf[bx]);
+                    uart_send_string(" BAT(");
+                    uart_send_number((unsigned int)bat_mv);
+                    uart_send_string("mV) ");
+                }
+                else
+                {
+                    uart_send_string("B");
+                    uart_send_number(bx+1);
+                    uart_send_string("=");
+                    uart_send_number(vdd_buf[bx]);
+                    uart_send_string(" ???(");
+                    uart_send_number((unsigned int)vx_mv);
+                    uart_send_string("mV) ");
+                }
+            }
+            uart_send_string(" ");
+        }
+
+    print_ntc:
+        /* NTC(AN18=RC2), VDDå‚è€ƒ(æ¸©åº¦å…¬å¼åŸºäº5Våˆ†å‹è®¾è®¡) */
+        test_adc = ADC_Sample(18, 0);
+        if(0xA5 == test_adc)
+        {
+            unsigned int ntc_adc = adresult;
+
+            uart_send_string(" NTC=");
+            uart_send_number(ntc_adc);
+
+            if(ntc_adc < 100)
+            {
+                uart_send_string(" T=SHORT");
+            }
+            else if(ntc_adc > 3996)
+            {
+                uart_send_string(" T=OPEN");
+            }
+            else
+            {
+                unsigned long rt = (unsigned long)ntc_adc * 10000UL / (4096UL - ntc_adc);
+                unsigned int temp_x10;
+                if(rt >= 10000UL)
+                    temp_x10 = 250U - (unsigned int)((rt - 10000UL) * 10UL / 445UL);
+                else
+                    temp_x10 = 250U + (unsigned int)((10000UL - rt) * 10UL / 445UL);
+
+                uart_send_string(" T=");
+                uart_send_number(temp_x10 / 10);
+                uart_send_string(".");
+                uart_send_number(temp_x10 % 10);
+                uart_send_string("C");
+            }
+        }
+
+        uart_send_string("\r\n VCC=");
+        uart_send_number(vcc_mv);
+        uart_send_string("mV\r\n");
+
+        asm("clrwdt");
+    }
+}
+
+/*========================================================================
+  ç³»ç»Ÿåˆå§‹åŒ– - MOSFETæ …æå…¨éƒ¨HIGH(å…³é—­)
+========================================================================*/
+void Init_System(void)
+{
+    asm("nop");
+    asm("clrwdt");
+    OPTION_REG = 0x0F;
+    asm("clrwdt");
+    OSCCON = 0X70;
+
+    WPUA = 0B00000000;
+    WPUB = 0B00000000;
+    WPUC = 0B00000000;
+    WPUD = 0B00000000;
+
+    /* MOSFETæ …æå…¨éƒ¨HIGH(å…³é—­)
+       Pæ²Ÿé“AO3401: Gate=Highâ†’å…³, Gate=Lowâ†’å¼€
+       RC2(AN18/NTC)è®¾ä¸ºæ¨¡æ‹Ÿè¾“å…¥ */
+    TRISA = 0xF0;  PORTA = 0x0F;
+    TRISB = 0x30;  PORTB = 0x4F;
+    TRISC = 0x07;  PORTC = 0x00;  /* RC2,RC1,RC0è¾“å…¥; RC2ç”¨äºNTC */
+    TRISD = 0xF0;  PORTD = 0x0F;
+
+    CC0CON = 0;
+    CC1CON = 0;
+
+    PR2 = 249;
+    TMR2IF = 0;
+    TMR2IE = 1;
+    T2CON = 0B00000100;
+    INTCON = 0XC0;
+}
+
+void interrupt Isr_Timer(void)
+{
+    if(TMR2IF)
+    {
+        TMR2IF = 0;
+    }
 }

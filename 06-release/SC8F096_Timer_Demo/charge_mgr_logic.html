@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>ChargeProcess_Slot 状态机逻辑图</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+body { font-family: 'Microsoft YaHei', sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
+h1 { text-align: center; color: #333; }
+h2 { color: #555; border-bottom: 2px solid #ddd; padding-bottom: 5px; margin-top: 40px; }
+.mermaid { background: white; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.container { max-width: 1400px; margin: 0 auto; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>ChargeProcess_Slot() 状态机逻辑图</h1>
+
+<h2>1. 顶层状态机</h2>
+<div class="mermaid">
+stateDiagram-v2
+    direction LR
+
+    [*] --> IDLE
+
+    IDLE --> DETECT : 插入电池
+
+    state DETECT {
+        direction TB
+        wait200: ⏳ 等待200tick\n电容放电稳定
+        snapshot: 📸 ct=200 快照\n保存g_slotRefV\nv>2900→置capFlag
+        highV: 🔺 高压区间\nv>2900 & v<OPEN
+        lowV: 🔻 低压区间\nv≤2900
+        typeRoute: 🏷️ 类型路由
+
+        wait200 --> snapshot
+        snapshot --> highV
+        snapshot --> lowV
+
+        state highV {
+            direction TB
+            stage1: 阶段① 稳定循环\n连续20tick无显著下跌
+            stage2: 阶段② 扩展等待\ncap标记等待电容放电
+            stableOk: 稳定确认\n无cap标记→放行
+            timeout: 超时仍>2900\n→AMBIGUOUS
+
+            stage1 --> stage2 : 稳定+cap标记
+            stage1 --> stableOk : 稳定+无cap
+            stage2 --> timeout : 超时
+        }
+
+        highV --> typeRoute
+        lowV --> typeRoute
+    }
+
+    state type_dispatch <<choice>>
+    typeRoute --> type_dispatch
+
+    type_dispatch --> IMP_CHECK : AMBIGUOUS\n(需脉冲+VCC检测确认)
+    type_dispatch --> ACTIVATE : LI_ION/LINEAR_LI\nbat_mv≤激活阈值
+    type_dispatch --> PRECHARGE : LI_ION/LINEAR_LI\nbat_mv<预充阈值
+    type_dispatch --> CV_CHARGE : LI_ION/LINEAR_LI\nbat_mv≥满电阈值
+    type_dispatch --> CC_CHARGE : LI_ION/LINEAR_LI\n正常充电区间
+    type_dispatch --> IDLE : UNKNOWN+OPEN超时\n(确认空槽)
+    type_dispatch --> ERROR : UNKNOWN(短路/异常)\nNIMH/DRY
+
+    state IMP_CHECK {
+        direction TB
+        pulse: ⚡ 78%PWM脉冲80ms
+        judge: 🔍 VCC跌落判断
+
+        pulse --> judge
+
+        state judge {
+            direction TB
+            nimh: NiMH\nVCC跌落>300mV
+            removed: 拔出\nv≥OPEN
+            li_ion: 恒压锂电\nVCC跌落>200mV
+            linear_li: 线性锂电\n无跌落+高压>2300
+            dry: 干电池\n无跌落+低压≤2300
+        }
+    }
+
+    IMP_CHECK --> ERROR : NiMH/干电池
+    IMP_CHECK --> IDLE : 拔出
+    IMP_CHECK --> ACTIVATE : 锂电(低电压)
+    IMP_CHECK --> PRECHARGE : 锂电(中电压)
+    IMP_CHECK --> CV_CHARGE : 锂电(高电压)
+    IMP_CHECK --> CC_CHARGE : 锂电(正常)
+
+    ACTIVATE --> PRECHARGE : v>激活阈值
+    ACTIVATE --> ERROR : 超时/过压
+
+    PRECHARGE --> CC_CHARGE : v≥预充上限
+    PRECHARGE --> ERROR : 超时/过压
+
+    CC_CHARGE --> CV_CHARGE : v≥满电阈值
+    CC_CHARGE --> FULL : LI_ION伪OPEN\n(电芯已满)
+    CC_CHARGE --> DETECT : 电压跌落重判\n(PEAK_DROP)
+    CC_CHARGE --> ERROR : 超时/过压
+
+    CV_CHARGE --> FULL : 超时/LI_ION伪OPEN
+    CV_CHARGE --> IDLE : 非锂电拔出
+    CV_CHARGE --> DETECT : 电压跌落重判\n(PEAK_DROP)
+    CV_CHARGE --> ERROR : 过压
+
+    FULL --> CC_CHARGE : LI_ION v<2800补电\n其他 v<FULL-10补电
+
+    ERROR --> IDLE : 拔出(OPEN)
+    ERROR --> DETECT : 电压恢复重判
+
+    IDLE --> [*]
+    ERROR --> [*]
+    FULL --> [*]
+</div>
+
+<h2>2. DETECT 状态详细流程</h2>
+<div class="mermaid">
+flowchart TD
+    START([进入DETECT]) --> CT1{ct == 1?}
+    CT1 -->|是| INIT[重置 g_stableCnt=0\n清除本槽 g_capFlag 位]
+    CT1 -->|否| CT_WAIT
+    INIT --> CT_WAIT
+
+    CT_WAIT{ct < 200?}
+    CT_WAIT -->|是| BREAK1([break: 继续等待])
+    CT_WAIT -->|否| CT200
+
+    CT200{ct == 200?}
+    CT200 -->|是| SNAP["📸 快照: g_slotRefV=v\nv>2900 → g_capFlag置位"]
+    SNAP --> BREAK2([break])
+
+    CT200 -->|否| V_CHECK{v > 2900\n&& v < OPEN?}
+
+    V_CHECK -->|是: 高压区间| STAGE{stableCnt\n>= 20?}
+    STAGE -->|否: 阶段①| DROP{v+DROP < v_init?}
+    DROP -->|是: 仍在放电| RESET1[更新基准\nstableCnt=0]
+    RESET1 --> CHECK1{stableCnt < 20?}
+    DROP -->|否: 稳定| INC[更新基准\nstableCnt++]
+    INC --> CHECK1
+    CHECK1 -->|是| BREAK3([break: 继续等待])
+    CHECK1 -->|否: 稳定确认| CAP{capFlag\n置位?}
+    CAP -->|是| BREAK4([break: 进入阶段②])
+    CAP -->|否| CLEAR1[stableCnt=0\n直接放行]
+
+    STAGE -->|是: 阶段②| V_LOW{v ≤ 2900?}
+    V_LOW -->|是: 电容放电确认| CLR_CAP[清除capFlag\nstableCnt=0]
+    V_LOW -->|否| TIMEOUT{ct < 1000?}
+    TIMEOUT -->|是: 继续等待| UPD[更新基准\n跟踪当前值]
+    UPD --> BREAK5([break])
+    TIMEOUT -->|否: 超时| FORCE[清除capFlag\nstableCnt=0\nty=AMBIGUOUS]
+
+    V_CHECK -->|否: 低压区间| SETTLE{ct < 1000\n&& v < OPEN?}
+    SETTLE -->|是: 监测下跌| DROP2{v_ref<OPEN\n&& v+DROP<v_ref?}
+    DROP2 -->|是| UPD2[更新基准]
+    UPD2 --> BREAK6([break])
+    DROP2 -->|否| ROUTE
+    SETTLE -->|否| ROUTE
+
+    CLR_CAP --> ROUTE
+    CLEAR1 --> ROUTE
+    FORCE --> ROUTE
+
+    ROUTE[🏷️ 类型路由起点] --> CAPFLAG{capFlag\n置位?}
+    CAPFLAG -->|是| AMB[清除capFlag\n重置lowCnt\nty=AMBIGUOUS]
+    CAPFLAG -->|否| DETECT_TYPE[ty = Detect_BatteryType]
+
+    AMB --> SHORT_CHECK
+    DETECT_TYPE --> SHORT_CHECK
+
+    SHORT_CHECK{v < SHORT?}
+    SHORT_CHECK -->|是| SHORT_CNT[lowCnt++\n<去抖阈值?]
+    SHORT_CNT -->|是| BREAK7([break])
+    SHORT_CNT -->|否| TYPE_DISP
+    SHORT_CHECK -->|否| RST_LOW{ty != AMBIGUOUS\n&& ty != LI_ION\n&& ty != LINEAR_LI?}
+    RST_LOW -->|是| RST[lowCnt=0]
+    RST_LOW -->|否| TYPE_DISP
+    RST --> TYPE_DISP
+
+    TYPE_DISP{ty 类型分发} -->|AMBIGUOUS| AMB_ROUTE
+    TYPE_DISP -->|LI_ION/LINEAR_LI| LI_ROUTE
+    TYPE_DISP -->|UNKNOWN| UNK_ROUTE
+    TYPE_DISP -->|NIMH/DRY| ND_ROUTE
+
+    AMB_ROUTE[消抖2帧\n串行锁检查\n采样VCC+打包g_impData] --> IMP[→ CHG_IMP_CHECK]
+    LI_ROUTE[消抖2帧\nDETECT_LI_ROUTE] --> LI_OUT[→ ACTIVATE/PRECHARGE/CV/CC]
+    UNK_ROUTE[OPEN+超时→IDLE\n否则→ERROR] --> UNK_OUT
+    ND_ROUTE[→ ERROR\n记录日志] --> ND_OUT
+
+    style START fill:#4CAF50,color:#fff
+    style IMP fill:#FF9800,color:#fff
+    style LI_OUT fill:#2196F3,color:#fff
+    style BREAK1 fill:#9E9E9E,color:#fff
+    style BREAK2 fill:#9E9E9E,color:#fff
+    style BREAK3 fill:#9E9E9E,color:#fff
+    style BREAK4 fill:#9E9E9E,color:#fff
+    style BREAK5 fill:#9E9E9E,color:#fff
+    style BREAK6 fill:#9E9E9E,color:#fff
+    style BREAK7 fill:#9E9E9E,color:#fff
+</div>
+
+<h2>3. IMP_CHECK 脉冲检测决策树</h2>
+<div class="mermaid">
+flowchart TD
+    START([进入IMP_CHECK]) --> WAIT{ct < 脉冲tick?}
+    WAIT -->|是| B1([break: 等待脉冲结束])
+    WAIT -->|否| SAMPLE[📊 实时VCC采样]
+
+    SAMPLE --> NIMH{"VCC跌落 > 300mV?\nIMP_VCC_DECODE > g_vcc_mv+300"}
+    NIMH -->|是| N_OUT["→ ERROR (NiMH)\n释放串行锁\n记录日志"]
+    NIMH -->|否| OPEN{"v ≥ OPEN?\n(电池拔出)"}
+    OPEN -->|是| O_OUT["→ IDLE (空槽)\n释放串行锁"]
+    OPEN -->|否| LI{"VCC跌落 > 200mV?\nIMP_VCC_DECODE > g_vcc_mv+200"}
+    LI -->|是| LI_OUT["→ LI_ION\n释放串行锁\nDETECT_LI_ROUTE"]
+    LI -->|否| HIGH_V{"脉冲前电压 > 2300?\n(g_impData & 0x0FFF)"}
+    HIGH_V -->|是| LLI_OUT["→ LINEAR_LI\n释放串行锁\nDETECT_LI_ROUTE"]
+    HIGH_V -->|否| DRY_OUT["→ ERROR (DRY)\n释放串行锁\n记录日志"]
+
+    style N_OUT fill:#f44336,color:#fff
+    style DRY_OUT fill:#f44336,color:#fff
+    style O_OUT fill:#607D8B,color:#fff
+    style LI_OUT fill:#2196F3,color:#fff
+    style LLI_OUT fill:#4CAF50,color:#fff
+</div>
+
+<h2>4. DETECT_LI_ROUTE 锂电路由</h2>
+<div class="mermaid">
+flowchart TD
+    START([DETECT_LI_ROUTE]) --> CALC[计算 bat_mv:\nv×VCC/4096→mV\n校准补偿]
+
+    CALC --> C1{bat_mv ≤ 激活阈值?}
+    C1 -->|是| A1[→ ACTIVATE]
+    C1 -->|否| C2{bat_mv < 预充阈值?}
+    C2 -->|是| A2[→ PRECHARGE]
+    C2 -->|否| C3{bat_mv ≥ 满电阈值?}
+    C3 -->|是| A3[→ CV_CHARGE\n保存 g_slotRefV]
+    C3 -->|否| A4[→ CC_CHARGE\n清零 ccBlocks\n保存 g_slotRefV]
+
+    A1 --> RESET[ct=0, ovCnt=0, lowCnt=0]
+    A2 --> RESET
+    A3 --> RESET
+    A4 --> RESET
+
+    style A1 fill:#FF9800,color:#fff
+    style A2 fill:#FFC107,color:#000
+    style A3 fill:#9C27B0,color:#fff
+    style A4 fill:#2196F3,color:#fff
+</div>
+
+<h2>5. 充电中保护机制 (CC/CV/FULL/ERROR)</h2>
+<div class="mermaid">
+flowchart TD
+    subgraph CC[CC_CHARGE]
+        direction TB
+        CC1[峰值追踪: v>g_slotRefV→更新] --> CC2{峰值跌落 > 阈值?}
+        CC2 -->|是+非LINEAR_LI| CC3[2帧消抖→DETECT重判]
+        CC2 -->|否| CC4{LI_ION+OPEN?}
+        CC4 -->|是| CC5[→FULL 伪OPEN]
+        CC4 -->|否| CC6{过压?}
+        CC6 -->|是| CC7[消抖→ERROR]
+        CC6 -->|否| CC8{v≥FULL?}
+        CC8 -->|是| CC9[→CV_CHARGE]
+    end
+
+    subgraph CV[CV_CHARGE]
+        direction TB
+        CV1[峰值追踪] --> CV2{OPEN?}
+        CV2 -->|是+LI| CV3[2帧→FULL 伪OPEN]
+        CV2 -->|是+非LI| CV4[2帧→IDLE 拔出]
+        CV2 -->|否| CV5{峰值跌落?}
+        CV5 -->|是| CV6[2帧→DETECT重判]
+        CV5 -->|否| CV7{过压?}
+        CV7 -->|是| CV8[消抖→ERROR]
+        CV7 -->|否| CV9{超时?}
+        CV9 -->|是| CV10[→FULL]
+    end
+
+    subgraph FULL[CHG_FULL]
+        direction TB
+        F1{LI_ION?} -->|是| F2{v<2800?}
+        F2 -->|是| F3[2帧→CC_CHARGE补电]
+        F1 -->|否| F4{v<FULL-10?}
+        F4 -->|是| F5[2帧→CC_CHARGE补电]
+    end
+
+    subgraph ERR[CHG_ERROR]
+        direction TB
+        E1{OPEN?} -->|是| E2[2帧→IDLE拔出]
+        E1 -->|否| E3{NIMH/DRY?}
+        E3 -->|是| E4{v>2700?}
+        E4 -->|是| E5[2帧→DETECT重判]
+        E4 -->|否| E6[永久锁定]
+        E3 -->|否| E7{v>ACTIVATE?}
+        E7 -->|是| E8[2帧→DETECT重判]
+    end
+
+    style CC3 fill:#FF9800,color:#fff
+    style CC5 fill:#4CAF50,color:#fff
+    style CC7 fill:#f44336,color:#fff
+    style CC9 fill:#9C27B0,color:#fff
+    style CV3 fill:#4CAF50,color:#fff
+    style CV4 fill:#607D8B,color:#fff
+    style CV6 fill:#FF9800,color:#fff
+    style CV8 fill:#f44336,color:#fff
+    style CV10 fill:#4CAF50,color:#fff
+    style F3 fill:#2196F3,color:#fff
+    style F5 fill:#2196F3,color:#fff
+    style E2 fill:#607D8B,color:#fff
+    style E5 fill:#FF9800,color:#fff
+    style E8 fill:#FF9800,color:#fff
+</div>
+
+</div>
+
+<script>
+mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    securityLevel: 'loose',
+    flowchart: { useMaxWidth: true, htmlLabels: true },
+    stateDiagram: { useMaxWidth: true }
+});
+</script>
+</body>
+</html>

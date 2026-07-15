@@ -1,7 +1,7 @@
 /*-------------------------------------------
   L1211 12槽充电器 - UART调试输出模块
   功能: 串口发送、状态打印(每秒一次)
-  配置: 9600bps, 8N1, TX=RB3(与B3共用), RX=RB4
+  配置: 软件UART, 9600bps, 8N1, TX=RC4(CLK, 仅TX)
   输出格式:
     T:温度C VDD:电源电压mV
     B1:V=ADC值 S=状态 T=类型 [ERR/FULL/CHG]
@@ -14,15 +14,42 @@
 #if UART_PRINT_EN
 
 /*========================================================================
+  函数: uart_init
+  功能: 软件UART引脚初始化
+  配置: RC4=输出, 数字模式, 初始高电平(空闲态)
+========================================================================*/
+void uart_init(void)
+{
+	TRISC &= (unsigned char)~0x10;  /* RC4=输出 */
+	ANSEL2 &= (unsigned char)~0x10; /* RC4=数字模式(非模拟) */
+	SW_TX = 1;                  /* 空闲态高电平 */
+}
+
+/*========================================================================
   函数: uart_send_char
-  功能: 发送单个字符
+  功能: 发送单个字符(软件模拟9600bps)
   参数: c - 要发送的字符
-  说明: 阻塞发送, 等待发送缓冲区空闲
+  时序: 起始位0 + 8数据位(LSB first) + 停止位1
+  说明: 关全局中断保证时序准确, 发送完成后恢复
 ========================================================================*/
 void uart_send_char(unsigned char c)
 {
-	while(TRMT1 == 0);              /* 等待发送缓冲区空闲 */
-	TXREG1 = c;                     /* 写入发送寄存器 */
+	unsigned char i;
+	GIE = 0;                    /* 关中断保证时序 */
+	SW_TX = 0;                  /* 起始位 */
+	__delay_us(BIT_TIME);
+	for(i = 0; i < 8; i++)
+	{
+		if(c & 0x01)
+			SW_TX = 1;
+		else
+			SW_TX = 0;
+		__delay_us(BIT_TIME);
+		c >>= 1;
+	}
+	SW_TX = 1;                  /* 停止位 */
+	__delay_us(BIT_TIME);
+	GIE = 1;                    /* 恢复中断 */
 }
 
 /*========================================================================
@@ -34,7 +61,10 @@ void uart_send_char(unsigned char c)
 void uart_send_string(const unsigned char *str)
 {
 	while(*str != '\0')
+	{
 		uart_send_char(*str++);     /* 逐字符发送 */
+		asm("clrwdt");              /* 喂狗: uart_send_char关GIE, ISR无法喂狗 */
+	}
 }
 
 /*========================================================================
@@ -66,77 +96,7 @@ void uart_send_number(unsigned int num)
 
 	/* 逆序发送(高位在前) */
 	for(j = i; j > 0; j--)
-		uart_send_char(buf[j-1]);
+		uart_send_char(buf[(unsigned char)(j - 1)]);
 }
 
-/*========================================================================
-  函数: Print_Status
-  功能: 打印系统状态(每秒一次)
-  输出内容:
-    温度: 当前温度摄氏度
-    电源电压: VDD电源电压(mV)
-    各槽位: B1~B12的电压/状态/类型/附加信息
-  输出示例:
-    T:25C VDD:5000mV
-    B1:V=188 S=4 T=1 CHG
-    B2:V=0   S=0 T=0
-    B3:V=188 S=6 T=1 FULL
-    B4:V=5   S=7 T=4 ERR
-========================================================================*/
-void Print_Status(void)
-{
-	unsigned char i;
-
-	/* 打印温度和电源电压 */
-	uart_send_string("T:");
-	uart_send_number(g_temperature);
-	uart_send_string("C NTC:");
-	uart_send_number(g_ntcAdc);
-	uart_send_string(" VDD:");
-	uart_send_number(power_ad);
-	uart_send_string("mV\r\n");
-
-	/* 打印 NTC 调试信息 */
-	uart_send_string("DBG: phase=");
-	uart_send_number(g_tempPhase);
-	uart_send_string(" settle=");
-	uart_send_number(g_tempSettleCnt);
-	uart_send_string(" diag=");
-	uart_send_number(g_ntcDiagAdc);
-	uart_send_string(" vdd=");
-	uart_send_number(g_ntcDiagVdd);
-	uart_send_string(" chk=");
-	uart_send_number(g_ntcDiagChk);
-	uart_send_string(" isr=");
-	uart_send_number(g_ntcDebugAdc);
-	uart_send_string("\r\n");
-
-	/* 打印12槽位状态 */
-	for(i = 0; i < BATTERY_SLOTS; i++)
-	{
-		uart_send_string("B");
-		uart_send_number(i + 1);          /* 槽位编号: B1~B12 */
-		uart_send_string(":V=");
-		uart_send_number(GSLOT(i)->voltage);  /* ADC电压值 */
-		uart_send_string(" S=");
-		uart_send_number(GSLOT(i)->state);    /* 充电状态 */
-		uart_send_string(" T=");
-		uart_send_number(GSLOT(i)->type);     /* 电池类型 */
-		if(0 == i)
-		{
-			uart_send_string(" because : ");
-			uart_send_number(global_test);
-		}
-		/* 附加状态信息 */
-		if(GSLOT(i)->state == CHG_ERROR)
-			uart_send_string(" ERR");      /* 错误 */
-		else if(GSLOT(i)->state == CHG_FULL)
-			uart_send_string(" FULL");     /* 充满 */
-		else if(GSLOT(i)->state == CHG_CC_CHARGE || 
-		        GSLOT(i)->state == CHG_CV_CHARGE)
-			uart_send_string(" CHG");      /* 充电中 */
-
-		uart_send_string("\r\n");
-	}
-}
 #endif

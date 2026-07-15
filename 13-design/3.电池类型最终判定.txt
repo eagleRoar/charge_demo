@@ -1,0 +1,7 @@
+类型 						DETECT 					IMP_CHECK VCC跌落 				最终动作 
+恒压锂电池 (CV_LI, ty=2) 		v>2900 或 AMBIGUOUS 		>200mV (charger IC拉载) 			CC→CV→DONE 
+线性锂电池 (LINEAR_LI, ty=6) 	v>2300 					不塌 + 脉冲前>2300 				CC→CV→DONE (500μs延放) 
+NiMH (ty=1) 				AMBIGUOUS 				>300mV (极低内阻短路VCC) 			ERROR 拒充 
+干电池 (DRY, ty=3) 			各种 					不塌 + 脉冲前≤2300 				ERROR 拒充 
+空槽 (UNKNOWN) 				≥OPEN 持续 				脉冲前后均OPEN 					IDLE 
+短路 (UNKNOWN) 				<500 					— 								ERROR

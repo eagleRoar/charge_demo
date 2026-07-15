@@ -14,10 +14,11 @@
 
 /*========================================================================
   函数: Update_LED_Slot
-  功能: 根据槽位充电状态更新LED显示
+  功能: LED状态维护(当前仅保留接口, LED状态由g_slot[idx].state实时派生,
+       不需要缓存g_ledState数组, 节省12B RAM)
   参数: idx - 槽位索引(0~11)
   说明: 每个槽位扫描Phase1时调用一次
-  LED映射:
+  LED映射(供实际IO驱动参考):
     CHG_IDLE          -> LED_OFF       (灭)
     CHG_DETECT        -> LED_RED_ON    (红灯亮, 检测中)
     CHG_ACTIVATE      -> LED_RED_ON    (红灯亮, 激活中)
@@ -29,94 +30,57 @@
 ========================================================================*/
 void Update_LED_Slot(unsigned char idx)
 {
-	BatterySlot_t *p = GSLOT(idx);
-
-	switch(p->state)
-	{
-	case CHG_IDLE:
-		p->ledState = LED_OFF;          /* 空闲: LED关闭 */
-		break;
-	case CHG_DETECT:                    /* 检测中 */
-	case CHG_ACTIVATE:                  /* 激活中 */
-	case CHG_PRECHARGE:                 /* 预充中 */
-	case CHG_CC_CHARGE:                 /* 恒流充电 */
-	case CHG_CV_CHARGE:                 /* 恒压充电 */
-		p->ledState = LED_RED_ON;       /* 红灯常亮: 充电中 */
-		break;
-	case CHG_FULL:
-		p->ledState = LED_GREEN_ON;     /* 绿灯常亮: 充满 */
-		break;
-	case CHG_ERROR:
-		p->ledState = LED_RED_FLASH;    /* 红灯闪烁: 错误 */
-		break;
-	default:
-		p->ledState = LED_OFF;          /* 其他: LED关闭 */
-		break;
-	}
+	(void)idx;
+	/* LED状态派生自g_slot[idx].state, 无需缓存数组
+	   ERROR闪灯频率由全局g_blinkTick统一控制, 不再需要per-slot timer */
 }
 
 /*========================================================================
   函数: Led_BlinkProcess
-  功能: LED闪烁计时处理
-  说明: 每轮扫描(槽位0的Phase2)调用一次, 处理所有槽位的闪烁
-  闪烁逻辑: 每0.5s切换一次闪烁相位(blinkPhase 0/1交替)
-  实际LED驱动: 在Charging_Control中根据ledState和blinkPhase控制IO
-  - 红灯闪烁: blinkPhase=0时亮, blinkPhase=1时灭(0.5Hz)
+  功能: LED闪烁计时处理(全局统一计数器)
+  说明: 每轮扫描(槽位0的Phase2)调用一次
+  闪烁逻辑: g_blinkTick递增, 溢出归零, 所有ERROR槽同步闪烁
+  周期: TICK_PER_SEC ticks, 50%占空比
+  - 红灯闪烁: g_blinkTick < TICK_PER_SEC/2 时亮, 否则灭
+  相比原per-slot timer方案节省: g_blinkTimer[12](12B)+g_blinkPhase[12](12B)
+  仅增加1B(g_blinkTick), 净省23B
 ========================================================================*/
 void Led_BlinkProcess(void)
 {
-	unsigned char i;
-	for(i = 0; i < BATTERY_SLOTS; i++)
-	{
-		/* 仅处理红灯闪烁状态的槽位 */
-		if(GSLOT(i)->ledState == LED_RED_FLASH)
-		{
-			GSLOT(i)->blinkTimer++;     /* 闪烁计时器累加 */
-			/* 每0.5秒切换一次闪烁相位 */
-			if(GSLOT(i)->blinkTimer >= (TICK_PER_SEC / 2))
-			{
-				GSLOT(i)->blinkTimer = 0;
-				GSLOT(i)->blinkPhase ^= 1;  /* 0/1交替 */
-			}
-		}
-	}
+	g_blinkTick++;
+	if(g_blinkTick >= TICK_PER_SEC)
+		g_blinkTick = 0;
 }
 
 /*========================================================================
   函数: PowerOnLedSequence
-  功能: 上电LED自检序列
-  说明: 系统上电后执行, 测试LED是否正常
+  功能: MINIMAL TEST - 空跑计时2秒(不操作LED, 避免PORTC RMW干扰B1AD)
+  说明: 前2秒ISR轻量(仅计数), 给主循环充足时间执行UART打印
   流程:
-    Phase0: 全亮1s(LED IO1=1, LED IO2=1), 红灯和绿灯同时亮
-    Phase1: 保持1s(继续全亮)
-    Phase2: 关闭LED, 进入正常工作模式
-  目的: 检测LED是否正常, 同时给用户视觉反馈系统已启动
+    Phase0: 等待1s → Phase1
+    Phase1: 等待1s → Phase2(进入B1最小测试)
 ========================================================================*/
 void PowerOnLedSequence(void)
 {
-	g_powerOnTimer++;                    /* 自检计时器累加 */
+	g_powerOnTimer++;
 
 	if(g_powerOnPhase == 0)
 	{
-		/* Phase 0: 全亮1秒 */
-		PIN_LED_IO1 = 1;                /* 红灯亮 */
-		PIN_LED_IO2 = 1;                /* 绿灯亮 */
+		/* Phase 0: 等待1秒, 不操作任何IO */
 		if(g_powerOnTimer >= TICK_PER_SEC)
 		{
 			g_powerOnTimer = 0;
-			g_powerOnPhase = 1;         /* 进入Phase 1 */
+			g_powerOnPhase = 1;
 		}
 	}
 	else if(g_powerOnPhase == 1)
 	{
-		/* Phase 1: 保持全亮1秒 */
+		/* Phase 1: 等待1秒, 不操作任何IO */
 		if(g_powerOnTimer >= TICK_PER_SEC)
 		{
 			g_powerOnTimer = 0;
-			g_powerOnPhase = 2;         /* 进入Phase 2 */
-			PIN_LED_IO1 = 0;            /* 关闭LED */
-			PIN_LED_IO2 = 0;
+			g_powerOnPhase = 2;         /* 进入B1最小测试阶段 */
 		}
 	}
-	/* Phase 2: 自检完成, 进入正常扫描 */
+	/* Phase 2: 自检完成, 进入B1最小测试 */
 }
