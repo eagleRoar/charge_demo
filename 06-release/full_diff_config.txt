@@ -1,0 +1,55 @@
+﻿diff --git a/06-release/SC8F096_Timer_Demo/config.h b/06-release/SC8F096_Timer_Demo/config.h
+index ddd12e5..2c41353 100644
+--- a/06-release/SC8F096_Timer_Demo/config.h
++++ b/06-release/SC8F096_Timer_Demo/config.h
+@@ -129,6 +129,8 @@
+                                        ADC璇绘暟鍋忛珮(瀹炴祴~3766), 3850鐣欒冻瑁曢噺鍚屾椂
+                                        浣庝簬OPEN(3990), 纭繚鐪熷疄杩囧帇浠嶅彲妫€鍑?*/
+ #define ADC_V_OPEN          3990   /*  绌烘Ы鍒や负寮€璺?ADC=4095鈮圴CC) */
++#define ADC_V_NEAR_OPEN     3500   /*  鍑嗗紑璺槇鍊? 纰虫€?纰辨€х數姹犲紑妲藉悗鐢靛铏氶珮,
++                                       鐢靛帇鍙帴杩慜PEN浣嗗唴闃诲ぇ, 闇€涓庝綆鍐呴樆閿傜數鍖哄垎 */
+ 
+ /* TODO: 浣庡帇闃堝€煎熀浜?鐐规爣瀹氬鎺? 鍑嗙‘鎬ф湁闄? 闇€琛ュ厖浣庡帇鏍囧畾鐐瑰悗淇 */
+ #define ADC_V_PRE_MIN       1200   /* ~0.70V 棰勫厖涓嬮檺(浼扮畻鍊? */
+@@ -209,17 +211,24 @@
+   澶氶樁娈电數姹犺瘑鍒弬鏁?NIMH_DETECT_ENABLE=1鏃剁敓鏁?
+   娴佺▼: 鐢靛帇鍒嗗尯 鈫?闃绘姉鑴夊啿(鍖哄垎骞茬數姹?NiMH/Li-ion)
+   ========================================================================*/
+-/* 鑴夊啿鏂瑰悜妫€娴? 鐭殏瀵奸€歁OSFET(1tick鈮?ms), 鍒ゆ柇鐢电壒鎬?+/* 鑴夊啿鏂瑰悜妫€娴? 鐭殏瀵奸€歁OSFET, 鍒ゆ柇鐢电壒鎬?    NiMH: 鏋佷綆鍐呴樆鈫払1AD琚媺鑷宠繎VCC鈫扐DC椋欒嚦鈮?990(涓旇剦鍐插墠<3990)
+-   Li-ion: 鍏呯數绠＄悊鑺墖鍒囨ā寮忊啋鐢靛帇灏忓箙涓婂崌
+-   骞茬數姹? 楂樺唴闃烩啋B1AD鏃犻鍗? 鐢靛帇涓嶄笂鍗?*/
+-#define IMP_PULSE_TICKS     1       /* 鑴夊啿鎸佺画tick鏁?1杞増9ms) */
++   Li-ion: 鍏呯數绠＄悊鑺墖鍒囨ā寮忊啋鐢靛帇灏忓箙涓婂崌, VCC璺岃惤>200mV
++   骞茬數姹? 楂樺唴闃烩啋B1AD鏃犻鍗? 鐢靛帇涓嶄笂鍗? VCC涓嶅
++   5tick鈮?5ms浠嶄笉瓒充互璁╅儴鍒嗛晬姘?鎭掑帇閿傚厖鍒嗘媺杞絍CC,
++   寤堕暱鍒?0tick鈮?0ms澧炲己VCC濉岄櫡/璺岃惤妫€娴嬪彲闈犳€?*/
++#define IMP_PULSE_TICKS     10      /* 鑴夊啿鎸佺画tick鏁?鈮?0ms) */
+ #define IMP_NOISE_THRESH     50      /* 鐢靛帇涓婂崌鍒ゅ畾闃堝€? 纰虫€х數姹犲櫔澹皛40, 閿傜數婵€娲?100 */
+ 
+ /* 浣撲簩鏋佺妫€娴?IMP_CHECK鏂规硶3): MOSFET鍏虫柇鍚嶣xAD鐢靛閫氳繃100K涓婃媺鍏呯數,
+-   绾挎€ч攤(浣撲簩鏋佺闃绘柇)鈫掔數鍘嬫寔缁埇鍗? 骞茬數姹?浣撲簩鏋佺瀵奸€?鈫掔數鍘嬬ǔ瀹?*/
+-#define DIODE_TEST_TICKS     TICK_PER_SEC   /* 鏈€闀跨瓑寰?00tick鈮?绉?*/
+-#define DIODE_RISE_THRESH    100            /* 鐢靛帇涓婂崌>100ADC鍒や负鐖崌 */
++   绾挎€ч攤(浣撲簩鏋佺闃绘柇)鈫掔數鍘嬫寔缁埇鍗? 骞茬數姹?浣撲簩鏋佺瀵奸€?鈫掔數鍘嬬ǔ瀹?+   DIODE_RISE_THRESH=900鐢ㄤ簬閬垮厤纰辨€?纰虫€ц鍒? 浣?00tick鈮?绉掍粛涓嶅閮ㄥ垎
++   妲戒綅(鐢靛/鎺ヨЕ鐢甸樆宸紓)鐖崌>900; 寤堕暱鍒?00tick鈮?绉? 缁欑嚎鎬ч攤鏇村厖瓒虫椂闂?
++   骞茬數姹?闀嶆阿鍥犱綋浜屾瀬绠￠挸浣嶄笉浼氳瑙﹀彂 */
++#define DIODE_TEST_TICKS     500     /* 鏈€闀跨瓑寰?00tick鈮?绉?*/
++#define DIODE_RISE_THRESH    900            /* 鐢靛帇涓婂崌>900ADC鍒や负绾挎€ч攤鐖崌
++                                                闀嶆阿/骞茬數姹犱綋浜屾瀬绠″閫? 鐖崌<姝ゅ€?+                                                鍙伩鍏嶇⒈鎬?纰虫€?闀嶆阿璇垽涓虹嚎鎬ч攤 */
+ 
+ /*========================================================================
+   娓╁害淇濇姢闃堝€?@@ -386,6 +395,14 @@ extern volatile bit g_detectLogFlag;        /* 妫€娴嬫棩蹇楁爣蹇? 妫€娴嬪埌NiMH
+ extern volatile unsigned char g_detectLogSlot;   /* 妫€娴嬫棩蹇楁Ы浣?0~11) */
+ extern volatile unsigned char g_detectLogType;   /* 妫€娴嬫棩蹇楃數姹犵被鍨?BAT_TYPE_NIMH/DRY) */
+ 
++/* 鐘舵€佹満璋冭瘯杩借釜鍙橀噺(main.c涓畾涔? charge_mgr.c涓洿鏂? */
++extern volatile unsigned char g_dbgSlot;        /* 鐘舵€佸彉鍖栫殑妲戒綅 */
++extern volatile unsigned char g_dbgOldState;    /* 璺宠浆鍓嶇殑鏃х姸鎬?*/
++extern volatile unsigned char g_dbgNewState;    /* 璺宠浆鍚庣殑鏂扮姸鎬?*/
++extern volatile unsigned char g_dbgNewType;     /* 鏂扮數姹犵被鍨?*/
++extern volatile unsigned int  g_dbgVoltage;     /* 褰撳墠鐢靛帇鍊?*/
++extern volatile bit g_dbgDetectFlag;            /* 鐘舵€佸彉鍖栨爣蹇? 涓诲惊鐜鐞?*/
++
+ /* 鍙閰嶇疆琛?瀛樻斁浜嶳OM) */
+ extern const unsigned char s_adcChannels[BATTERY_SLOTS];   /* 12妲紹xAD ADC閫氶亾鏄犲皠琛?*/
+ 

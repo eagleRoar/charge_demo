@@ -1,0 +1,80 @@
+﻿diff --git a/06-release/SC8F096_Timer_Demo/main.c b/06-release/SC8F096_Timer_Demo/main.c
+index 3a2a1f0..efd29ff 100644
+--- a/06-release/SC8F096_Timer_Demo/main.c
++++ b/06-release/SC8F096_Timer_Demo/main.c
+@@ -294,10 +294,20 @@ void Do_AdcSample(void)
+ 	    (st == CHG_ACTIVATE || st == CHG_PRECHARGE ||
+ 	     st == CHG_CC_CHARGE || st == CHG_CV_CHARGE)) ||
+ 	   st == CHG_DETECT ||
+-	   st == CHG_IMP_CHECK)
++	   st == CHG_IMP_CHECK ||
++	   st == CHG_IMP_DIODE_TEST)
+ 	{
+-		for(dly = 0; dly < 20; dly++)
++		/* LINEAR_LI鍏呯數鐘舵€? 100渭s瓒冲, 闃叉鐢靛鍏呯數鑷砄PEN浜х敓浼烦鍙?+		   DETECT/IMP_CHECK/IMP_DIODE_TEST: 2000渭s璁╃數瀹瑰厖鍒板彲鍖哄垎鐢垫睜绫诲瀷鐨勭數骞?*/
++		if(st == CHG_DETECT || st == CHG_IMP_CHECK || st == CHG_IMP_DIODE_TEST)
++		{
++			for(dly = 0; dly < 20; dly++)
++				__delay_us(100);
++		}
++		else
++		{
+ 			__delay_us(100);
++		}
+ 	}
+ 	else
+ 	{
+@@ -307,7 +317,19 @@ void Do_AdcSample(void)
+ 	test_adc = ADC_Sample(ch, 0);           /* VDD鍙傝€? 涓?9-test涓€鑷?*/
+ 
+ 	if(ADC_OK == test_adc)
+-		g_slot[g_scanIndex].voltage = adresult;
++	{
++		/* LINEAR_LI CC/CV浼狾PEN娑堝櫔: 淇濇姢IC瑙﹀彂鈫払xAD鐢靛鍏呯數鑷砎CC鈫掍吉OPEN.
++		   璇诲埌OPEN鏃朵笉鏇存柊, 淇濈暀涓婃鏈夋晥鍊? 闃叉g_slotRefV琚薄鏌撳鑷碢EAK_DROP璇垽 */
++		if(ty == BAT_TYPE_LINEAR_LI && (st == CHG_CC_CHARGE || st == CHG_CV_CHARGE)
++		   && adresult >= ADC_V_OPEN)
++		{
++			/* 浼狾PEN: 涓嶆洿鏂?*/
++		}
++		else
++		{
++			g_slot[g_scanIndex].voltage = adresult;
++		}
++	}
+ 	else
+ 		g_slot[g_scanIndex].voltage = 0;
+ 
+@@ -345,9 +367,9 @@ void Print_NtcTemp(void)
+   绉绘鑷?9-test: 鍙屽弬鏁扮嚎鎬ф爣瀹氬叕寮忚绠楃數姹爉V
+ ========================================================================*/
+ /* B2-B12鎵撳嵃寮€鍏? 0=浠匓1璇︾粏, 1=鍏ㄩ儴12妲?*/
+-#define PRINT_ALL_SLOTS     0
++#define PRINT_ALL_SLOTS     1
+ /* B1-B6鎵撳嵃寮€鍏? 1=B1~B6閫愯鎵撳嵃 */
+-#define PRINT_B1_B6         1
++#define PRINT_B1_B6         0
+ 
+ void Print_SystemStatus(void)
+ {
+@@ -392,11 +414,6 @@ void Print_SystemStatus(void)
+ 		unsigned int v = S_VOLT(i);
+ 		unsigned char s = S_STATE(i);
+ 
+-#if PRINT_ALL_SLOTS && !PRINT_B1_B6
+-		/* 鎹㈣: 姣?涓Ы涓€琛?*/
+-		if(i == 6) uart_send_string("\r\n");
+-#endif
+-
+ 		uart_send_char('B');
+ 		uart_send_number((unsigned int)i + 1U);
+ 		uart_send_char('=');
+@@ -460,7 +477,7 @@ void Print_SystemStatus(void)
+ 		uart_send_string(" ty=");
+ 		uart_send_number(S_TYPE(i));
+ 
+-#if PRINT_B1_B6
++#if PRINT_B1_B6 || PRINT_ALL_SLOTS
+ 		uart_send_string("\r\n");
+ #endif
+ 	}

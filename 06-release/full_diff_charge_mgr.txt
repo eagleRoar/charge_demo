@@ -1,0 +1,156 @@
+﻿diff --git a/06-release/SC8F096_Timer_Demo/charge_mgr.c b/06-release/SC8F096_Timer_Demo/charge_mgr.c
+index c8651e4..c432de1 100644
+--- a/06-release/SC8F096_Timer_Demo/charge_mgr.c
++++ b/06-release/SC8F096_Timer_Demo/charge_mgr.c
+@@ -76,11 +76,15 @@ unsigned char Detect_BatteryType(unsigned int voltage)
+ 
+ #if NIMH_DETECT_ENABLE
+ 	/* AMBIGUOUS鍖洪棿[NIMH_LOW, OPEN): 瑕嗙洊浣?涓?楂樺帇鐢垫睜, 鍏ㄩ儴杩涘叆IMP_CHECK
+-	   鐢╒CC璺岃惤鑴夊啿鍖哄垎:
++	   鐢╒CC璺岃惤鑴夊啿+浣撲簩鏋佺鐖崌鍖哄垎:
+ 	   - VCC璺?300mV 鈫?NiMH(鏋佷綆鍐呴樆鎷夊灝VCC)
+ 	   - VCC璺?200mV 鈫?LI_ION(charger IC鎷夎浇)
+-	   - VCC涓嶅+鐢靛帇>2300 鈫?LINEAR_LI(鏃燾harger IC)
+-	   - VCC涓嶅+鐢靛帇鈮?300 鈫?DRY(骞茬數姹犳嫆鍏?
++	   - 鐢垫睜鑷韩璺?1000ADC 鈫?DRY(纰虫€?纰辨€ч珮鍐呴樆)
++	   - 鑴夊啿鍓?NEAR_OPEN涓擵CC涓嶅 鈫?DRY(楂樺帇纰虫€?纰辨€?
++	   - 鑴夊啿鍓?2300(鈮EAR_OPEN) 鈫?LINEAR_LI(涓帇閿傜數鍏滃簳)
++	   - 鑴夊啿鍚庣數鍘嬧墺OPEN 鈫?LINEAR_LI(浣撲簩鏋佺闃绘柇)
++	   - DIODE_TEST鐖崌>DIODE_RISE_THRESH 鈫?LINEAR_LI(鏃燾harger IC)
++	   - 鍚﹀垯DIODE_TEST瓒呮椂 鈫?DRY(骞茬數姹犳嫆鍏?
+ 	   楂樹綅纰虫€?纰辨€ц嫢婕忓叆CC, PEAK_DROP浼氬湪鏁扮鍐呯籂姝?*/
+ 	if(voltage >= ADC_V_NIMH_LOW && voltage < ADC_V_OPEN)
+ 		return BAT_TYPE_AMBIGUOUS;
+@@ -148,6 +152,12 @@ void ChargeProcess_Slot(unsigned char idx)
+ 		ct = 0;
+ 		st = CHG_DETECT;
+ 		g_highVFlag &= ~((unsigned int)1 << idx);
++		/* 璁板綍IDLE鈫扗ETECT鍒濆鐢靛帇, 鐢ㄤ簬ct<TIME_DETECT_WAIT鏈熼棿
++		   妫€娴嬬⒊鎬?绌烘Ы鐢靛琚覆鎵板厖鐢?鐢靛帇澶у箙涓婂崌>1000ADC) */
++		if(v < ADC_V_OPEN)
++			g_slotRefV[idx] = v;
++		else
++			g_slotRefV[idx] = 0;
+ 		break;
+ 
+ 	case CHG_DETECT:
+@@ -161,7 +171,25 @@ void ChargeProcess_Slot(unsigned char idx)
+ 		}
+ 
+ 		if(ct < TIME_DETECT_WAIT)
++		{
++			/* 纰虫€?纰辨€?绌烘Ы鐢靛琚覆鎵板厖鐢垫娴? 鍒濆鐢靛帇宸茶緝楂?>2500ADC)
++		   涓斿悗缁寔缁笂鍗?1000ADC, 璇存槑鏄數瀹?绌烘Ы琚叾浠栨ЫPWM/CD涓叉壈
++		   鍏呯數, 鑰岄潪鐪熷疄鐢垫睜鐢靛帇绋冲畾. 鐩存帴鍒RY鎷掑厖, 閬垮厤杩汭MP_CHECK
++		   鍚庡洜pre_v楂樿璇垽涓篖INEAR_LI. g_slotRefV淇濈暀鍒濆鍊间笉鏇存柊. */
++		if(g_slotRefV[idx] > 2500U &&
++		   v > g_slotRefV[idx] + 1000U && v < ADC_V_OPEN)
++		{
++			ty = BAT_TYPE_DRY;
++			st = CHG_ERROR;
++			g_highVFlag &= ~((unsigned int)1 << idx);
++			g_detectLowCnt[idx] = 0;
++			g_detectLogSlot = idx;
++			g_detectLogType = BAT_TYPE_DRY;
++			g_detectLogFlag = 1;
+ 			break;
++		}
++		break;
++		}
+ 
+ 		/* 楂樺唴闃荤數姹?纰虫€?纰辨€?寮€妲芥斁鐢电ǔ瀹氭娴?
+ 		   OPEN鈫扗ETECT鏃舵Ы浣嶇數瀹瑰厖婊¤繎VCC鐢佃嵎, 楂樺唴闃荤數姹犳斁鐢垫參,
+@@ -423,13 +451,57 @@ void ChargeProcess_Slot(unsigned char idx)
+ 			if(IMP_VCC_DECODE(g_impData) > g_vcc_mv + 200U)
+ 				goto imp_li_ion;
+ 
+-			/* 鈹€鈹€ 绾挎€ч攤鐢垫睜妫€娴?鏂规硶1+鏂规硶2) 鈹€鈹€
+-		   鏂规硶1(鍘熼€昏緫): 鑴夊啿鍓嶇數鍘?2300(鐢靛浼狾PEN, DETECT鍏虫柇MOSFET
+-		       鏃剁數瀹规棤鏀剧數璺緞閫愬懆鏈熷厖鐢佃嚦VCC, 浠呯嚎鎬ч攤鐢典細鍑虹幇)
+-		   鏂规硶2(閰嶅悎鏂规B): 鑴夊啿鍚庣數鍘嬧墺OPEN, IMP_CHECK PWM鑴夊啿鍚?-		       鐢靛鍏呯數鑷砎CC浣嗕綋浜屾瀬绠￠樆鏂棤娉曟斁鐢?*/
+-		if((g_impData & 0x0FFFU) > 2300U)
++			/* 鈹€鈹€ 纰虫€?纰辨€у共鐢垫睜鐢靛帇澶у箙涓嬭穼妫€娴?鈹€鈹€
++		   纰虫€х數姹犲紑妲藉悗鐢靛铏氶珮, 楂樺唴闃诲鑷寸數鍘嬫寔缁笅璺?
++		   鑻ヨ剦鍐插悗鐢靛帇姣旇剦鍐插墠浣?1000ADC, 璇存槑鐢垫睜鍐呴樆楂樸€佹棤娉曠淮鎸?+		   鐢靛帇, 鐩存帴鍒RY鎷掑厖. 鎭掑帇閿?绾挎€ч攤鐢靛帇绋冲畾, 璺屽箙寰堝皬. */
++		if(((g_impData & 0x0FFFU) > v) &&
++		   ((g_impData & 0x0FFFU) - v) > 1000U)
++		{
++			ty = BAT_TYPE_DRY;
++			st = CHG_ERROR;
++			g_impCheckSlot = 0xFF;
++			g_highVFlag &= ~((unsigned int)1 << idx);
++			g_detectLowCnt[idx] = 0;
++			g_detectLogSlot = idx;
++			g_detectLogType = BAT_TYPE_DRY;
++			g_detectLogFlag = 1;
++			break;
++		}
++
++		/* 鈹€鈹€ 楂樺帇纰虫€?纰辨€у共鐢垫睜淇濇姢 鈹€鈹€
++		   纰虫€?纰辨€х數姹犲紑妲藉悗BxAD鐢靛琚?00K涓婃媺鑷宠繎OPEN(濡侭12鍒濆3701),
++		   浼氳鍚庣画"鑴夊啿鍓?2300"鎹峰緞璇垽涓篖INEAR_LI骞惰繘鍏V鍏呯數銆?+		   鐗瑰緛: 鑴夊啿鍓嶇數鍘嬫帴杩慜PEN(>NEAR_OPEN)浣哣CC涓嶅(<200mV),
++		   璇存槑鏄珮鍐呴樆骞茬數姹? 鐩存帴鍒RY鎷掑厖銆?+		   鎭掑帇閿?绾挎€ч攤姝ゆ椂VCC閫氬父浼氳穼钀?200mV(宸茶涓婃枃LI_ION璺緞鎹曡幏),
++		   鎴栬剦鍐插墠鐢靛帇宸查殢璐熻浇涓嬮檷鑷砃EAR_OPEN浠ヤ笅銆?*/
++		if(((g_impData & 0x0FFFU) > ADC_V_NEAR_OPEN) &&
++		   (IMP_VCC_DECODE(g_impData) <= g_vcc_mv + 200U))
++		{
++			ty = BAT_TYPE_DRY;
++			st = CHG_ERROR;
++			g_impCheckSlot = 0xFF;
++			g_highVFlag &= ~((unsigned int)1 << idx);
++			g_detectLowCnt[idx] = 0;
++			g_detectLogSlot = idx;
++			g_detectLogType = BAT_TYPE_DRY;
++			g_detectLogFlag = 1;
++			break;
++		}
++
++		/* 鈹€鈹€ 绾挎€ч攤鐢垫睜妫€娴? 鑴夊啿鍓嶇數鍘?ADC_V_NIMH_MAX 鈹€鈹€
++		   DETECT闃舵MOSFET瀵奸€? 绾挎€ч攤鐢?閮ㄥ垎鎭掑帇閿傜數鏃犳樉钁梀CC璺岃惤鏃?
++		   鑴夊啿鍓嶇數鍘嬩粛淇濇寔>2900. 纰虫€?纰辨€ч珮鍘嬪凡琚玁EAR_OPEN淇濇姢鎷︽埅,
++		   2900~NEAR_OPEN鍖洪棿瑕嗙洊楂樼數鍘嬮攤鐢? 闃叉鍏舵紡鍏IODE_TEST鑰楁椂璇垽.
++		   2300~2900鍖洪棿涓嶯iMH閲嶅彔, 涓嶅啀璧版嵎寰? 缁熶竴鐢盌IODE_TEST鐖崌
++		   (DIODE_RISE_THRESH=900)鍖哄垎绾挎€ч攤涓庨晬姘?骞茬數姹? 閬垮厤NiMH琚鍒? */
++		if((g_impData & 0x0FFFU) > ADC_V_NIMH_MAX)
+ 			goto imp_linear_li;
++
++		/* 鈹€鈹€ 绾挎€ч攤鐢垫睜妫€娴? 鑴夊啿鍚庣數鍘嬧墺OPEN 鈹€鈹€
++		   IMP_CHECK PWM鑴夊啿鍚庣數瀹瑰厖鐢佃嚦VCC, 绾挎€ч攤鐢典綋浜屾瀬绠￠樆鏂?+		   鏃犳硶鏀剧數鈫抳璇讳吉OPEN; 骞茬數姹犱綋浜屾瀬绠″閫氣啋v琚挸浣?*/
+ 		if(v >= ADC_V_OPEN)
+ 			goto imp_linear_li;
+ 
+@@ -455,8 +527,7 @@ void ChargeProcess_Slot(unsigned char idx)
+ 		break;
+ 
+ 	/* 鈹€鈹€ 绾挎€ч攤鐢垫睜璺敱(鏃燾harger IC, VCC涓嶅) 鈹€鈹€
+-	   妫€娴? (1)鑴夊啿鍓?2300(浼狾PEN,鍘熼€昏緫) (2)鑴夊啿鍚庘墺OPEN(浣撲簩鏋佺闃绘柇)
+-	          (3)DIODE_TEST鐖崌>100ADC(鏂规硶3)
++	   妫€娴? (1)鑴夊啿鍚庘墺OPEN(浣撲簩鏋佺闃绘柇) (2)DIODE_TEST鐖崌>DIODE_RISE_THRESH
+ 	   鐢ㄨ剦鍐插墠鐢靛帇(g_impData浣?2浣?鍋欴ETECT_LI_ROUTE:
+ 	   绾挎€ч攤鏃燾harger IC鎷夎浇, IMP_CHECK PWM鑴夊啿鍚庣數瀹瑰厖鐢佃嚦VCC,
+ 	   浣撲簩鏋佺琚樆鏂棤娉曟斁鐢碘啋v璇讳吉OPEN(4091), 鑻ョ敤v鍋氳矾鐢变細璇叆CV
+@@ -472,12 +543,10 @@ void ChargeProcess_Slot(unsigned char idx)
+ 	/*========================================================================
+ 	  CHG_IMP_DIODE_TEST: 浣撲簩鏋佺琚姩妫€娴? 	  MOSFET鍏虫柇, BxAD鐢靛閫氳繃100K涓婃媺鍏呯數, 瑙傚療鐢靛帇鐖崌
+-	  RC鏃堕棿甯告暟蟿鈮?-10s(100K脳10-47渭F), 100tick鈮?绉掑唴:
+-	   绾挎€ч攤(浣撲簩鏋佺闃绘柇): 螖V 鈮?VCC脳(1-e^(-1/蟿)) - Vbat
+-	       蟿=2s鈫拁800counts, 蟿=10s鈫拁200counts, 鍧?100闃堝€?-	   骞茬數姹?浣撲簩鏋佺瀵奸€?: 鐢靛缁忎綋浜屾瀬绠℃斁鐢佃嚦Vbat+Vf(~2.0V),
+-	      鐢靛帇绋冲畾, 鏃犵埇鍗?-	  闃堝€?00ADC: 鍣０(~40)+瀹夊叏瑁曢噺(60), 瑙勯伩ADC璺冲姩璇垽
++	  RC鏃堕棿甯告暟蟿鈮?-10s(100K脳10-47渭F), 500tick鈮?绉掑唴:
++	   绾挎€ч攤(浣撲簩鏋佺闃绘柇): 鐢靛鏃犳斁鐢佃矾寰? 鐢靛帇鎸佺画鐖崌>DIODE_RISE_THRESH
++	   闀嶆阿/骞茬數姹?浣撲簩鏋佺瀵奸€氭垨鍐呴樆澶?: 鐢靛帇琚挸浣?绋冲畾, 鐖崌涓嶈冻
++	  闃堝€糄IODE_RISE_THRESH=900: 鍣０/闀嶆阿鐖崌<姝ゅ€? 绾挎€ч攤鐖崌>姝ゅ€? 	========================================================================*/
+ 	case CHG_IMP_DIODE_TEST:
+ 		ct += tick;
+@@ -489,7 +558,11 @@ void ChargeProcess_Slot(unsigned char idx)
+ 				/* 缁х画绛夊緟鑰岄潪绔嬪嵆鍒DLE, 閬垮厤绾挎€ч攤涓€旇鍒ゆ嫈鍑?*/
+ 			}
+ 
+-			/* 鐢靛帇鐖崌妫€娴? 褰撳墠鐢靛帇-鑴夊啿鍓嶇數鍘?> 闃堝€?*/
++			/* 鐢靛帇鐖崌妫€娴? 褰撳墠鐢靛帇-鑴夊啿鍓嶇數鍘?> 闃堝€?+			   绾挎€ч攤鐢典綋浜屾瀬绠￠樆鏂? BxAD鐢靛閫氳繃100K鎸佺画鍏呯數鈫掔數鍘嬫樉钁楃埇鍗?
++			   闀嶆阿/骞茬數姹犱綋浜屾瀬绠″閫氭垨鍐呴樆澶? 鐢靛帇绋冲畾/鐖崌涓嶈冻.
++			   鍙敤DIODE_RISE_THRESH=900鍗曚竴闃堝€? 500tick(鈮?绉掗噰鏍风疮璁?
++			   缁欒冻鐢靛鍏呯數鏃堕棿, 鍚屾椂閬垮厤闀嶆阿(濡侭2 2882ADC)琚厹搴曡鍒? */
+ 			if(v > (g_impData & 0x0FFFU) + DIODE_RISE_THRESH)
+ 				goto imp_linear_li;
+ 
