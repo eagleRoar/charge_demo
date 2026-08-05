@@ -376,7 +376,9 @@ void Print_SystemStatus(void)
 	unsigned char i;
 	unsigned int vcc_mv;
 
-	uart_send_string("\r\n== L1211 12CH CHARGER ==\r\n");
+	uart_send_string("\r\n== L1211 12CH CHARGER ");
+	uart_send_string(FIRMWARE_VERSION);
+	uart_send_string(" ==\r\n");
 
 	/* VCC测量(内部1.2V参考反推) */
 	test_adc = ADC_Sample(ADC_CH_VREF, 0);

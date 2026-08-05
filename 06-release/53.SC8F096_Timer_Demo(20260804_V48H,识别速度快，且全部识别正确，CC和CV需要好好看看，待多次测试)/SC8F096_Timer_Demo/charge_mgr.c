@@ -210,10 +210,13 @@ void ChargeProcess_Slot(unsigned char idx)
 			   才进入高压稳定路径. 若初始电压≤2900(无cap标记)后电压
 			   异常跳升>2900: 多槽IMP_CHECK排队等待期间其他槽充电噪声/
 			   串扰导致ADC读值异常(碳性1960→3769), 重置DETECT重读.
-			   接触改善导致电压真上升会在重置后ct=200时正确置cap标记
+			   但电压>NEAR_OPEN(3500)时已接近OPEN, 不可能是碳性噪声,
+			   应继续高压稳定流程, 避免高压线性锂/恒压锂(B11等)卡死.
+			   接触改善导致电压真上升会在重置后ct=TIME_DETECT_WAIT时正确置cap标记
 			   ty=AMBIGUOUS跳过: amb_shortcut清除g_capFlag后ty已标记
 			   为AMBIGUOUS(确认高压稳定), 门禁不应重置ct→丢失进度 */
-			if(!(g_capFlag & ((unsigned int)1 << idx)) && ty != BAT_TYPE_AMBIGUOUS)
+			if(!(g_capFlag & ((unsigned int)1 << idx)) && ty != BAT_TYPE_AMBIGUOUS &&
+			   v <= ADC_V_NEAR_OPEN)
 			{
 				ct = 0;
 				g_slotRefV[idx] = 0;
@@ -248,11 +251,11 @@ void ChargeProcess_Slot(unsigned char idx)
 				else if(ct < TIME_DETECT_WAIT + TIME_DETECT_SETTLE)
 				{
 					/* 高压锂电提前放行: g_highVFlag已确认V>2900稳定,
-					   碳性电池电容放电至≤2900仅需1~2秒(实测R6P:约3秒),
-					   保守等2秒(200tick)后仍>2900→真锂电, 直接IMP_CHECK */
-					if((g_highVFlag & ((unsigned int)1 << idx)) &&
-					   ct >= TIME_DETECT_WAIT + 200U)
-						goto amb_shortcut;
+				   碳性电池电容放电至≤2900仅需1~2秒(实测R6P:约3秒),
+				   保守等2秒(25tick@12.5tick/s)后仍>2900→真锂电, 直接IMP_CHECK */
+				if((g_highVFlag & ((unsigned int)1 << idx)) &&
+				   ct >= TIME_DETECT_WAIT + 25U)
+					goto amb_shortcut;
 					/* 继续等待, 更新基准跟踪当前值 */
 					g_slotRefV[idx] = v;
 					break;
@@ -405,18 +408,26 @@ void ChargeProcess_Slot(unsigned char idx)
 			break;
 
 		{
-			/* 实时VCC采样: IMP_CHECK期间MOSFET已导通~80ms,
-			   NiMH极低内阻会拉低VCC, 此处采样获取当前真实VCC
-			   不声明局部变量, 用内联计算节省RAM */
+			/* 实时VCC采样: IMP_CHECK期间MOSFET已导通~80ms */
 			if(ADC_OK == ADC_Sample(ADC_CH_VREF, 0))
 				g_vcc_mv = (unsigned int)(POWER_RATIO / adresult);
 
-			/* ── NiMH VCC塌陷检测(优先级最高) ──
-			   g_impData编码: 低12位=脉冲前电压v, 高4位=脉冲前VCC编码(100mV分辨率)
-			   还原公式: (解码值+38)*100
-			   NiMH极低内阻(0.02~0.1Ω)在78%PWM下等效短路, VCC跌落>300mV
-			   碳性/碱性高内阻不会导致VCC塌陷, 杜绝误判 */
-			if(IMP_VCC_DECODE(g_impData) > g_vcc_mv + 300U)
+			/* ── 电池拔出检测（最高优先级） ──
+			   脉冲前、后电压均≥OPEN → 确实空槽/已被拔出
+			   放在pre-voltage shortcut之前, 避免空槽/接触不良被误判为LINEAR_LI并充电 */
+			if(v >= ADC_V_OPEN && (g_impData & 0x0FFFU) >= ADC_V_OPEN)
+			{
+				ty = BAT_TYPE_UNKNOWN;
+				st = CHG_IDLE;
+				g_impCheckSlot = 0xFF;
+				g_highVFlag &= ~((unsigned int)1 << idx);
+				break;
+			}
+
+			/* ── NiMH VCC塌陷检测 ──
+			   VCC跌落>300mV 且 脉冲后电池端被拉到OPEN
+			   恒压锂电charger IC也会拉低VCC, 但电池端不会飙升到OPEN, 避免误判 */
+			if(IMP_VCC_DECODE(g_impData) > g_vcc_mv + 300U && v >= ADC_V_OPEN)
 			{
 				ty = BAT_TYPE_NIMH;
 				st = CHG_ERROR;
@@ -428,93 +439,45 @@ void ChargeProcess_Slot(unsigned char idx)
 				break;
 			}
 
-			/* ── 电池拔出检测 ──
-			   脉冲前电压(g_impData低12位)已是OPEN且脉冲后也是OPEN → 确实空槽/被拔出
-			   仅当脉冲前电压≥OPEN时才判拔出:
-			   线性锂电池(无charger IC)在MOSFET导通时BxAD电容充电至VCC,
-			   短暂关断后100μs电容放电不足, ADC读到伪OPEN, 但脉冲前电压远低于OPEN,
-			   必须用脉冲前电压区分真拔出(脉冲前也是OPEN)和伪OPEN(脉冲前有电池) */
-			if(v >= ADC_V_OPEN && (g_impData & 0x0FFFU) >= ADC_V_OPEN)
-			{
-				ty = BAT_TYPE_UNKNOWN;
-				st = CHG_IDLE;
-				g_impCheckSlot = 0xFF;
-				g_highVFlag &= ~((unsigned int)1 << idx);
-				break;
-			}
-
-			/* ── VCC跌落>200mV → Li-ion(充电管理芯片拉载) ──
-			   恒压锂电池内部TP4056类charger IC在78%PWM下启动充电,
-			   拉载电流导致VCC跌落200~300mV(远小于NiMH的>300mV)
-			   碳性/碱性无charger IC, 不会拉载VCC
-			   VCC分辨率100mV, 200mV阈值有足够噪声裕量 */
+			/* ── 恒压锂电: VCC跌落>200mV ── */
 			if(IMP_VCC_DECODE(g_impData) > g_vcc_mv + 200U)
 				goto imp_li_ion;
 
-			/* ── 碳性/碱性干电池电压大幅下跌检测 ──
-		   碳性电池开槽后电容虚高, 高内阻导致电压持续下跌.
-		   若脉冲后电压比脉冲前低>1000ADC, 说明电池内阻高、无法维持
-		   电压, 直接判DRY拒充. 恒压锂/线性锂电压稳定, 跌幅很小. */
-		if(((g_impData & 0x0FFFU) > v) &&
-		   ((g_impData & 0x0FFFU) - v) > 1000U)
-		{
-			ty = BAT_TYPE_DRY;
-			st = CHG_ERROR;
-			g_impCheckSlot = 0xFF;
+			/* ── 碳性/碱性干电池: 脉冲后电压比脉冲前低>1000ADC ── */
+			if(((g_impData & 0x0FFFU) > v) &&
+			   ((g_impData & 0x0FFFU) - v) > 1000U)
+			{
+				ty = BAT_TYPE_DRY;
+				st = CHG_ERROR;
+				g_impCheckSlot = 0xFF;
+				g_highVFlag &= ~((unsigned int)1 << idx);
+				g_detectLowCnt[idx] = 0;
+				g_detectLogSlot = idx;
+				g_detectLogType = BAT_TYPE_DRY;
+				g_detectLogFlag = 1;
+				break;
+			}
+
+			/* ── 高压锂电保护: pre>NEAR_OPEN 且 VCC不塌(<200mV)
+			   不直接判DRY, 先进DIODE_TEST确认, 避免高压恒压锂/线性锂
+			   (B10/B11/B12等)被误拒充 */
+			if(((g_impData & 0x0FFFU) > ADC_V_NEAR_OPEN) &&
+			   (IMP_VCC_DECODE(g_impData) <= g_vcc_mv + 200U))
+			{
+				goto imp_diode_test_entry;
+			}
+
+			/* ── 脉冲后≥OPEN → 进DIODE_TEST进一步确认 ──
+			   可能是线性锂/恒压锂/镍氢, DIODE_TEST用爬升区分Li与DRY/NiMH */
+			if(v >= ADC_V_OPEN)
+				goto imp_diode_test_entry;
+
+		imp_diode_test_entry:
+			/* ── 进入DIODE_TEST ──
+			   保持IMP_CHECK串行锁不释放, 防止g_impData基准被其它槽改写 */
+			st = CHG_IMP_DIODE_TEST;
+			ct = 0;
 			g_highVFlag &= ~((unsigned int)1 << idx);
-			g_detectLowCnt[idx] = 0;
-			g_detectLogSlot = idx;
-			g_detectLogType = BAT_TYPE_DRY;
-			g_detectLogFlag = 1;
-			break;
-		}
-
-		/* ── 高压碳性/碱性干电池保护 ──
-		   碳性/碱性电池开槽后BxAD电容被100K上拉至近OPEN(如B12初始3701),
-		   会被后续"脉冲前>2300"捷径误判为LINEAR_LI并进入CV充电。
-		   特征: 脉冲前电压接近OPEN(>NEAR_OPEN)但VCC不塌(<200mV),
-		   说明是高内阻干电池, 直接判DRY拒充。
-		   恒压锂/线性锂此时VCC通常会跌落>200mV(已被上文LI_ION路径捕获),
-		   或脉冲前电压已随负载下降至NEAR_OPEN以下。 */
-		if(((g_impData & 0x0FFFU) > ADC_V_NEAR_OPEN) &&
-		   (IMP_VCC_DECODE(g_impData) <= g_vcc_mv + 200U))
-		{
-			ty = BAT_TYPE_DRY;
-			st = CHG_ERROR;
-			g_impCheckSlot = 0xFF;
-			g_highVFlag &= ~((unsigned int)1 << idx);
-			g_detectLowCnt[idx] = 0;
-			g_detectLogSlot = idx;
-			g_detectLogType = BAT_TYPE_DRY;
-			g_detectLogFlag = 1;
-			break;
-		}
-
-		/* ── 线性锂电池检测: 脉冲前电压>2300 ──
-		   DETECT阶段MOSFET导通, 线性锂电/部分恒压锂电无显著VCC跌落时,
-		   脉冲前电压仍保持>2300. 碳性/碱性高压已被NEAR_OPEN保护拦截,
-		   2300~NEAR_OPEN区间覆盖中高电压锂电, 防止其漏入DIODE_TEST超时误判.
-		   2300以下仍由DIODE_TEST(300tick)和VCC跌落进一步区分,
-		   DIODE_TEST中超时前若电压稳定在>2000也会兜底判LINEAR_LI. */
-		if((g_impData & 0x0FFFU) > 2300U)
-			goto imp_linear_li;
-
-		/* ── 线性锂电池检测: 脉冲后电压≥OPEN ──
-		   IMP_CHECK PWM脉冲后电容充电至VCC, 线性锂电体二极管阻断
-		   无法放电→v读伪OPEN; 干电池体二极管导通→v被钳位 */
-		if(v >= ADC_V_OPEN)
-			goto imp_linear_li;
-
-		/* ── 方法3: 体二极管被动检测(方案B DETECT MOSFET ON专用) ──
-		   方案B下DETECT阶段MOSFET导通→电容起始Vbat(~1970≈1.0V),
-		   78%PWM脉冲无法将电容充至VCC(电池钳位), 方法1/2均失败.
-		   方法3: 跳转CHG_IMP_DIODE_TEST, MOSFET关断, 观察BxAD电容
-		   通过100K上拉充电:
-		   线性锂(体二极管阻断)→电容无放电路径→电压持续爬升
-		   干电池(体二极管导通)→电容经体二极管放电→电压稳定 */
-		st = CHG_IMP_DIODE_TEST;
-		ct = 0;
-		g_highVFlag &= ~((unsigned int)1 << idx);
 		}
 		break;
 
@@ -541,12 +504,10 @@ void ChargeProcess_Slot(unsigned char idx)
 		break;
 
 	/*========================================================================
-	  CHG_IMP_DIODE_TEST: 体二极管被动检测
+	  CHG_IMP_DIODE_TEST: 体二极管被动检测 (V48A)
 	  MOSFET关断, BxAD电容通过100K上拉充电, 观察电压爬升
-	  RC时间常数τ≈2-10s(100K×10-47μF), 500tick≈5秒内:
-	   线性锂(体二极管阻断): 电容无放电路径, 电压持续爬升>DIODE_RISE_THRESH
-	   镍氢/干电池(体二极管导通或内阻大): 电压被钳位/稳定, 爬升不足
-	  阈值DIODE_RISE_THRESH=900: 噪声/镍氢爬升<此值, 线性锂爬升>此值
+	  线性锂(体二极管阻断): 电容持续爬升>DIODE_RISE_THRESH
+	  镍氢/干电池(体二极管导通或内阻大): 电压被钳位, 爬升不足
 	========================================================================*/
 	case CHG_IMP_DIODE_TEST:
 		ct += tick;
@@ -555,20 +516,52 @@ void ChargeProcess_Slot(unsigned char idx)
 			if(v >= ADC_V_OPEN && (g_impData & 0x0FFFU) < ADC_V_OPEN)
 			{
 				/* 预脉冲非OPEN但当前OPEN: 电容正在充电中, 不是真拔出 */
-				/* 继续等待而非立即判IDLE, 避免线性锂中途误判拔出 */
 			}
 
-			/* 电压爬升检测: 当前电压-脉冲前电压 > 阈值
-			   线性锂电体二极管阻断, BxAD电容通过100K持续充电→电压显著爬升;
-			   镍氢/干电池体二极管导通或内阻大, 电压稳定/爬升不足. */
+			/* 电压爬升检测: 当前电压-脉冲前电压 > DIODE_RISE_THRESH → Li */
 			if(v > (g_impData & 0x0FFFU) + DIODE_RISE_THRESH)
-				goto imp_linear_li;
+			{
+				/* 用IMP_CHECK期间记录的VCC跌落区分CV锂与线性锂:
+				   跌落>150mV → 恒压锂, 否则 → 线性锂 */
+				if(IMP_VCC_DECODE(g_impData) > g_vcc_mv + 150U)
+					goto imp_li_ion;
+				else
+					goto imp_linear_li;
+			}
 
-			/* 低压锂电兜底: DIODE_TEST满100tick后, 电压仍稳定在>2100
+			/* 高压锂电回落识别 (V48H)
+		   IMP_CHECK时MOSFET导通, BxAD电容被充到偏高电压;
+		   进入DIODE_TEST后MOSFET关断, 真实高压锂电(低内阻)会把电容
+		   电压迅速拉回电池本体电压 → v明显低于pre但仍>NIMH_MAX.
+		   碱性/碳性内阻大, 电容会被100K继续拉向VCC, 不会出现此回落.
+		   pre阈值从NEAR_OPEN(3500)降至3000, 覆盖B12等电压稍低的恒压锂电. */
+		if(((g_impData & 0x0FFFU) > 3000U) &&
+		   (v > ADC_V_NIMH_MAX) &&
+		   (v < (g_impData & 0x0FFFU)))
+			goto imp_linear_li;
+
+			/* NiMH上拉虚高保护:
+			   脉冲前≤2300但DIODE_TEST期间电压>2900, 说明是100K上拉把电池/电容
+			   充起来的虚假高电平, 判DRY拒充, 避免镍氢被误判为LINEAR_LI. */
+			if((v > ADC_V_NIMH_MAX) &&
+			   ((g_impData & 0x0FFFU) <= 2300U))
+			{
+				ty = BAT_TYPE_DRY;
+				st = CHG_ERROR;
+				g_impCheckSlot = 0xFF;
+				g_highVFlag &= ~((unsigned int)1 << idx);
+				g_detectLowCnt[idx] = 0;
+				g_detectLogSlot = idx;
+				g_detectLogType = BAT_TYPE_DRY;
+				g_detectLogFlag = 1;
+				break;
+			}
+
+			/* 低压锂电兜底: DIODE_TEST满20tick后, 电压仍稳定在>2100
 			   且无明显下跌(与脉冲前相比下降<100), 说明体二极管未被显著钳位,
 			   更可能是低压恒压锂电/线性锂电, 避免被超时判DRY.
-			   碱性/碳性/镍氢在此阶段电压通常<2000或被钳位, 不会误触发. */
-			if(ct >= 100U && v > 2100U &&
+			   镍氢/碳性通常<2000或被钳位, 不会误触发. */
+			if(ct >= 20U && v > 2100U &&
 			   v + 100U >= (g_impData & 0x0FFFU))
 				goto imp_linear_li;
 
@@ -584,10 +577,8 @@ void ChargeProcess_Slot(unsigned char idx)
 				g_detectLogType = BAT_TYPE_DRY;
 				g_detectLogFlag = 1;
 			}
-		}
-		break;
-
-
+	}
+	break;
 
 	case CHG_ACTIVATE:
 		ct += tick;

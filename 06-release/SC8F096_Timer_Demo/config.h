@@ -4,6 +4,12 @@
   功能: 12通道恒压锂电池脉冲充电管理
   版本: 2026/06/01 <V2.0>
 
+  固件版本字符串(烧录后通过串口输出, 每次修改代码后迭代)
+  格式: Vxx[字母], 例如 V48A, V48B, V49
+*/
+#define FIRMWARE_VERSION  "V48Z"
+
+/*
   原理图参考: L1211 TOP V2.0
   需求参考: requirement_20260518.xlsx
   资源分配参考: resource_allocation.txt
@@ -163,8 +169,8 @@
 #define TIME_ACTIVATE_MAX   (60 * TICK_PER_SEC)            /* 激活超时: 60秒 */
 #define TIME_PRECHARGE_MAX  (300 * TICK_PER_SEC)           /* 预充超时: 300秒(5分钟) */
 #define TIME_CHARGE_MAX     (10800UL * TICK_PER_SEC)       /* 充电超时: 10800秒(3h), 16bit溢出→由CC_BLOCK机制实现 */
-#define TIME_DETECT_WAIT    (2 * TICK_PER_SEC)             /* 检测等待: 2秒(初始) */
-#define TIME_DETECT_SETTLE  (8 * TICK_PER_SEC)             /* 高内阻电池额外稳定等待: 最多8秒 */
+#define TIME_DETECT_WAIT    (30)                           /* 检测等待: ~2.4秒@12.5tick/s (原200tick实际≈16s) */
+#define TIME_DETECT_SETTLE  (100)                          /* 高内阻电池额外稳定等待: ~8秒@12.5tick/s */
 #define DETECT_SETTLE_DROP  50                             /* 稳定判定: ADC下降<50视为已稳定 */
 #define TIME_CV_HOLD        (600 * TICK_PER_SEC)           /* CV恒压保持: 600秒(10分钟) */
 
@@ -222,9 +228,9 @@
 
 /* 体二极管检测(IMP_CHECK方法3): MOSFET关断后BxAD电容通过100K上拉充电,
    线性锂(体二极管阻断)→电压持续爬升, 干电池(体二极管导通)→电压稳定
-   DIODE_RISE_THRESH=900避免碱性/碳性误判, 300tick≈3秒给线性锂完成电容充电,
+   DIODE_RISE_THRESH=900避免碱性/碳性误判, 30tick≈2.4秒给线性锂完成电容充电,
    干电池/镍氢因体二极管钳位不会误触发 */
-#define DIODE_TEST_TICKS     300     /* 最长等待300tick≈3秒 */
+#define DIODE_TEST_TICKS     30      /* 最长等待30tick≈2.4秒@12.5tick/s */
 #define DIODE_RISE_THRESH    900            /* 电压上升>900ADC判为线性锂爬升
                                                 镍氢/干电池体二极管导通, 爬升<此值
                                                 可避免碱性/碳性/镍氢误判为线性锂 */
