@@ -1,5 +1,6 @@
 # SC8F096 编译输出
 output/
+*.cof
 *.lst
 *.map
 *.obj

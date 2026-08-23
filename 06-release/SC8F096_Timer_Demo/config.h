@@ -1,4 +1,4 @@
-/*-------------------------------------------
+﻿/*-------------------------------------------
   L1211 12槽充电器 - 全局配置文件
   MCU: SC8F096AD832 QFN32
   功能: 12通道恒压锂电池脉冲充电管理
@@ -7,10 +7,10 @@
   固件版本字符串(烧录后通过串口输出, 每次修改代码后迭代)
   格式: Vxx[字母], 例如 V48A, V48B, V49
 */
-#define FIRMWARE_VERSION  "V48Z"
+#define FIRMWARE_VERSION  "V57B"
 
 /*
-  原理图参考: L1211 TOP V2.0
+  原理图参考: L1211 TOP V2.3 (20260624)
   需求参考: requirement_20260518.xlsx
   资源分配参考: resource_allocation.txt
 
@@ -42,13 +42,12 @@
     B11AD   : RA7/AN7       B11电压采样
     B12AD   : RA6/AN6       B12电压采样
     NTC     : RC2/AN18      温度检测(CMFA103J3950HANT,10K上拉至VDD)
-    LED IO1    : RC5/AN21      LED电源控制1(与DAT共用)
-    LED IO2    : RC4/AN20      LED电源控制2(与CLK/UART TX共用)
-    PWM        : RB7/AN15      PWM总控输出(pin8)
-    CD IO1     : RC3/AN19      充电组控制1(B1-B6组)
-    CD IO2     : RC5/AN21      充电组控制2(B7-B12组)
-    EN         : RB6/AN14      主电源使能(Q3 4435)
-    SW UART TX : RC4/AN20      UART发送(软件模拟9600bps, 复用CLK引脚, 仅TX)
+    LED_IO1 : RC5/AN21      红灯全局驱动(Q11 AO3401 P沟道, 低有效)
+    LED_IO2 : RC4/AN20      绿灯全局驱动(Q8 AO3401 P沟道, 低有效)
+    PWM     : RB7/AN15       PWM总控输出(pin8)
+    CD      : RC3/AN19       V2.3无分时组控电路(CD网标未接D-FET使能, 保持低电平)
+    EN      : RB6/AN14       主电源使能(Q3 4435)
+    SW UART TX : RC4/AN20    UART发送(软件模拟9600bps, 仅调试用, 与LED_IO2复用, 默认禁用)
 -------------------------------------------*/
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
@@ -69,6 +68,11 @@
 /* 电源电压 = ADC值 * 1.2V(内部参考) / 4096 * 1000(转mV) */
 #define POWER_RATIO        (4096UL * 1200UL)   /* 4096 * 1.2 * 1000 = VREF反推VCC */
 
+/* VCC 归一化基准: 所有阈值/判定均基于 VCC=5000mV 标定.
+   Adc_Norm() 将原始 ADC(参考VDD) 缩放到该基准, 消除电源波动(4600~5180mV)
+   导致的电池检测漂移与跨槽读数不一致. */
+#define VCC_REF_MV         5000UL
+
 /* --- 电池电压双参数线性标定 ---
    标定点: ADC=1885→1.33V(NiMH), ADC=3307→1.55V(恒压锂) @VCC≈5070mV
    公式: V_BAT_mV = (124 * V_BxAD_mV + 206 * VCC_mV) / 1000
@@ -77,7 +81,9 @@
 #define ALPHA_NUM           124UL    /* α * 1000 */
 #define BETA_NUM            206UL    /* β * 1000 (注意: 公式改为加法, β为正) */
 #define CAL_DEN             1000UL
-#define UART_PRINT_EN      1       /* UART调试输出开关: 1=启用, 0=禁用 */
+#define UART_PRINT_EN      1       /* UART调试输出开关: 1=启用, 0=禁用
+                                       V2.3中RC4=LED_IO2(绿灯), 与UART TX冲突,
+                                       生产固件必须=0; 调试时置1会占用绿灯引脚 */
 #define SW_TX              RC4     /* 软件UART TX引脚(复用CLK, 9600bps) */
 #define BIT_TIME           104     /* 9600bps @16MHz */
 
@@ -133,7 +139,9 @@
 #define ADC_V_FULL          3100   /*  1.52V 满电阈值(CV切入), 公式: bat_mV≈1518 */
 #define ADC_V_OVER          3850   /*  1.64V 过压保护, 恒压锂charger IC高阻抗特性导致
                                        ADC读数偏高(实测~3766), 3850留足裕量同时
-                                       低于OPEN(3990), 确保真实过压仍可检出 */
+                                       低于OPEN(3990), 确保真实过压仍可检出.
+                                       V54L回退: 3950导致B5/B6/B9/B10/B11 CV阶段
+                                       电压虚高超OPEN被误拔, 恢复3850并调整CV上爬阈值. */
 #define ADC_V_OPEN          3990   /*  空槽判为开路(ADC=4095≈VCC) */
 #define ADC_V_NEAR_OPEN     3500   /*  准开路阈值: 碳性/碱性电池开槽后电容虚高,
                                        电压可接近OPEN但内阻大, 需与低内阻锂电区分 */
@@ -161,21 +169,50 @@
 
 /*========================================================================
   充电时间阈值
-  说明: chargeTimer在ChargeProcess_Slot中每次+1, 每轮扫描(12槽×3阶段=36次Timer0)调用一次
-  Timer0周期125us, 但部分ISR阶段(Phase0/Phase2)耗时>125us导致扫描周期拉长
-   每轮扫描实测≈7.9ms, 1秒≈1000/7.9≈126个tick, 取100(留余量)
+  说明: V57A 起状态机计时改为"显式10ms节拍"(ISR维护g_hwTick, chargeTimer
+  按真实经过的10ms数累加), 与主循环轮速/UART打印阻塞完全解耦.
+  因此 TICK_PER_SEC=100 精确表示 100tick=1秒(10ms/tick),
+  下方常量按注释标注的设计物理时长校准:
+    TIME_DETECT_WAIT=240 → 2.4秒 (原V55A实测因打印阻塞被拉长至~24秒)
   ========================================================================*/
-#define TICK_PER_SEC        100         /* 1秒对应的扫描tick数(校准值) */
+#define TICK_PER_SEC        100         /* 1秒对应的tick数(10ms/tick, 显式硬件节拍) */
 #define TIME_ACTIVATE_MAX   (60 * TICK_PER_SEC)            /* 激活超时: 60秒 */
 #define TIME_PRECHARGE_MAX  (300 * TICK_PER_SEC)           /* 预充超时: 300秒(5分钟) */
 #define TIME_CHARGE_MAX     (10800UL * TICK_PER_SEC)       /* 充电超时: 10800秒(3h), 16bit溢出→由CC_BLOCK机制实现 */
-#define TIME_DETECT_WAIT    (30)                           /* 检测等待: ~2.4秒@12.5tick/s (原200tick实际≈16s) */
-#define TIME_DETECT_SETTLE  (100)                          /* 高内阻电池额外稳定等待: ~8秒@12.5tick/s */
+#define TIME_DETECT_WAIT    (240)                          /* 检测等待: 2.4秒 */
+#define TIME_DETECT_SETTLE  (800)                          /* 高内阻电池额外稳定等待: 8秒 */
 #define DETECT_SETTLE_DROP  50                             /* 稳定判定: ADC下降<50视为已稳定 */
 #define TIME_CV_HOLD        (600 * TICK_PER_SEC)           /* CV恒压保持: 600秒(10分钟) */
+#define IDLE_POLL_TICKS     (2400)                          /* 空槽IDLE轮询停留: 24秒,
+                                                               避免空槽DETECT红灯周期性常亮(V51C) */
+#define PRINT_INTERVAL_TICKS (200)  /* UART打印间隔: 200×10ms=2秒(与状态机节拍解耦,
+                                        阻塞式打印每2s一次, PWM冻结占比从86%降至~35%) */
 
 #define CC_BLOCK_TICKS      (600 * TICK_PER_SEC)   /* CC超时分块: 10分钟tick数(60000<65535) */
 #define CC_MAX_BLOCKS       18                     /* 18块=180分钟=3小时 */
+
+/* CC无进展检测(V50E): 漏洞A闭环
+   进入CC后窗口期内电压未上升≥CC_NO_PROGRESS_RISE → 停滞于中压高位
+   (2000~3100)不升不降 → ERROR, 而非等CC_MAX_BLOCKS(最长3h)超时
+   适用对象: 仅LI_ION(LINEAR_LI已有16s超时路径, 不重复检测)
+   校准: 6000tick=60秒; 30ADC≈37mV */
+#define CC_NO_PROGRESS_TICKS (6000)   /* 无进展检测窗口: 60秒 */
+#define CC_NO_PROGRESS_RISE  (30)    /* 窗口内最小电压上升: 30ADC */
+
+/* CV上爬检测(V51C): 漏洞B加固
+   进入CV后窗口期内电压相对起点持续爬升超阈值 → 过充特征
+   (碳性/碱性/镍氢误判锂电进CV), 直接ERROR而非等TIME_CV_HOLD(10分钟)误判FULL.
+   正常满电锂电进CV后电压被PI钳位在ADC_V_FULL附近不再爬升, 不会误报.
+   校准: 6000tick=60秒; 50ADC≈61mV */
+#define CV_NO_PROGRESS_TICKS (6000)   /* CV上爬检测窗口: 60秒 */
+#define CV_NO_PROGRESS_RISE  (50)    /* 窗口内相对起点上升超此值判过充: 50ADC */
+#define CV_NO_PROGRESS_CNT   3       /* 连续超限帧数消抖(防采样噪声误杀) */
+
+/* CV崩溃循环上限(V51C): 漏洞B加固
+   碳性/碱性误判进CV后电压崩溃下跌→PEAK_DROP回DET→再误判进CV的死循环.
+   g_ccBlocks复用为CV崩溃计数(PEAK_DROP回DET时+1), 累计达此值后
+   DETECT_LI_ROUTE再进CV直接ERROR, 杜绝无限循环占用充电资源. */
+#define CV_DROP_LOOP_MAX     2       /* CV崩溃→回DET循环次数上限 */
 
 #define OV_DEBOUNCE_CNT     5                      /* 过压消抖次数: 连续N次过压才报ERROR */
 #define DETECT_LOW_DEBOUNCE 5                      /* DETECT低电压消抖: 连续N次读到低ADC才判UNKNOWN */
@@ -221,19 +258,21 @@
    NiMH: 极低内阻→B1AD被拉至近VCC→ADC飙至≥3990(且脉冲前<3990)
    Li-ion: 充电管理芯片切模式→电压小幅上升, VCC跌落>200mV
    干电池: 高内阻→B1AD无飙升, 电压不上升, VCC不塌
-   5tick≈45ms给恒压锂charger IC足够时间拉低VCC,
+   5tick=50ms给恒压锂charger IC足够时间拉低VCC,
    同时避免镍氢/恒压锂因脉冲太短被误判 */
-#define IMP_PULSE_TICKS     5       /* 脉冲持续tick数(≈45ms) */
+#define IMP_PULSE_TICKS     5       /* 脉冲持续tick数(5×10ms=50ms) */
 #define IMP_NOISE_THRESH     50      /* 电压上升判定阈值: 碳性电池噪声~40, 锂电激活>100 */
 
 /* 体二极管检测(IMP_CHECK方法3): MOSFET关断后BxAD电容通过100K上拉充电,
    线性锂(体二极管阻断)→电压持续爬升, 干电池(体二极管导通)→电压稳定
-   DIODE_RISE_THRESH=900避免碱性/碳性误判, 30tick≈2.4秒给线性锂完成电容充电,
+   DIODE_RISE_THRESH=900避免碱性/碳性误判, 240tick=2.4秒给线性锂完成电容充电,
    干电池/镍氢因体二极管钳位不会误触发 */
-#define DIODE_TEST_TICKS     30      /* 最长等待30tick≈2.4秒@12.5tick/s */
+#define DIODE_TEST_TICKS     240     /* 最长等待2.4秒 */
 #define DIODE_RISE_THRESH    900            /* 电压上升>900ADC判为线性锂爬升
                                                 镍氢/干电池体二极管导通, 爬升<此值
-                                                可避免碱性/碳性/镍氢误判为线性锂 */
+                                                可避免碱性/碳性/镍氢误判为线性锂.
+                                                V54L回退: 200导致碳性/碱性误放行风险,
+                                                B11/B12改由中压钳位兜底保护, 不降低阈值. */
 
 /*========================================================================
   温度保护阈值
@@ -248,7 +287,7 @@
 #define VCC_UVLO_STOP       4400    /* VCC低于此值(mV): 停止所有充电 */
 #define VCC_UVLO_RESUME     4600    /* VCC高于此值(mV): 恢复充电(200mV回差) */
 
-/* NTC ADC配置 (RC5分时复用LED/NTC, C12=22uF滤波, τ≈110ms, 5τ≈550ms) */
+/* NTC ADC配置 (RC2独立引脚, C12=22uF滤波, τ≈110ms, 5τ≈550ms) */
 #define NTC_SETTLE_ROUNDS    60
 #define TEMP_READ_INTERVAL   200
 
@@ -279,10 +318,8 @@
 ========================================================================*/
 /* 总控引脚 */
 #define PIN_PWM             RB7     /* PWM总控输出(VT_PWM1, pin8=RB7/AN15) */
-#define PIN_CD1             RC3     /* 充电组控制1(B1-B6) */
-#define PIN_CD2             RC5     /* 充电组控制2(B7-B12) */
-#define PIN_LED_IO1         RC5     /* LED电源控制1(与CD2分时复用RC5) */
-#define PIN_LED_IO2         RC4     /* LED电源控制2 */
+#define PIN_LED_IO1         RC5     /* LED_IO1: 红灯全局驱动(经Q11 AO3401 P沟道, 低有效) */
+#define PIN_LED_IO2         RC4     /* LED_IO2: 绿灯全局驱动(经Q8 AO3401 P沟道, 低有效) */
 #define PIN_EN              RB6     /* 主电源使能(Q3 4435) */
 
 /* B1-B12 独立MOSFET栅极控制引脚
@@ -331,13 +368,6 @@
 	} \
 } while(0)
 
-/* 关闭所有槽位充电(温度保护时使用) */
-#define SLOT_ALL_OFF()  do { \
-	PIN_B1_CTRL=1; PIN_B2_CTRL=1; PIN_B3_CTRL=1; PIN_B4_CTRL=1; \
-	PIN_B5_CTRL=1; PIN_B6_CTRL=1; PIN_B7_CTRL=1; PIN_B8_CTRL=1; \
-	PIN_B9_CTRL=1; PIN_B10_CTRL=1; PIN_B11_CTRL=1; PIN_B12_CTRL=1; \
-} while(0)
-
 /*========================================================================
   数据结构定义
 ========================================================================*/
@@ -348,9 +378,6 @@ typedef struct {
 	unsigned int  voltage;          /* 当前ADC电压值 */
 	unsigned int  chargeTimer;      /* 充电计时器(tick) */
 } BatterySlot_t;
-
-/* LED闪烁: 全局统一计数器, 所有ERROR槽共用, 替代原3个per-slot数组节省35B RAM */
-extern unsigned char g_blinkTick;
 
 /*========================================================================
   全局变量声明(extern)
@@ -371,11 +398,15 @@ extern unsigned int g_temperature;          /* 当前温度(0.1°C), 存储temp_
 extern unsigned char g_tempProtect;         /* 温度保护标志: 1=保护中, 0=正常 */
 extern unsigned char g_ccBlocks[12];        /* CC阶段10分钟块计数 */
 extern unsigned char g_ovCnt[12];           /* 过压消抖计数器 */
+
 /* g_slotRefV[12]: 槽位参考电压(DETECT初始值+CC/CV峰值), g_capFlag: 电容虚高标记, g_impData: IMP_CHECK共享数据 */
+extern unsigned int g_slotRefV[BATTERY_SLOTS];  /* V54H: 打印ref用(DETECT基准/CC-CV峰值) */
 extern unsigned char g_impCheckSlot;        /* IMP_CHECK串行锁: 0xFF=空闲, 其他=持有锁的槽号 */
-extern volatile unsigned char g_scanIndex;   /* 当前扫描槽位索引(0-11) */
-extern volatile unsigned char g_scanPhase;   /* 当前扫描阶段(0/1/2) */
-extern volatile unsigned int  g_vcc_mv;       /* 系统电压(mV), 由VREF反推, ISR定期更新 */
+extern unsigned int g_impData;              /* IMP_CHECK共享数据: 低12位脉冲前电压+高4位VCC编码 */
+extern unsigned char g_diodeTrace[4];  /* DIODE_TEST v偏移轨迹(V54G): 4点(ct=7,14,21,28), 每点1字节存(v-pre)/4+128 */
+extern unsigned char g_diodeTraceCnt;  /* DIODE_TEST v轨迹采样点数, 主循环打印后清零 */
+extern unsigned char g_diodeTraceSlot; /* 轨迹归属槽号(打印时匹配) */
+extern volatile unsigned int  g_vcc_mv;       /* 系统电压(mV), 由VREF反推, 每轮采样更新 */
 extern volatile unsigned int  g_powerOnTimer;  /* 上电自检计时器 */
 extern volatile unsigned char g_powerOnPhase;  /* 上电自检阶段(0/1/2) */
 
@@ -384,29 +415,17 @@ extern volatile unsigned char g_tempPhase;     /* NTC读温状态: 0=等待间�
 extern volatile unsigned int  g_tempSettleCnt; /* NTC建立等待计数器(轮) */
 extern volatile unsigned int  g_tempReadRoundCnt; /* 温度读取间隔计数器(轮) */
 
-extern volatile bit g_doAdcSample;          /* ADC采样请求标志 */
-extern volatile bit g_adcBusy;              /* ADC忙标志: 主循环采样中, ISR不重复请求 */
-
 /* PWM/CC-CV 控制变量 */
 extern volatile unsigned char g_pwmDuty;       /* 当前PWM占空比(0~PWM_MAX) */
 extern volatile unsigned char g_pwmCounter;    /* PWM计数器(ISR中递增, 0~31循环) */
 extern signed int g_cvIntegral;                /* CV PI积分累加器 */
 
+/* 显式节拍(V57A): ISR维护10ms硬件节拍, 状态机计时与打印/主循环轮速解耦 */
+extern volatile unsigned int  g_hwTick;        /* 10ms硬件节拍(ISR递增) */
+extern volatile unsigned int  g_elapsedTicks;  /* 主循环本轮经过的10ms节拍数 */
+
 /* UART通信变量 */
 extern volatile bit g_printFlag;
-
-/* 电池检测日志变量(charge_mgr.c中设置, main.c中打印) */
-extern volatile bit g_detectLogFlag;        /* 检测日志标志: 检测到NiMH/干电池时置1 */
-extern volatile unsigned char g_detectLogSlot;   /* 检测日志槽位(0~11) */
-extern volatile unsigned char g_detectLogType;   /* 检测日志电池类型(BAT_TYPE_NIMH/DRY) */
-
-/* 状态机调试追踪变量(main.c中定义, charge_mgr.c中更新) */
-extern volatile unsigned char g_dbgSlot;        /* 状态变化的槽位 */
-extern volatile unsigned char g_dbgOldState;    /* 跳转前的旧状态 */
-extern volatile unsigned char g_dbgNewState;    /* 跳转后的新状态 */
-extern volatile unsigned char g_dbgNewType;     /* 新电池类型 */
-extern volatile unsigned int  g_dbgVoltage;     /* 当前电压值 */
-extern volatile bit g_dbgDetectFlag;            /* 状态变化标志, 主循环处理 */
 
 /* 只读配置表(存放于ROM) */
 extern const unsigned char s_adcChannels[BATTERY_SLOTS];   /* 12槽BxAD ADC通道映射表 */
@@ -424,13 +443,13 @@ unsigned char ADC_Sample(unsigned char adch, unsigned char adldo);  /* ADC单次
 /* 充电管理 */
 unsigned int Read_Temperature(void);        /* 读取NTC温度(0.1°C), 返回temp_x10 */
 unsigned char Detect_BatteryType(unsigned int voltage); /* 根据电压判断电池类型 */
-void ChargeProcess_Slot(unsigned char idx); /* 单槽充电状态机处理 */
-void Charging_Control(void);                /* 12路充电使能控制(含温度保护) */
+unsigned int Get_Vcc(void);                 /* 采样VREF反推实时VCC(mV), 写回g_vcc_mv */
+unsigned int Adc_Norm(unsigned char ch);    /* 采样ADC通道并归一化到VCC_REF_MV(5000) */
+void Slot_Charge_Ctrl(unsigned char idx);   /* 单槽同步控制: 采样+检测+充电+MOSFET */
 void CCCV_Control(void);                    /* CC-CV恒流恒压PWM占空比调节 */
 
 /* LED控制 */
-void Update_LED_Slot(unsigned char idx);    /* 根据槽位状态更新LED显示 */
-void Led_BlinkProcess(void);                /* LED闪烁计时处理 */
+void Update_LED_Global(void);               /* 根据12槽状态更新全局LED显示 */
 void PowerOnLedSequence(void);              /* 上电LED自检序列 */
 
 /* UART调试输出 */
