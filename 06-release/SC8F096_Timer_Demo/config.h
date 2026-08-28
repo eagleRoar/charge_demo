@@ -1,4 +1,4 @@
-﻿/*-------------------------------------------
+/*-------------------------------------------
   L1211 12槽充电器 - 全局配置文件
   MCU: SC8F096AD832 QFN32
   功能: 12通道恒压锂电池脉冲充电管理
@@ -7,7 +7,7 @@
   固件版本字符串(烧录后通过串口输出, 每次修改代码后迭代)
   格式: Vxx[字母], 例如 V48A, V48B, V49
 */
-#define FIRMWARE_VERSION  "V57B"
+#define FIRMWARE_VERSION  "V57O"
 
 /*
   原理图参考: L1211 TOP V2.3 (20260624)
@@ -139,9 +139,7 @@
 #define ADC_V_FULL          3100   /*  1.52V 满电阈值(CV切入), 公式: bat_mV≈1518 */
 #define ADC_V_OVER          3850   /*  1.64V 过压保护, 恒压锂charger IC高阻抗特性导致
                                        ADC读数偏高(实测~3766), 3850留足裕量同时
-                                       低于OPEN(3990), 确保真实过压仍可检出.
-                                       V54L回退: 3950导致B5/B6/B9/B10/B11 CV阶段
-                                       电压虚高超OPEN被误拔, 恢复3850并调整CV上爬阈值. */
+                                       低于OPEN(3990), 确保真实过压仍可检出. */
 #define ADC_V_OPEN          3990   /*  空槽判为开路(ADC=4095≈VCC) */
 #define ADC_V_NEAR_OPEN     3500   /*  准开路阈值: 碳性/碱性电池开槽后电容虚高,
                                        电压可接近OPEN但内阻大, 需与低内阻锂电区分 */
@@ -169,11 +167,10 @@
 
 /*========================================================================
   充电时间阈值
-  说明: V57A 起状态机计时改为"显式10ms节拍"(ISR维护g_hwTick, chargeTimer
+  说明: 状态机计时采用"显式10ms节拍"(ISR维护g_hwTick, chargeTimer
   按真实经过的10ms数累加), 与主循环轮速/UART打印阻塞完全解耦.
   因此 TICK_PER_SEC=100 精确表示 100tick=1秒(10ms/tick),
-  下方常量按注释标注的设计物理时长校准:
-    TIME_DETECT_WAIT=240 → 2.4秒 (原V55A实测因打印阻塞被拉长至~24秒)
+  下方常量按注释标注的设计物理时长校准.
   ========================================================================*/
 #define TICK_PER_SEC        100         /* 1秒对应的tick数(10ms/tick, 显式硬件节拍) */
 #define TIME_ACTIVATE_MAX   (60 * TICK_PER_SEC)            /* 激活超时: 60秒 */
@@ -184,14 +181,14 @@
 #define DETECT_SETTLE_DROP  50                             /* 稳定判定: ADC下降<50视为已稳定 */
 #define TIME_CV_HOLD        (600 * TICK_PER_SEC)           /* CV恒压保持: 600秒(10分钟) */
 #define IDLE_POLL_TICKS     (2400)                          /* 空槽IDLE轮询停留: 24秒,
-                                                               避免空槽DETECT红灯周期性常亮(V51C) */
+                                                               避免空槽DETECT红灯周期性常亮 */
 #define PRINT_INTERVAL_TICKS (200)  /* UART打印间隔: 200×10ms=2秒(与状态机节拍解耦,
                                         阻塞式打印每2s一次, PWM冻结占比从86%降至~35%) */
 
 #define CC_BLOCK_TICKS      (600 * TICK_PER_SEC)   /* CC超时分块: 10分钟tick数(60000<65535) */
 #define CC_MAX_BLOCKS       18                     /* 18块=180分钟=3小时 */
 
-/* CC无进展检测(V50E): 漏洞A闭环
+/* CC无进展检测: 漏洞A闭环
    进入CC后窗口期内电压未上升≥CC_NO_PROGRESS_RISE → 停滞于中压高位
    (2000~3100)不升不降 → ERROR, 而非等CC_MAX_BLOCKS(最长3h)超时
    适用对象: 仅LI_ION(LINEAR_LI已有16s超时路径, 不重复检测)
@@ -199,7 +196,12 @@
 #define CC_NO_PROGRESS_TICKS (6000)   /* 无进展检测窗口: 60秒 */
 #define CC_NO_PROGRESS_RISE  (30)    /* 窗口内最小电压上升: 30ADC */
 
-/* CV上爬检测(V51C): 漏洞B加固
+/* FULL→CC补电循环限制: 碳性误判LINEAR_LI后CC→CV→FULL→回落补电无限循环,
+   真锂电满电后OCV≈3100稳定不回落到<2800, 仅异常电池反复回落.
+   补电累计超过上限→ERROR锁死, 杜绝无限循环. 拔出/新检测周期复位. */
+#define FULL_REFILL_MAX      2       /* 满电回落补电最大次数: 超过判碳性循环锁死 */
+
+/* CV上爬检测: 漏洞B加固
    进入CV后窗口期内电压相对起点持续爬升超阈值 → 过充特征
    (碳性/碱性/镍氢误判锂电进CV), 直接ERROR而非等TIME_CV_HOLD(10分钟)误判FULL.
    正常满电锂电进CV后电压被PI钳位在ADC_V_FULL附近不再爬升, 不会误报.
@@ -208,7 +210,7 @@
 #define CV_NO_PROGRESS_RISE  (50)    /* 窗口内相对起点上升超此值判过充: 50ADC */
 #define CV_NO_PROGRESS_CNT   3       /* 连续超限帧数消抖(防采样噪声误杀) */
 
-/* CV崩溃循环上限(V51C): 漏洞B加固
+/* CV崩溃循环上限: 漏洞B加固
    碳性/碱性误判进CV后电压崩溃下跌→PEAK_DROP回DET→再误判进CV的死循环.
    g_ccBlocks复用为CV崩溃计数(PEAK_DROP回DET时+1), 累计达此值后
    DETECT_LI_ROUTE再进CV直接ERROR, 杜绝无限循环占用充电资源. */
@@ -271,8 +273,37 @@
 #define DIODE_RISE_THRESH    900            /* 电压上升>900ADC判为线性锂爬升
                                                 镍氢/干电池体二极管导通, 爬升<此值
                                                 可避免碱性/碳性/镍氢误判为线性锂.
-                                                V54L回退: 200导致碳性/碱性误放行风险,
-                                                B11/B12改由中压钳位兜底保护, 不降低阈值. */
+                                                阈值不宜再降, 过低会放行碳性/碱性. */
+#define DIODE_TOP_MARGIN     150     /* 钳位到顶容差: 归一化读数距当前VCC满量程
+                                       (VCC_norm=g_vcc_mv*4096/5000)150ADC以内,
+                                       视为BxAD电容被100K上拉至VCC. IMP_CHECK用此
+                                       判空槽(pre与v均接近各自VCC_norm, 消除低VCC
+                                       时空槽误放行); DIODE_TEST超时用v接近VCC_norm
+                                       判线性锂(体二极管阻断爬升至顶, 消除中压锂电
+                                       爬升量不足900ADC的盲区). */
+#define DIODE_PRE_MIN       2100    /* 爬升提前放行/中压钳位放行的脉冲前电压下界
+                                       (V57E log 5次测试标定): 实测锂电pre≥2271,
+                                       碳性pre≤1936, 2100落在空档. 阻止低压碳性
+                                       电容被100K自由浮空(爬升快且无界, B10 T2
+                                       pre=1389越过+900被误放行)冒充锂电. */
+#define DIODE_MID_MIN       2600    /* 中压锂电放行绝对下界(V57E log标定): 实测锂电
+                                       超时slot_v≥2637, 镍氢停留2300~2500不爬升,
+                                       2600落在空档. 避免镍氢(B2 T3 pre≈2350持稳
+                                       2300~2500)被中压钳位误放行进CC. */
+#define DIODE_PRE_DRY_MAX   1936    /* 干电池(碳性)脉冲前电压实测上沿(V57E log标定):
+                                       低于此值视为干电池特征, 作为低压锂电预充放行的
+                                       pre下界. 深度过放锂电(B12 pre=1977~2152)高于
+                                       此值且DIODE_TEST中slot_v爬升超钳位→预充放行,
+                                       隔离碳性(pre≤1936)自由爬升冒充锂电. */
+#define DIODE_CLIMB_MIN     50      /* 高压/中压放行所需slot_v相对pre的最小爬升(ADC):
+                                       锂电体二极管阻断使slot_v持续爬升(实测≥80),
+                                       碱性/空槽平直(slot_v≈pre, 实测差≤6), 以此
+                                       隔离平直高值非锂电(碱性pre≈3500/空槽轨偏置
+                                       ≈3500). */
+#define DIODE_MID_FLAT_MAX  3000    /* 中压平直放行的pre上界(实测平直锂电pre≤2849):
+                                       pre低于此值且slot_v未跌破pre-150即视为持稳锂电
+                                       放行(爬升缓慢的V57E中压锂电); pre≥此值必须真实
+                                       爬升, 挡碱性/空槽平直高值冒充锂电. */
 
 /*========================================================================
   温度保护阈值
@@ -400,10 +431,10 @@ extern unsigned char g_ccBlocks[12];        /* CC阶段10分钟块计数 */
 extern unsigned char g_ovCnt[12];           /* 过压消抖计数器 */
 
 /* g_slotRefV[12]: 槽位参考电压(DETECT初始值+CC/CV峰值), g_capFlag: 电容虚高标记, g_impData: IMP_CHECK共享数据 */
-extern unsigned int g_slotRefV[BATTERY_SLOTS];  /* V54H: 打印ref用(DETECT基准/CC-CV峰值) */
+extern unsigned int g_slotRefV[BATTERY_SLOTS];  /* 槽位参考电压(DETECT基准/CC-CV峰值, 打印ref用) */
 extern unsigned char g_impCheckSlot;        /* IMP_CHECK串行锁: 0xFF=空闲, 其他=持有锁的槽号 */
 extern unsigned int g_impData;              /* IMP_CHECK共享数据: 低12位脉冲前电压+高4位VCC编码 */
-extern unsigned char g_diodeTrace[4];  /* DIODE_TEST v偏移轨迹(V54G): 4点(ct=7,14,21,28), 每点1字节存(v-pre)/4+128 */
+extern unsigned char g_diodeTrace[4];  /* DIODE_TEST v偏移轨迹: 4点(ct=7,14,21,28), 每点1字节存(v-pre)/4+128 */
 extern unsigned char g_diodeTraceCnt;  /* DIODE_TEST v轨迹采样点数, 主循环打印后清零 */
 extern unsigned char g_diodeTraceSlot; /* 轨迹归属槽号(打印时匹配) */
 extern volatile unsigned int  g_vcc_mv;       /* 系统电压(mV), 由VREF反推, 每轮采样更新 */
@@ -420,7 +451,7 @@ extern volatile unsigned char g_pwmDuty;       /* 当前PWM占空比(0~PWM_MAX) 
 extern volatile unsigned char g_pwmCounter;    /* PWM计数器(ISR中递增, 0~31循环) */
 extern signed int g_cvIntegral;                /* CV PI积分累加器 */
 
-/* 显式节拍(V57A): ISR维护10ms硬件节拍, 状态机计时与打印/主循环轮速解耦 */
+/* 显式10ms节拍: ISR维护硬件节拍, 状态机计时与打印/主循环轮速解耦 */
 extern volatile unsigned int  g_hwTick;        /* 10ms硬件节拍(ISR递增) */
 extern volatile unsigned int  g_elapsedTicks;  /* 主循环本轮经过的10ms节拍数 */
 

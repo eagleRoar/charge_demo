@@ -7,15 +7,36 @@
 #define DETECT_STABLE_TICKS      20    /* 高压稳定确认tick数: 20tick=200ms无显著下跌→真锂电 */
 #define DIODE_CLAMP_MARGIN       150   /* DIODE_TEST钳位判据: 相对脉冲前电压的最大允许爬升(ADC).
                                           超过说明电容未被电池/体二极管钳位→干电池高内阻特征 */
-#define CC_RETRY_FLAG            0x80  /* V54K: g_ccBlocks bit7 复用为LINEAR_LI CC超时循环标记.
+#define CC_RETRY_FLAG            0x80  /* g_ccBlocks bit7 复用为LINEAR_LI CC超时循环标记:
                                           0=首次超时回DETECT重判, 1=再次超时直接ERROR锁死,
-                                          避免B3碳性误判LINEAR_LI后16s超时→ERROR→DET的无限循环.
-                                          V57B: 标志置位后imp_linear_li拒绝再次放行(直接DRY锁死,
-                                          清highVFlag防ERROR重判), 配合CC块计数检查屏蔽bit7.
+                                          避免碳性误判LINEAR_LI后循环重判. 标志置位后
+                                          imp_linear_li拒绝再次放行(直接DRY锁死),
                                           进CV/新CC周期/电池拔出时清零. */
-#define CC_LINEAR_LI_TICKS       1600  /* V57A: LINEAR_LI在CC的最长停留(16s, 原硬编码200tick
-                                          按~80ms/tick校准; 显式10ms节拍下换算为1600tick).
+#define CC_LINEAR_LI_TICKS       1600  /* LINEAR_LI在CC的最长停留(16s, 10ms/tick换算).
                                           超过仍未进CV→回DETECT重判/ERROR锁死. */
+
+/* --- DIODE_TEST 判据命名布尔量: 判定链逐级清单化, 每个宏=一条判据(语义见各调用处) ---
+   宏参数全称约定:
+     pre_volt  = 脉冲前电压 IMP_PRE_VOLT(g_impData): 电池开路电压估计
+     slot_volt = 当前槽电压读数 slot_v
+     vcc_norm  = 归一化VCC VCC_NORM(g_vcc_mv): 空槽/钳位上限参考
+   判据概览: RISE_FAST=早期快速爬升锂电 / HI_RECOVER=高压回落线性锂 / NIMH_FAKE=NiMH上拉虚高
+             LOW_CLAMP=低压钳位兜底 / TOP_CLAMPED=钳位到顶 / HI_CLIMB=高压段真实爬升
+             MID_GROW=中压爬升或平直持稳 / LOW_PRECHG=低压锂电预充 */
+#define DIO_RISE_FAST(pre_volt, slot_volt)   ((pre_volt) >= DIODE_PRE_MIN && (slot_volt) > (pre_volt) + DIODE_RISE_THRESH)
+#define DIO_HI_RECOVER(pre_volt, slot_volt)  ((pre_volt) > 3000U && (slot_volt) > ADC_V_NIMH_MAX && (slot_volt) < (pre_volt))
+#define DIO_NIMH_FAKE(pre_volt, slot_volt)   ((slot_volt) > ADC_V_NIMH_MAX && (pre_volt) < DIODE_PRE_MIN)
+#define DIO_LOW_CLAMP(pre_volt, slot_volt)   ((slot_volt) > 2100U && (pre_volt) <= 2300U && (slot_volt) + 160U >= (pre_volt) && \
+                                              (slot_volt) <= (pre_volt) + DIODE_CLAMP_MARGIN)
+#define DIO_TOP_CLAMPED(slot_volt, vcc_norm) ((slot_volt) + DIODE_TOP_MARGIN >= (vcc_norm))
+#define DIO_HI_CLIMB(pre_volt, slot_volt)    ((pre_volt) > ADC_V_NEAR_OPEN && (pre_volt) < ADC_V_OPEN && \
+                                              (slot_volt) >= (pre_volt) + DIODE_CLIMB_MIN)
+#define DIO_MID_GROW(pre_volt, slot_volt)    ((slot_volt) > DIODE_MID_MIN && (slot_volt) < ADC_V_OPEN && \
+                                              (pre_volt) >= DIODE_PRE_MIN && (pre_volt) < 3500U && \
+                                              (((pre_volt) < DIODE_MID_FLAT_MAX && (slot_volt) + 150U >= (pre_volt)) || \
+                                               (slot_volt) >= (pre_volt) + DIODE_CLIMB_MIN))
+#define DIO_LOW_PRECHG(pre_volt, slot_volt)  ((slot_volt) > (pre_volt) + DIODE_CLAMP_MARGIN && (slot_volt) < ADC_V_OPEN && \
+                                              (pre_volt) > DIODE_PRE_DRY_MAX && (pre_volt) < 3500U)
 
 /*========================================================================
   全局变量
@@ -25,9 +46,10 @@ unsigned char g_tempProtect = 0;
 unsigned char g_vccProtect  = 0;         /* VCC低压保护标志: 1=VCC过低, 关闭充电 */
 unsigned int g_slotRefV[BATTERY_SLOTS];  /* 槽位参考电压: DETECT存初始值/稳定基准, CC/CV存峰值 */
 unsigned char g_ccBlocks[12];           /* CC阶段10分钟块计数(解决16bit chargeTimer溢出);
-                                           V54K复用bit7作为LINEAR_LI CC超时循环标记 */
+                                           bit7复用为CC_RETRY_FLAG(见其定义) */
 unsigned char g_ovCnt[12];              /* 过压消抖计数器: 连续过压次数 */
 unsigned char g_detectLowCnt[12];       /* 通用消抖计数器(短路消抖/AMBIGUOUS消抖/LI_ION消抖) */
+unsigned char g_fullRefillCnt[12];      /* FULL→CC补电循环计数: 碳性误判循环锁死用, 拔出/新检测复位 */
 unsigned char g_impCheckSlot = 0xFF;    /* IMP_CHECK串行锁: 0xFF=空闲, 其他=持有锁的槽号
                                            同一时间只允许一个槽做IMP_CHECK,
                                            避免NiMH拉垮VCC导致其他槽误判 */
@@ -35,11 +57,11 @@ unsigned char g_stableCnt[12];           /* DETECT高压稳定循环专用计数
 unsigned int g_capFlag;                  /* 电容虚高标记位掩码: bit[i]=1表示槽i需扩展等待电容放电 */
 unsigned int g_impData;                  /* IMP_CHECK共享数据: 低12位脉冲前电压+高4位VCC编码(100mV步进)
                                            因IMP_CHECK串行化, 同一时间仅一个槽使用 */
-unsigned char g_diodeTrace[4];         /* DIODE_TEST v轨迹(V54G): 4点(ct=7,14,21,28),
+unsigned char g_diodeTrace[4];         /* DIODE_TEST slot_v轨迹: 4点(charge_ticks=7,14,21,28),
                                          每点1字节存相对pre偏移/4+128(±127*4 ADC, clamp),
                                          单槽共享缓冲(IMP_CHECK串行锁保证同时仅一槽在DIODE_TEST),
                                          仅ISR写数组供主循环打印, 不阻塞UART */
-unsigned char g_diodeTraceCnt;         /* DIODE_TEST v轨迹采样点数, 主循环打印后清零 */
+unsigned char g_diodeTraceCnt;         /* DIODE_TEST slot_v轨迹采样点数, 主循环打印后清零 */
 unsigned char g_diodeTraceSlot;        /* 轨迹归属槽号(打印时匹配) */
 unsigned int g_highVFlag;                /* DETECT高压确认标记: bit[i]=1表示槽i在高压稳定循环中
                                            连续≥DETECT_STABLE_TICKS维持V>2900, 用于IMP_CHECK
@@ -63,7 +85,7 @@ unsigned int Get_Vcc(void)
   函数: Adc_Norm
   功能: 采样指定ADC通道并归一化到 VCC_REF_MV(5000mV) 基准
   说明: ADC参考为VDD(比例式), 同一物理电压在不同VCC下原始ADC不同.
-        归一化后 raw*5000/vcc 使同一电池在不同槽位/不同电源下读数一致,
+        归一化后 raw*vcc/5000 使同一电池在不同槽位/不同电源下读数一致,
         可直接套用 VCC≈5000 标定的全部阈值.
 ========================================================================*/
 unsigned int Adc_Norm(unsigned char ch)
@@ -74,7 +96,7 @@ unsigned int Adc_Norm(unsigned char ch)
 	raw = adresult;
 	if(g_vcc_mv == 0)
 		return raw;                     /* 防除0 */
-	return (unsigned int)(((unsigned long)raw * VCC_REF_MV) / (unsigned long)g_vcc_mv);
+	return (unsigned int)(((unsigned long)raw * (unsigned long)g_vcc_mv) / VCC_REF_MV);
 }
 
 unsigned int Read_Temperature(void)
@@ -144,44 +166,42 @@ unsigned char Detect_BatteryType(unsigned int voltage)
 volatile BatterySlot_t g_slot[12];
 
 /* 槽位字段读写辅助宏 */
-#define SLOT_RD_ALL(idx, st, ty, v, ct)  do { \
-	st = g_slot[(idx)].state; ty = g_slot[(idx)].type; \
-	v  = g_slot[(idx)].voltage; ct = g_slot[(idx)].chargeTimer; \
+#define SLOT_RD_ALL(idx, state, type, slot_v, charge_ticks)  do { \
+	state = g_slot[(idx)].state; type = g_slot[(idx)].type; \
+	slot_v  = g_slot[(idx)].voltage; charge_ticks = g_slot[(idx)].chargeTimer; \
 } while(0)
 
-#define SLOT_WR_ALL(idx, st, ty, v, ct)  do { \
-	g_slot[(idx)].state = st; g_slot[(idx)].type = ty; \
-	g_slot[(idx)].voltage = v; g_slot[(idx)].chargeTimer = ct; \
+#define SLOT_WR_ALL(idx, state, type, slot_v, charge_ticks)  do { \
+	g_slot[(idx)].state = state; g_slot[(idx)].type = type; \
+	g_slot[(idx)].voltage = slot_v; g_slot[(idx)].chargeTimer = charge_ticks; \
 } while(0)
 
 /* 锂电池DETECT后统一充电路由: 计算bat_mv→按电压档位跳转ACTIVATE/PRECHARGE/CV/CC */
-#define DETECT_LI_ROUTE(idx, v, st, ct)  do { \
-	unsigned long vx_mv = (unsigned long)(v) * VCC_REF_MV / 4096UL; \
+#define DETECT_LI_ROUTE(idx, slot_v, state, charge_ticks)  do { \
+	unsigned long vx_mv = (unsigned long)(slot_v) * VCC_REF_MV / 4096UL; \
 	unsigned long bat_mv_long = ALPHA_NUM * vx_mv + BETA_NUM * VCC_REF_MV; \
 	unsigned int  bat_mv = (unsigned int)((bat_mv_long + CAL_DEN/2UL) / CAL_DEN); \
 	if(bat_mv <= BAT_MV_ACTIVATE) { \
-		st = CHG_ACTIVATE; \
+		state = CHG_ACTIVATE; \
 	} else if(bat_mv < BAT_MV_PRECHARGE) { \
-		st = CHG_PRECHARGE; \
+		state = CHG_PRECHARGE; \
 	} else if(bat_mv >= BAT_MV_FULL) { \
 		if(g_ccBlocks[idx] >= CV_DROP_LOOP_MAX) { \
-			st = CHG_ERROR; \
+			state = CHG_ERROR; \
 		} else { \
-			st = CHG_CV_CHARGE; \
-			g_slotRefV[idx] = v; \
+			state = CHG_CV_CHARGE; \
+			g_slotRefV[idx] = slot_v; \
 			g_ccBlocks[idx] = 0; \
 			g_stableCnt[idx] = 0; \
 		} \
 	} else { \
-		st = CHG_CC_CHARGE; \
-		g_ccBlocks[idx] &= CC_RETRY_FLAG; /* V54V: 保留CC_RETRY_FLAG(仅清块计数),
-		                                     使CC超时重判循环能累计到再次超时ERROR.
-		                                     V54T曾回退为=0导致B3碳性中压被V54U中压钳位
-		                                     放行后16s超时→DETECT→再CC无限循环不ERROR. */ \
-		g_slotRefV[idx] = v; \
+		state = CHG_CC_CHARGE; \
+		g_ccBlocks[idx] &= CC_RETRY_FLAG; /* 仅清块计数, 保留CC_RETRY_FLAG(使CC超时
+		                                     重判能累计到再次超时ERROR, 防无限循环) */ \
+		g_slotRefV[idx] = slot_v; \
 		g_stableCnt[idx] = 0; \
 	} \
-	ct = 0; \
+	charge_ticks = 0; \
 	g_ovCnt[idx] = 0; \
 	g_detectLowCnt[idx] = 0; \
 } while(0)
@@ -189,24 +209,33 @@ volatile BatterySlot_t g_slot[12];
 /* IMP_CHECK阶段VCC解码: 从g_impData高4位还原脉冲前VCC(mV), 误差≤50mV */
 #define IMP_VCC_DECODE(data)  (((((data) >> 12) & 0x0FU) + 38U) * 100U)
 
+/* IMP_CHECK阶段脉冲前电压解码: 从g_impData低12位还原脉冲前归一化电压(pre) */
+#define IMP_PRE_VOLT(data)  ((data) & 0x0FFFU)
+
+/* IMP_CHECK阶段g_impData打包: 低12位=脉冲前电压pre_v, 高4位=脉冲前VCC编码(100mV步进) */
+#define IMP_PACK(pre_v, vcc_mv)  ((pre_v) | ((unsigned int)((((vcc_mv) + 50U) / 100U) - 38U) << 12))
+
+/* VCC归一化满量程: 该VCC下空槽/爬升至顶读数的归一化ADC(=VCC*4096/5000) */
+#define VCC_NORM(vcc_mv)  ((unsigned int)(((unsigned long)(vcc_mv) * 4096UL) / VCC_REF_MV))
+
 void Slot_Charge_Ctrl(unsigned char idx)
 {
-	unsigned char st, ty;                   /* st: 充电状态, ty: 电池类型 */
-	unsigned int  v, ct;                   /* v: ADC电压(归一化), ct: 充电计时器 */
-	unsigned int  ctPrev;                  /* ct累加前值(跨越检测: 精确tick点ct==N) */
+	unsigned char state, type;                   /* state: 充电状态, type: 电池类型 */
+	unsigned int  slot_v, charge_ticks;                   /* slot_v: ADC电压(归一化), charge_ticks: 充电计时器 */
+	unsigned int  charge_ticks_prev;                  /* charge_ticks累加前值(跨越检测: 精确tick点charge_ticks==N) */
 	unsigned char dly;                     /* 稳定延时循环计数 */
 
-	SLOT_RD_ALL(idx, st, ty, v, ct);
+	SLOT_RD_ALL(idx, state, type, slot_v, charge_ticks);
 
-	/* --- 显式节拍(V57A): ct按ISR 10ms硬件节拍累加(与打印/主循环轮速解耦).
-	   累加粒度可能>1tick(打印轮恢复后一次性补回), 因此所有"ct==N"精确判断
-	   必须用 ctPrev/ct 跨越检测, 不能直接比较. --- */
-	ctPrev = ct;
-	ct += (unsigned int)g_elapsedTicks;
+	/* --- charge_ticks按ISR 10ms硬件节拍累加(与打印/主循环轮速解耦).
+	   累加粒度可能>1tick, 因此所有"charge_ticks==N"精确判断
+	   必须用 charge_ticks_prev/charge_ticks 跨越检测, 不能直接比较. --- */
+	charge_ticks_prev = charge_ticks;
+	charge_ticks += (unsigned int)g_elapsedTicks;
 
 	/* --- 单槽同步采样: 关MOSFET → 稳定延时 → 采样并归一化 --- */
 	SLOT_CHARGE_OFF(idx);
-	if(st == CHG_DETECT || st == CHG_IMP_CHECK || st == CHG_IMP_DIODE_TEST)
+	if(state == CHG_DETECT || state == CHG_IMP_CHECK || state == CHG_IMP_DIODE_TEST)
 	{
 		/* 2000us: 让BxAD电容充电/放电到可区分电池类型的电平 */
 		for(dly = 0; dly < 20; dly++)
@@ -220,89 +249,85 @@ void Slot_Charge_Ctrl(unsigned char idx)
 	{
 		unsigned int newv = Adc_Norm(s_adcChannels[idx]);
 		/* LINEAR_LI CC/CV伪OPEN消噪: 读到OPEN不更新, 保留上次有效值 */
-		if(!(ty == BAT_TYPE_LINEAR_LI &&
-		     (st == CHG_CC_CHARGE || st == CHG_CV_CHARGE) &&
+		if(!(type == BAT_TYPE_LINEAR_LI &&
+		     (state == CHG_CC_CHARGE || state == CHG_CV_CHARGE) &&
 		     newv >= ADC_V_OPEN))
 		{
-			v = newv;
+			slot_v = newv;
 		}
 	}
 
-	switch(st)
+	switch(state)
 	{
 	case CHG_IDLE:
-		/* V51C: 空槽轮询停留. 空槽(v≥OPEN)停留IDLE_POLL_TICKS后再转DETECT,
-		   避免空槽在 DETECT(130tick红灯)→IMP_CHECK→IDLE 间循环导致红灯
-		   常亮(修复后空槽大部分时间灯灭, 全IDLE→LED全灭).
-		   插入电池(v<OPEN)立即转DETECT, 响应不受影响. */
-		if(v >= ADC_V_OPEN)
+		/* 空槽轮询停留: 空槽(slot_v≥OPEN)停留IDLE_POLL_TICKS后再转DETECT,
+		   避免空槽在DETECT→IMP_CHECK→IDLE间循环导致红灯常亮.
+		   插入电池(slot_v<OPEN)立即转DETECT. */
+		if(slot_v >= ADC_V_OPEN)
 		{
-			if(ct < IDLE_POLL_TICKS)
-				break;              /* ct已在开头按10ms节拍累加 */
+			if(charge_ticks < IDLE_POLL_TICKS)
+				break;              /* charge_ticks已在开头按10ms节拍累加 */
 		}
-		ct = 0;
-		st = CHG_DETECT;
-		g_ccBlocks[idx] = 0;      /* V51C: 新检测周期复位CV崩溃计数(防ERROR后换电池死循环)
-		                           V54K: 同时清CC_RETRY_FLAG */
+		charge_ticks = 0;
+		state = CHG_DETECT;
+		g_ccBlocks[idx] = 0;      /* 新检测周期复位块计数/CV崩溃计数与CC_RETRY_FLAG */
+		g_fullRefillCnt[idx] = 0; /* 新检测周期复位补电循环计数 */
 		g_highVFlag &= ~((unsigned int)1 << idx);
-		/* 记录IDLE→DETECT初始电压, 用于ct<TIME_DETECT_WAIT期间
+		/* 记录IDLE→DETECT初始电压, 用于charge_ticks<TIME_DETECT_WAIT期间
 		   检测碳性/空槽电容被串扰充电(电压大幅上升>1000ADC) */
-		if(v < ADC_V_OPEN)
-			g_slotRefV[idx] = v;
+		if(slot_v < ADC_V_OPEN)
+			g_slotRefV[idx] = slot_v;
 		else
 			g_slotRefV[idx] = 0;
 		break;
 
 	case CHG_DETECT:
-		/* ct已在开头按10ms节拍累加 */
+		/* charge_ticks已在开头按10ms节拍累加 */
 
-		/* 首次进入DETECT(跨越ct=1): 重置本槽专用计数器, 清除可能残留的电容标记 */
-		if(ctPrev < 1U && ct >= 1U)
+		/* 首次进入DETECT(跨越charge_ticks=1): 重置本槽专用计数器, 清除可能残留的电容标记 */
+		if(charge_ticks_prev < 1U && charge_ticks >= 1U)
 		{
 			g_stableCnt[idx] = 0;
 			g_capFlag &= ~((unsigned int)1 << idx); /* 通过idx清除可能残留的电容标记 */
 		}
 
-		if(ct < TIME_DETECT_WAIT)
+		if(charge_ticks < TIME_DETECT_WAIT)
 		{
-			/* V54I: 停用"串扰充电快速检测"(原: ref>2500 && v>ref+1000 && v<OPEN → 判DRY).
-			   V54H实测误杀B5恒压锂: ref=2533∈(2500,2990), DETECT中charger IC输出电容
-			   BxAD电压建立慢, 从2533持续爬升至真实值(~3879), v>ref+1000被误判为
-			   "电容被串扰充电"→DRY永久锁死(ct=17, g_highVFlag被清无法回DETECT).
-			   该检查与ct≥30后的高压稳定流程功能重叠且必然误杀ref∈(2500,2990)的真锂电,
-			   停用后干电池/碱性改走 IMP_CHECK(VCC不塌+脉冲后v大跌>1000→DRY) 或
-			   DIODE_TEST(爬升不足超时→DRY) 正常拒充链路, 仅拒充时间变长数秒. */
+			/* 停用"串扰充电快速检测"(ref>2500 && slot_v>ref+1000 → 判DRY):
+			   该判据会误杀charger IC输出电容建立慢的真锂电, 且与高压稳定
+			   流程功能重叠. 干电池/碱性改走IMP_CHECK(VCC不塌+脉冲后大跌)
+			   或DIODE_TEST(爬升不足超时)拒充, 仅拒充时间略长. */
 			break;
 		}
 
 		/* 高内阻电池(碳性/碱性)开槽放电稳定检测:
 		   OPEN→DETECT时槽位电容充满近VCC电荷, 高内阻电池放电慢,
 		   初始ADC读数偏高(碳性R6P实测: 3745→1972需约8秒)
-		   ct=200时标记>2900, 稳定后若降至≤2900→电容放电→g_capFlag清除
+		   charge_ticks=200时标记>2900, 稳定后若降至≤2900→电容放电→g_capFlag清除
 		   高压区间(>2900): 连续稳定tick=真锂电池→放行;
 		   否则延至≤2900直接判DRY或超时(碳性电容放电至2900约3秒) */
-		if(ctPrev < TIME_DETECT_WAIT && ct >= TIME_DETECT_WAIT)
+		if(charge_ticks_prev < TIME_DETECT_WAIT && charge_ticks >= TIME_DETECT_WAIT)
 		{
-			g_slotRefV[idx] = v;
-			if(v > ADC_V_NIMH_MAX)
+			g_slotRefV[idx] = slot_v;
+			if(slot_v > ADC_V_NIMH_MAX)
 				g_capFlag |= (unsigned int)1 << idx;  /* 标记: 初始电压>2900(可能是电容放电) */
 			break;
 		}
-		if(v > ADC_V_NIMH_MAX && v < ADC_V_OPEN)
+		if(slot_v > ADC_V_NIMH_MAX && slot_v < ADC_V_OPEN)
 		{
-			/* 门禁: 仅ct=TIME_DETECT_WAIT时电压已>2900(g_capFlag置位)
+			/* 门禁: 仅charge_ticks=TIME_DETECT_WAIT时电压已>2900(g_capFlag置位)
 			   才进入高压稳定路径. 若初始电压≤2900(无cap标记)后电压
 			   异常跳升>2900: 多槽IMP_CHECK排队等待期间其他槽充电噪声/
 			   串扰导致ADC读值异常(碳性1960→3769), 重置DETECT重读.
 			   但电压>NEAR_OPEN(3500)时已接近OPEN, 不可能是碳性噪声,
 			   应继续高压稳定流程, 避免高压线性锂/恒压锂(B11等)卡死.
-			   接触改善导致电压真上升会在重置后ct=TIME_DETECT_WAIT时正确置cap标记
-			   ty=AMBIGUOUS跳过: amb_shortcut清除g_capFlag后ty已标记
-			   为AMBIGUOUS(确认高压稳定), 门禁不应重置ct→丢失进度 */
-			if(!(g_capFlag & ((unsigned int)1 << idx)) && ty != BAT_TYPE_AMBIGUOUS &&
-			   v <= ADC_V_NEAR_OPEN)
+			   接触改善导致电压真上升会在重置后charge_ticks=TIME_DETECT_WAIT时正确置cap标记
+			   type=AMBIGUOUS跳过: amb_shortcut清除g_capFlag后type已标记
+			   为AMBIGUOUS(确认高压稳定), 门禁不应重置charge_ticks→丢失进度 */
+			if(!(g_capFlag & ((unsigned int)1 << idx)) && type != BAT_TYPE_AMBIGUOUS &&
+			   slot_v <= ADC_V_NEAR_OPEN)
 			{
-				ct = 0;
+				charge_ticks = 0;
 				g_slotRefV[idx] = 0;
 				g_stableCnt[idx] = 0;
 				g_detectLowCnt[idx] = 0;
@@ -325,26 +350,25 @@ void Slot_Charge_Ctrl(unsigned char idx)
 				   真干电池(碳性/碱性)无法在高压区间连续20tick保持稳定 */
 				g_highVFlag |= (unsigned int)1 << idx;
 				/* ── 阶段[2]: 扩展等待电容放电 ── */
-				if(v <= ADC_V_NIMH_MAX)
+				if(slot_v <= ADC_V_NIMH_MAX)
 				{
 					/* 电压降至2900以下 → 电容放电确认, 清除所有高压标记 */
 					g_capFlag &= ~((unsigned int)1 << idx);
 					g_stableCnt[idx] = 0;
 					g_highVFlag &= ~((unsigned int)1 << idx);
 				}
-				else if(ct < TIME_DETECT_WAIT + TIME_DETECT_SETTLE)
+				else if(charge_ticks < TIME_DETECT_WAIT + TIME_DETECT_SETTLE)
 				{
 					/* 高压锂电提前放行: g_highVFlag已确认V>2900稳定,
 			   碳性电池电容放电至≤2900实测R6P约3秒, 保守等
 			   25tick(≈2s)后仍>2900→真锂电, 直接IMP_CHECK.
-			   V54F方案B回退: V54E曾放宽至60tick, 但平衡点型碳性
-			   稳态分压降不下, 多等无益; 异常环境误入由DIODE_TEST
+			   碳性稳态分压降不下, 多等无益; 异常误入由DIODE_TEST
 			   判据及CC/CV崩溃锁定兜底 */
 				if((g_highVFlag & ((unsigned int)1 << idx)) &&
-				   ct >= TIME_DETECT_WAIT + 25U)
+				   charge_ticks >= TIME_DETECT_WAIT + 25U)
 					goto amb_shortcut;
 					/* 继续等待, 更新基准跟踪当前值 */
-					g_slotRefV[idx] = v;
+					g_slotRefV[idx] = slot_v;
 					break;
 				}
 					else
@@ -352,27 +376,31 @@ void Slot_Charge_Ctrl(unsigned char idx)
 				amb_shortcut:
 					/* 超时仍>2900: 走AMBIGUOUS→IMP_CHECK用VCC跌落做最后区分:
 					有charger IC(VCC跌落>200mV)→LI_ION, 无→LINEAR_LI
-					必须goto amb_check, 否则后续Detect_BatteryType(v)会
-					将ty覆盖为LI_ION(>2900), 导致IMP_CHECK被跳过 */
+					必须goto amb_check, 否则后续Detect_BatteryType(slot_v)会
+					将type覆盖为LI_ION(>2900), 导致IMP_CHECK被跳过 */
 					g_capFlag &= ~((unsigned int)1 << idx);
 					g_stableCnt[idx] = 0;
-					ty = BAT_TYPE_AMBIGUOUS;
+					type = BAT_TYPE_AMBIGUOUS;
 					goto amb_check;
 				}
 			}
 			else
 			{
-				/* ── 阶段[1]: 稳定循环 ── */
-				if(v + DETECT_SETTLE_DROP < v_init)
+				/* ── 阶段[1]: 稳定循环 ──
+				   超时兜底: 读数持续波动导致g_stableCnt长期凑不满20时,
+				   达到总等待上限强制走AMBIGUOUS→IMP_CHECK, 防止永久卡DETECT */
+				if(charge_ticks >= TIME_DETECT_WAIT + TIME_DETECT_SETTLE)
+					goto amb_shortcut;
+				if(slot_v + DETECT_SETTLE_DROP < v_init)
 				{
 					/* 电压显著下跌: 仍在放电, 更新基准并重置稳定计数 */
-					g_slotRefV[idx] = v;
+					g_slotRefV[idx] = slot_v;
 					g_stableCnt[idx] = 0;
 				}
 				else
 				{
 					/* 电压稳定(或小幅上升): 更新基准跟踪当前值, 递增稳定计数 */
-					g_slotRefV[idx] = v;
+					g_slotRefV[idx] = slot_v;
 					g_stableCnt[idx]++;
 				}
 				if(g_stableCnt[idx] < DETECT_STABLE_TICKS)
@@ -383,12 +411,12 @@ void Slot_Charge_Ctrl(unsigned char idx)
 				g_stableCnt[idx] = 0;            /* 无cap标记: 直接放行 */
 			}
 		}
-		else if(ct < TIME_DETECT_WAIT + TIME_DETECT_SETTLE && v < ADC_V_OPEN)
+		else if(charge_ticks < TIME_DETECT_WAIT + TIME_DETECT_SETTLE && slot_v < ADC_V_OPEN)
 		{
 			unsigned int v_ref = g_slotRefV[idx];
-			if(v_ref < ADC_V_OPEN && v + DETECT_SETTLE_DROP < v_ref)
+			if(v_ref < ADC_V_OPEN && slot_v + DETECT_SETTLE_DROP < v_ref)
 			{
-				g_slotRefV[idx] = v;
+				g_slotRefV[idx] = slot_v;
 				break;
 			}
 		}
@@ -400,38 +428,36 @@ void Slot_Charge_Ctrl(unsigned char idx)
 		{
 			g_capFlag &= ~((unsigned int)1 << idx);  /* 清除标记 */
 			g_detectLowCnt[idx] = 0;                  /* 重置消抖计数器 */
-			ty = BAT_TYPE_AMBIGUOUS;                  /* 强制AMBIGUOUS→IMP_CHECK */
+			type = BAT_TYPE_AMBIGUOUS;                  /* 强制AMBIGUOUS→IMP_CHECK */
 		}
 		else
 		{
-			ty = Detect_BatteryType(v);
-			/* V51C: 空槽OPEN超时直接进IMP_CHECK(修复B1永远卡DETECT)
-			   原逻辑在UNKNOWN分支v≥OPEN超时后goto amb_check, 但ty每轮被
-			   Detect_BatteryType(v≥OPEN→UNKNOWN)覆盖回UNKNOWN→消抖计数被清零
-			   →永远进不了IMP_CHECK. 现此处强制ty=AMBIGUOUS, 复用amb_check的
-			   2帧消抖+串行锁+VCC重采样进入IMP_CHECK, 空槽脉冲前后v均≥OPEN→IDLE,
-			   恒压/线性锂负载下v跌至真实值→正常充电. 仅需2帧消抖(无害), 省ROM. */
-			if(ty == BAT_TYPE_UNKNOWN && v >= ADC_V_OPEN &&
-			   ct >= TIME_DETECT_WAIT + TIME_DETECT_SETTLE)
-				ty = BAT_TYPE_AMBIGUOUS;
+			type = Detect_BatteryType(slot_v);
+			/* 空槽OPEN超时直接进IMP_CHECK: 强制type=AMBIGUOUS复用amb_check的
+			   消抖+串行锁+VCC重采样, 否则type每轮被Detect_BatteryType覆盖回
+			   UNKNOWN, 永远进不了IMP_CHECK. 空槽脉冲前后slot_v均≥OPEN→回IDLE,
+			   恒压/线性锂负载下slot_v跌至真实值→正常充电. */
+			if(type == BAT_TYPE_UNKNOWN && slot_v >= ADC_V_OPEN &&
+			   charge_ticks >= TIME_DETECT_WAIT + TIME_DETECT_SETTLE)
+				type = BAT_TYPE_AMBIGUOUS;
 		}
 
 		/* 消抖: 高内阻电池ADC读数可能跳动到极低值,
 		   连续N次低值才判定为UNKNOWN, 避免单次噪点误触发ERROR */
-		if(v < ADC_V_SHORT)
+		if(slot_v < ADC_V_SHORT)
 		{
 			g_detectLowCnt[idx]++;
 			if(g_detectLowCnt[idx] < DETECT_LOW_DEBOUNCE)
 				break;
 		}
 		/* 仅对UNKNOWN/NIMH/DRY重置计数器, AMBIGUOUS和LI_ION各自维护消抖计数 */
-		else if(ty != BAT_TYPE_AMBIGUOUS && ty != BAT_TYPE_LI_ION && ty != BAT_TYPE_LINEAR_LI)
+		else if(type != BAT_TYPE_AMBIGUOUS && type != BAT_TYPE_LI_ION && type != BAT_TYPE_LINEAR_LI)
 		{
 			g_detectLowCnt[idx] = 0;
 		}
 
 	amb_check:
-		if(ty == BAT_TYPE_AMBIGUOUS)
+		if(type == BAT_TYPE_AMBIGUOUS)
 		{
 			/* AMBIGUOUS电压段(1.20V~1.45V): 短脉冲方向检测区分
 			   恒压/线性锂电池: 接PWM后芯片切充电模式→电压上升
@@ -450,43 +476,43 @@ void Slot_Charge_Ctrl(unsigned char idx)
 			   避免后续IMP_CHECK中误判(实测: 其他槽充电时VCC从5000降至4717,
 			   若用旧VCC编码5000会误判>200mV跌落→误判LI_ION) */
 			Get_Vcc();
-			/* VCC打包至g_impData: 低12位=脉冲前电压v(0~4095), 高4位=脉冲前VCC编码
+			/* VCC打包至g_impData: 低12位=脉冲前电压slot_v(0~4095), 高4位=脉冲前VCC编码
 			   VCC编码 = (g_vcc_mv+50)/100 - 38, 四舍五入到100mV, 覆盖3800~5100mV范围
 			   IMP_CHECK串行锁保证单槽访问, 无需数组 */
-			g_impData = v | ((unsigned int)(((g_vcc_mv + 50U) / 100U) - 38U) << 12);
-			st = CHG_IMP_CHECK;
-			ct = 0;
+			g_impData = IMP_PACK(slot_v, g_vcc_mv);
+			state = CHG_IMP_CHECK;
+			charge_ticks = 0;
 			g_detectLowCnt[idx] = 0;
 		}
-		if(ty == BAT_TYPE_LI_ION || ty == BAT_TYPE_LINEAR_LI)
+		if(type == BAT_TYPE_LI_ION || type == BAT_TYPE_LINEAR_LI)
 		{
 			/* LI_ION/LINEAR_LI: 连续2帧确认, 防止碳性/碱性电池ADC尖峰越过NIMH_HIGH误判 */
 			g_detectLowCnt[idx]++;
 			if(g_detectLowCnt[idx] < 2)
 				break;
-			DETECT_LI_ROUTE(idx, v, st, ct);
+			DETECT_LI_ROUTE(idx, slot_v, state, charge_ticks);
 		}
-		else if(ty == BAT_TYPE_UNKNOWN)
+		else if(type == BAT_TYPE_UNKNOWN)
 		{
 			/* UNKNOWN: 分辨空槽(OPEN)和不可识别电池(SHORT/异常)
-			   注: v≥OPEN且等待超时的空槽已由上方ty强制AMBIGUOUS接管(V51C),
+			   注: slot_v≥OPEN且等待超时的空槽已由上方强制AMBIGUOUS接管,
 			   此分支的OPEN等待仅在超时前短暂出现(电容放电中) */
-			if(v >= ADC_V_OPEN)
+			if(slot_v >= ADC_V_OPEN)
 				break;                /* 继续等待电压下降 */
-			st = CHG_ERROR;           /* 电压异常或无法识别 → 报错 */
+			state = CHG_ERROR;           /* 电压异常或无法识别 → 报错 */
 			g_detectLowCnt[idx] = 0;
 		}
-		else if(ty == BAT_TYPE_NIMH || ty == BAT_TYPE_DRY)
+		else if(type == BAT_TYPE_NIMH || type == BAT_TYPE_DRY)
 		{
-			st = CHG_ERROR;
+			state = CHG_ERROR;
 			g_detectLowCnt[idx] = 0;
 		}
 		break;
 
 	case CHG_IMP_CHECK:
-		/* ct已在开头按10ms节拍累加; IMP_PULSE_TICKS=5(50ms),
+		/* charge_ticks已在开头按10ms节拍累加; IMP_PULSE_TICKS=5(50ms),
 		   主循环一轮(elapsed≥1)即达到脉冲窗口 */
-		if(ct < IMP_PULSE_TICKS)
+		if(charge_ticks < IMP_PULSE_TICKS)
 			break;
 
 		{
@@ -495,50 +521,67 @@ void Slot_Charge_Ctrl(unsigned char idx)
 
 			/* ── 电池拔出检测（最高优先级） ──
 			   脉冲前、后电压均≥OPEN → 确实空槽/已被拔出
-			   V54L修复B1: 高压碱性满电电压~3967~4005, 与OPEN接近但<4050,
+			   高压碱性满电电压~3967~4005, 与OPEN接近但<4050,
 			   仅当双值均≥4050才判空槽, 避免高压电池被误拔入IDLE死循环. */
-			if(v >= 4050U && (g_impData & 0x0FFFU) >= 4050U)
+			if(slot_v >= 4050U && IMP_PRE_VOLT(g_impData) >= 4050U)
 			{
-				ty = BAT_TYPE_UNKNOWN;
-				st = CHG_IDLE;
+				type = BAT_TYPE_UNKNOWN;
+				state = CHG_IDLE;
 				g_impCheckSlot = 0xFF;
 				g_highVFlag &= ~((unsigned int)1 << idx);
 				break;
 			}
 
+			/* ── 空槽识别(归一化域, 兼容低VCC) ──
+			   无电池时BxAD电容经100K上拉至VCC, 脉冲前(pre)后(slot_v)读数
+			   均接近各自VCC的归一化满量程(VCC_norm). pre按打包时VCC
+			   解码, slot_v按当前VCC, 双基准各自抵消VCC波动(含其他槽拉载).
+			   真锂电: 线性锂pre为电池电压(远低于VCC_norm), 恒压锂脉冲
+			   后slot_v被电池钳位回落, 均不满足, 不会被误判拔出. */
+			{
+				unsigned int vcc_norm_pre = VCC_NORM(IMP_VCC_DECODE(g_impData));
+				unsigned int vcc_norm_now = VCC_NORM(g_vcc_mv);
+				if((IMP_PRE_VOLT(g_impData) + DIODE_TOP_MARGIN >= vcc_norm_pre) &&
+				   (slot_v + DIODE_TOP_MARGIN >= vcc_norm_now))
+				{
+					type = BAT_TYPE_UNKNOWN;
+					state = CHG_IDLE;
+					g_impCheckSlot = 0xFF;
+					g_highVFlag &= ~((unsigned int)1 << idx);
+					break;
+				}
+			}
+
 			/* ── NiMH VCC塌陷检测 ──
 			   VCC跌落>300mV 且 脉冲后电池端被拉到OPEN
 			   恒压锂电charger IC也会拉低VCC, 但电池端不会飙升到OPEN, 避免误判 */
-			if(IMP_VCC_DECODE(g_impData) > g_vcc_mv + 300U && v >= ADC_V_OPEN)
+			if(IMP_VCC_DECODE(g_impData) > g_vcc_mv + 300U && slot_v >= ADC_V_OPEN)
 			{
-				ty = BAT_TYPE_NIMH;
-				st = CHG_ERROR;
+				type = BAT_TYPE_NIMH;
+				state = CHG_ERROR;
 				g_impCheckSlot = 0xFF;
 				g_highVFlag &= ~((unsigned int)1 << idx);
 				break;
 			}
 
 			/* ── 恒压锂电: VCC跌落>200mV ──
-			   V54M修复B1: 高压碱性/碳性(pre≥OPEN)在IMP脉冲时VCC波动易超200mV,
-			   被误判为恒压锂进CV过充. 对pre≥OPEN的电池禁用此判据.
-			   V54O修复B3: 中压碳性(pre 3100~3900)同样因VCC波动被误判为恒压锂,
-			   上限从OPEN降到3100, 中压段统一走DIODE_TEST用爬升区分. */
+			   高压/中压碳性(pre≥3100)在IMP脉冲时VCC波动易超200mV被误判为
+			   恒压锂, 故仅对脉冲前<3100的电池启用此判据,
+			   中压段统一走DIODE_TEST用爬升区分. */
 			if(IMP_VCC_DECODE(g_impData) > g_vcc_mv + 200U &&
-			   (g_impData & 0x0FFFU) < 3100U)
+			   IMP_PRE_VOLT(g_impData) < 3100U)
 				goto imp_li_ion;
 
 			/* ── 碳性/碱性干电池: 脉冲后电压比脉冲前低>1000ADC ──
-			   V54J: 加g_highVFlag保护: DETECT已确认高压稳定(≥20tick>2900)的真锂电
-			   跳过此判据, 避免pre虚高被误判DRY永久锁死.
-			   V54I实测B9恒压锂ref=3840(高压稳定确认), IMP脉冲后电容放电回真实值
-			   ~2745, pre差1095>1000被误杀. 真锂电脉冲前读数是电容虚高并非电池真值;
-			   碳性/碱性在DETECT无法连续20tick稳定(内阻大充电慢), flag不置位仍正常拒充 */
+			   g_highVFlag保护: DETECT已确认高压稳定的真锂电跳过此判据,
+			   其脉冲前读数是电容虚高(实测脉冲后回落>1000), 并非电池真值;
+			   碳性/碱性无法在DETECT连续稳定, flag不置位仍正常拒充 */
 			if(!(g_highVFlag & ((unsigned int)1 << idx)) &&
-			   ((g_impData & 0x0FFFU) > v) &&
-			   ((g_impData & 0x0FFFU) - v) > 1000U)
+			   (IMP_PRE_VOLT(g_impData) > slot_v) &&
+			   (IMP_PRE_VOLT(g_impData) - slot_v) > 1000U)
 			{
-				ty = BAT_TYPE_DRY;
-				st = CHG_ERROR;
+				type = BAT_TYPE_DRY;
+				state = CHG_ERROR;
 				g_impCheckSlot = 0xFF;
 				g_highVFlag &= ~((unsigned int)1 << idx);
 				g_detectLowCnt[idx] = 0;
@@ -548,7 +591,7 @@ void Slot_Charge_Ctrl(unsigned char idx)
 			/* ── 高压锂电保护: pre>NEAR_OPEN 且 VCC不塌(<200mV)
 			   不直接判DRY, 先进DIODE_TEST确认, 避免高压恒压锂/线性锂
 			   (B10/B11/B12等)被误拒充 */
-			if(((g_impData & 0x0FFFU) > ADC_V_NEAR_OPEN) &&
+			if((IMP_PRE_VOLT(g_impData) > ADC_V_NEAR_OPEN) &&
 			   (IMP_VCC_DECODE(g_impData) <= g_vcc_mv + 200U))
 			{
 				goto imp_diode_test_entry;
@@ -556,15 +599,15 @@ void Slot_Charge_Ctrl(unsigned char idx)
 
 			/* ── 脉冲后≥OPEN → 进DIODE_TEST进一步确认 ──
 			   可能是线性锂/恒压锂/镍氢, DIODE_TEST用爬升区分Li与DRY/NiMH */
-			if(v >= ADC_V_OPEN)
+			if(slot_v >= ADC_V_OPEN)
 				goto imp_diode_test_entry;
 
 		imp_diode_test_entry:
 			/* ── 进入DIODE_TEST ──
 			   保持IMP_CHECK串行锁不释放, 防止g_impData基准被其它槽改写 */
-			st = CHG_IMP_DIODE_TEST;
-			ct = 0;
-			g_diodeTraceCnt = 0;        /* V54G: 新一轮检测开始, 清v轨迹(单槽共享缓冲) */
+			state = CHG_IMP_DIODE_TEST;
+			charge_ticks = 0;
+			g_diodeTraceCnt = 0;        /* 新一轮检测开始, 清slot_v轨迹(单槽共享缓冲) */
 			g_diodeTraceSlot = (unsigned char)idx;
 			g_highVFlag &= ~((unsigned int)1 << idx);
 		}
@@ -574,58 +617,54 @@ void Slot_Charge_Ctrl(unsigned char idx)
 	imp_li_ion:
 		g_impCheckSlot = 0xFF;
 		g_highVFlag &= ~((unsigned int)1 << idx);
-		ty = BAT_TYPE_LI_ION;
-		DETECT_LI_ROUTE(idx, v, st, ct);
+		type = BAT_TYPE_LI_ION;
+		DETECT_LI_ROUTE(idx, slot_v, state, charge_ticks);
 		break;
 
 	/* ── 线性锂电池路由(无charger IC, VCC不塌) ──
 	   检测: (1)脉冲后≥OPEN(体二极管阻断) (2)DIODE_TEST爬升>DIODE_RISE_THRESH
 	   用脉冲前电压(g_impData低12位)做DETECT_LI_ROUTE:
 	   线性锂无charger IC拉载, IMP_CHECK PWM脉冲后电容充电至VCC,
-	   体二极管被阻断无法放电→v读伪OPEN(4091), 若用v做路由会误入CV
+	   体二极管被阻断无法放电→slot_v读伪OPEN(4091), 若用slot_v做路由会误入CV
 	   且g_slotRefV被设为4091, 后续PEAK_DROP必然触发
 	   脉冲前电压来自DETECT(MOSFET导通→电容跟踪Vbat→读数准确) */
 	imp_linear_li:
 		g_impCheckSlot = 0xFF;
 		g_highVFlag &= ~((unsigned int)1 << idx);
-		/* V57B: 碳性/碱性循环锁死. 该槽已完成一次LINEAR_LI CC无进展超时(16s)
-		   仍未充电 → 判定高内阻干电池(DETECT电容虚高/CC不升压), 直接锁死拒充,
-		   杜绝B11实测的 DET→DIO→CC→ERR 无限循环.
-		   必须清highVFlag: 否则CHG_ERROR中ty=DRY且v>2700+highVFlag会重判回
-		   DETECT放行; 清掉后DRY永久锁定(仅拔电池恢复).
-		   真实线性锂在CC中电压必上升(≥CC_NO_PROGRESS_RISE), 不会触发16s
-		   无进展超时, 不受此锁影响. */
+		/* 碳性/碱性循环锁死: 该槽已完成一次LINEAR_LI CC无进展超时(16s)仍未
+		   充电 → 判定高内阻干电池(DETECT电容虚高/CC不升压), 锁死拒充,
+		   杜绝 DET→DIO→CC→ERR 无限循环. 清highVFlag防止ERROR重判回DETECT;
+		   真实线性锂CC中电压必上升, 不会触发16s无进展超时, 不受此锁影响. */
 		if(g_ccBlocks[idx] & CC_RETRY_FLAG)
 		{
-			ty = BAT_TYPE_DRY;
-			st = CHG_ERROR;
+			type = BAT_TYPE_DRY;
+			state = CHG_ERROR;
 			break;
 		}
-		ty = BAT_TYPE_LINEAR_LI;
-		DETECT_LI_ROUTE(idx, (unsigned int)(g_impData & 0x0FFFU), st, ct);
+		type = BAT_TYPE_LINEAR_LI;
+		DETECT_LI_ROUTE(idx, (unsigned int)IMP_PRE_VOLT(g_impData), state, charge_ticks);
 		break;
 
 	/*========================================================================
-	  CHG_IMP_DIODE_TEST: 体二极管被动检测 (V48A)
-	  MOSFET关断, BxAD电容通过100K上拉充电, 观察电压爬升
+	  CHG_IMP_DIODE_TEST: 体二极管被动检测
+  MOSFET关断, BxAD电容通过100K上拉充电, 观察电压爬升
 	  线性锂(体二极管阻断): 电容持续爬升>DIODE_RISE_THRESH
 	  镍氢/干电池(体二极管导通或内阻大): 电压被钳位, 爬升不足
 	========================================================================*/
 	case CHG_IMP_DIODE_TEST:
-		/* ct已在开头按10ms节拍累加 */
-		/* V54G: 记录v相对pre的偏移轨迹(ct=7,14,21,28共4点, 每点1字节:
-		   (v-pre)/4+128, 覆盖±508ADC并clamp), 供主循环打印分析
-		   爬升/回落形态后设计鲁棒判据. 仅写数组不打印:
-		   避免ISR内UART阻塞(GIE关闭1ms/字符)破坏PWM/扫描时序
-		   V57A: ct为10ms节拍, 一次累加可能跨多个采样点→循环补齐 */
+		/* charge_ticks已在开头按10ms节拍累加 */
+		/* 记录slot_v相对pre的偏移轨迹(charge_ticks=7,14,21,28共4点, 每点1字节:
+		   (slot_v-pre)/4+128, 覆盖±508ADC并clamp), 供主循环打印分析.
+		   仅写数组不打印, 避免UART阻塞破坏PWM/扫描时序.
+		   charge_ticks为10ms节拍, 一次累加可能跨多个采样点→循环补齐 */
 		while(g_diodeTraceCnt < 4U)
 		{
 			unsigned char pt = (unsigned char)(g_diodeTraceCnt + 1U);
 			unsigned int  ptTick = (unsigned int)pt * 7U;
-			if(ct < ptTick)
+			if(charge_ticks < ptTick)
 				break;                      /* 未到下一采样点(7/14/21/28) */
 			{
-				signed int diff = (signed int)v - (signed int)(g_impData & 0x0FFFU);
+				signed int diff = (signed int)slot_v - (signed int)IMP_PRE_VOLT(g_impData);
 				diff >>= 2;                 /* /4 */
 				if(diff > 127) diff = 127;
 				if(diff < -128) diff = -128;
@@ -634,115 +673,80 @@ void Slot_Charge_Ctrl(unsigned char idx)
 		}
 		{
 			/* 电池拔出检查: 线性锂误插后拔出→电压回落至OPEN */
-			if(v >= ADC_V_OPEN && (g_impData & 0x0FFFU) < ADC_V_OPEN)
+			if(slot_v >= ADC_V_OPEN && IMP_PRE_VOLT(g_impData) < ADC_V_OPEN)
 			{
 				/* 预脉冲非OPEN但当前OPEN: 电容正在充电中, 不是真拔出 */
 			}
 
-			/* 电压爬升检测: 当前电压-脉冲前电压 > DIODE_RISE_THRESH → Li */
-			if(v > (g_impData & 0x0FFFU) + DIODE_RISE_THRESH)
+			/* 早期快速爬升 → 锂电: 体二极管阻断, 电容被100K持续充电(>900ADC).
+			   pre≥DIODE_PRE_MIN隔离低压碳性(自由浮空爬升无界, 非锂电特征) */
+			if(DIO_RISE_FAST(IMP_PRE_VOLT(g_impData), slot_v))
 			{
-				/* 用IMP_CHECK期间记录的VCC跌落区分CV锂与线性锂:
-				   跌落>150mV → 恒压锂, 否则 → 线性锂 */
+				/* IMP_CHECK记录的VCC跌落区分: 跌落>150mV→恒压锂, 否则→线性锂 */
 				if(IMP_VCC_DECODE(g_impData) > g_vcc_mv + 150U)
 					goto imp_li_ion;
 				else
 					goto imp_linear_li;
 			}
 
-			/* 高压锂电回落识别 (V48H, V54F恢复V51C阈值3000)
-		   IMP_CHECK时MOSFET导通, BxAD电容被充到偏高电压;
-		   进入DIODE_TEST后MOSFET关断, 真实高压锂电(低内阻)会把电容
-		   电压迅速拉回电池本体电压 → v明显低于pre但仍>NIMH_MAX.
-		   碱性/碳性内阻大, 电容会被100K继续拉向VCC, 不会出现此回落.
-		   pre阈值从NEAR_OPEN(3500)降至3000, 覆盖B12等电压稍低的恒压锂电.
-		   V54F回退: V54E曾恢复3500拦截B3 pre≈3016误判, 但3500存在拒充
-		   pre∈(3000,3500)回落型中压锂电的理论风险; B3异常环境误入CC
-		   由崩溃检测锁定为ERROR, 不循环 */
-		if(((g_impData & 0x0FFFU) > 3000U) &&
-		   (v > ADC_V_NIMH_MAX) &&
-		   (v < (g_impData & 0x0FFFU)))
-			goto imp_linear_li;
+			/* 高压锂电回落 → 线性锂: 低内阻把电容电压拉回电池本体(slot_v<pre)
+			   但仍>NIMH_MAX; 碱性/碳性内阻大, 电容被100K继续拉向VCC不回落 */
+			if(DIO_HI_RECOVER(IMP_PRE_VOLT(g_impData), slot_v))
+				goto imp_linear_li;
 
-			/* NiMH上拉虚高保护:
-			   脉冲前≤2300但DIODE_TEST期间电压>2900, 说明是100K上拉把电池/电容
-			   充起来的虚假高电平, 判DRY拒充, 避免镍氢被误判为LINEAR_LI. */
-			if((v > ADC_V_NIMH_MAX) &&
-			   ((g_impData & 0x0FFFU) <= 2300U))
+			/* NiMH/干电池上拉虚高 → DRY: pre<DIODE_PRE_MIN但slot_v>NIMH_MAX,
+			   是100K上拉充出的虚假高电平(实测锂电pre≥2271, 碳性pre≤1936) */
+			if(DIO_NIMH_FAKE(IMP_PRE_VOLT(g_impData), slot_v))
 			{
-				ty = BAT_TYPE_DRY;
-				st = CHG_ERROR;
+				type = BAT_TYPE_DRY;
+				state = CHG_ERROR;
 				g_impCheckSlot = 0xFF;
 				g_highVFlag &= ~((unsigned int)1 << idx);
 				g_detectLowCnt[idx] = 0;
 				break;
 			}
 
-			/* 低压锂电兜底: DIODE_TEST满20tick后, 电压仍稳定在>2100
-			   且与脉冲前电压基本持平(下跌<160, 爬升≤DIODE_CLAMP_MARGIN),
-			   说明体二极管/电池本体将电容钳位在电池电压附近 → 真锂电放行.
-			   干电池(碳性/碱性)高内阻, 100K上拉能把电容持续推离电池电压:
-			   B3碳性实测pre=2635→ct26时v=2902(爬升>250ADC), 不满足钳位
-			   判据 → 超时判DRY拒充, 不再误入CC.
-			   V54D修复: 原V54C的pre≤2300界限误杀中压锂电(B9 pre2949/v2895,
-			   B12 pre3030/v3084, B8 pre3480/v3481 均稳定钳位在电池电压),
-			   现改为钳位判据覆盖全电压段; 碱性B1/镍氢B2/B7在DIODE_TEST中
-			   电压显著下跌(<2100)不满足v>2100, 天然拒充, 不误触发.
-			   V54K修复B3: 碳性中压(2300~2900)在DIODE_TEST中v≈pre也会触发兜底,
-			   加pre≤2300限制, 仅对真实低压锂电放行; 中压锂电由爬升>900或
-			   高压回落识别覆盖, 不受影响.
-			   V54U修复B5: 恒压锂充电中v从pre上升>100(实测pre=1911→v=2071~2282,
-			   差160)不满足v+100>=pre被误判DRY, 差值放宽到160. */
-			if(ct >= 20U && v > 2100U &&
-			   (g_impData & 0x0FFFU) <= 2300U &&
-			   v + 160U >= (g_impData & 0x0FFFU) &&
-			   v <= (g_impData & 0x0FFFU) + DIODE_CLAMP_MARGIN)
+			/* 低压锂电钳位兜底(满20tick) → 线性锂: 电压稳定>2100且与pre基本持平
+			   (下跌<160, 爬升≤钳位150), 体二极管把电容钳在电池电压附近.
+			   pre≤2300避免碳性中压(slot_v≈pre)误触发; 碱性/镍氢DIODE_TEST
+			   电压显著下跌(<2100)天然不满足 */
+			if(charge_ticks >= 20U && DIO_LOW_CLAMP(IMP_PRE_VOLT(g_impData), slot_v))
 				goto imp_linear_li;
 
-			/* 超时: 无爬升 → 干电池
-			   V54K修复B5/B9: 高压锂电(pre>NEAR_OPEN或v>NEAR_OPEN)在DIODE_TEST中
-			   可能仅因电容/体二极管特性爬升不足(<900), 直接判DRY会误杀.
-			   V54L修复B12: 中压锂电(pre 2300~3100)爬升缓慢(32~80ADC)无法达900,
-			   放宽为"v>2800且与pre差<150(稳定钳位)"即放行LINEAR_LI.
-			   碳性中压也会被放行, 但后续CC16s超时循环(V54K)会锁定ERROR,
-			   比直接拒充多一轮验证, 真实锂电不受影响. */
-			if(ct >= DIODE_TEST_TICKS)
+			/* 超时终判(240tick无快速爬升): 逐级放行锂电, 否则判DRY拒充.
+			   高压/中压锂电爬升不足900ADC(电容/体二极管特性)需此兜底;
+			   碳性中压即使被放行也由CC 16s无进展锁死ERROR, 真实锂电不受影响 */
+			if(charge_ticks >= DIODE_TEST_TICKS)
 			{
-				unsigned int pre = (unsigned int)(g_impData & 0x0FFFU);
-				/* V57B修复B3线性锂: 高压段pre>3500统一放行锂电池, 删V54R的
-				   "VCC不塌且无爬升→判DRY"分支(实测误杀B3: 真实线性锂体二极管
-				   把节点钳位在电池电压, DIODE_TEST中tr=+4,+4,+4,+4平直不爬升,
-				   并非碳性特征; 碳性/碱性电芯仅1.5V不可能稳定维持pre>3500.
-				   若为DETECT电容虚高, DIODE_TEST中MOSFET关断100K上拉必现爬升,
-				   放行后由CC无进展锁死(V57B)+钳位电压限制兜底, 不会过充).
-				   仅保留VCC跌落区分恒压锂与线性锂:
-				   1. VCC跌落>150mV → 恒压锂(charger IC拉载), 放行
-				   2. VCC不塌 → 线性锂(含钳位平直型), 放行 */
-				if(pre > ADC_V_NEAR_OPEN && pre < ADC_V_OPEN)
+				unsigned int pre = (unsigned int)IMP_PRE_VOLT(g_impData);
+				unsigned int vcc_norm = VCC_NORM(g_vcc_mv);
+				/* 钳位到顶: 线性锂体二极管阻断, 电容被100K充至≈当前VCC_norm;
+				   干电池被钳位在电池电压远低于VCC_norm. 恒压锂slot_v被电池
+				   钳位不爬升, 由VCC跌落判据区分 */
+				if(DIO_TOP_CLAMPED(slot_v, vcc_norm))
+				{
+					if(IMP_VCC_DECODE(g_impData) > g_vcc_mv + 150U)
+						goto imp_li_ion;
+					goto imp_linear_li;
+				}
+				/* 高压段须真实爬升(pre>3500且sv≥pre+50): 挡空槽轨偏置平直(差≤6)
+				   与碱性(pre≈3499平直). 用VCC跌落区分恒压/线性锂 */
+				if(DIO_HI_CLIMB(pre, slot_v))
 				{
 					if(IMP_VCC_DECODE(g_impData) > g_vcc_mv + 150U)
 						goto imp_li_ion;              /* 恒压锂 */
-					goto imp_linear_li;               /* 线性锂(含平直钳位) */
+					goto imp_linear_li;               /* 线性锂(爬升) */
 				}
-				if(v > ADC_V_NEAR_OPEN && v < ADC_V_OPEN)
-				{
+				/* 中压放行: pre∈[2100,3500)且平直持稳(pre<3000, 实测≤2849)
+				   或真实爬升(≥pre+50); slot_v>DIODE_MID_MIN隔离镍氢(2300~2500) */
+				if(DIO_MID_GROW(pre, slot_v))
 					goto imp_linear_li;
-				}
-				/* V54U修复B4/B8/B9: 中压钳位范围从(2800~3100)拓宽到(2300~3500),
-				   消除VCC异常时VCC跌落判据失效导致的盲区:
-				   - pre 2300~2800(B9 pre=2722/B8 pre=2856/第三次B4 pre=2362)原不满足
-				     低压兜底(pre≤2300)与中压钳位(v>2800)双条件 → 误判DRY
-				   - pre 3100~3500(第二次B4 pre=3425)原不满足VCC跌落(pre<3100)、
-				     高压段(pre>3500)、中压钳位(v<3100) → 误判DRY
-				   真实锂电稳定钳位在电池电压附近(v与pre差<150)即放行.
-				   碳性B3中压若被放行, 仍由CC 16s超时循环(V54K/V54T)兜底. */
-				if(v > 2300U && v < 3500U && pre < 3500U &&
-				   v + 150U >= pre && pre + 150U >= v)
-				{
+				/* 低压锂电预充: 深度过放锂电(pre≈2000~2500)爬升超钳位但未达
+				   中压下界; 碳性pre≤DIODE_PRE_DRY_MAX实测上沿隔离 */
+				if(DIO_LOW_PRECHG(pre, slot_v))
 					goto imp_linear_li;
-				}
-				ty = BAT_TYPE_DRY;
-				st = CHG_ERROR;
+				type = BAT_TYPE_DRY;
+				state = CHG_ERROR;
 				g_impCheckSlot = 0xFF;
 				g_highVFlag &= ~((unsigned int)1 << idx);
 				g_detectLowCnt[idx] = 0;
@@ -751,38 +755,38 @@ void Slot_Charge_Ctrl(unsigned char idx)
 	break;
 
 	case CHG_ACTIVATE:
-		/* ct已在开头按10ms节拍累加 */
-		if(ct > TIME_ACTIVATE_MAX)
+		/* charge_ticks已在开头按10ms节拍累加 */
+		if(charge_ticks > TIME_ACTIVATE_MAX)
 		{
-			st = CHG_ERROR;
+			state = CHG_ERROR;
 			break;
 		}
-		if(v > ADC_V_ACTIVATE)
+		if(slot_v > ADC_V_ACTIVATE)
 		{
-			st = CHG_PRECHARGE;
-			ct = 0;
+			state = CHG_PRECHARGE;
+			charge_ticks = 0;
 			break;
 		}
-		if(v >= ADC_V_OVER)
+		if(slot_v >= ADC_V_OVER)
 		{
-			st = CHG_ERROR;
+			state = CHG_ERROR;
 			break;
 		}
 		break;
 
 	case CHG_PRECHARGE:
-		/* ct已在开头按10ms节拍累加 */
-		if(ct > TIME_PRECHARGE_MAX)
+		/* charge_ticks已在开头按10ms节拍累加 */
+		if(charge_ticks > TIME_PRECHARGE_MAX)
 		{
-			st = CHG_ERROR;
+			state = CHG_ERROR;
 			break;
 		}
-		if(v >= ADC_V_OVER)
+		if(slot_v >= ADC_V_OVER)
 		{
 			g_ovCnt[idx]++;
 			if(g_ovCnt[idx] >= OV_DEBOUNCE_CNT)
 			{
-				st = CHG_ERROR;
+				state = CHG_ERROR;
 				break;
 			}
 		}
@@ -790,71 +794,65 @@ void Slot_Charge_Ctrl(unsigned char idx)
 		{
 			g_ovCnt[idx] = 0;
 		}
-		if(v >= ADC_V_PRE_MAX)
+		if(slot_v >= ADC_V_PRE_MAX)
 		{
-			st = CHG_CC_CHARGE;
-			ct = 0;
-			g_ccBlocks[idx] = 0;       /* V51C/V54K: 复位块计数与CC_RETRY_FLAG */
+			state = CHG_CC_CHARGE;
+			charge_ticks = 0;
+			g_ccBlocks[idx] = 0;       /* 复位块计数与CC_RETRY_FLAG */
 			g_ovCnt[idx] = 0;
-			g_slotRefV[idx] = v;
-			g_stableCnt[idx] = 0;      /* V50E: 复位CC无进展检测闩锁 */
+			g_slotRefV[idx] = slot_v;
+			g_stableCnt[idx] = 0;      /* 复位CC无进展检测闩锁 */
 		}
 		break;
 
 	case CHG_CC_CHARGE:
-		/* ct已在开头按10ms节拍累加 */
-		if(ct >= CC_BLOCK_TICKS)
+		/* charge_ticks已在开头按10ms节拍累加 */
+		if(charge_ticks >= CC_BLOCK_TICKS)
 		{
-			ct -= CC_BLOCK_TICKS;
+			charge_ticks -= CC_BLOCK_TICKS;
 			g_ccBlocks[idx]++;
 		}
-		/* V57B: 块计数检查屏蔽CC_RETRY_FLAG(bit7). DETECT_LI_ROUTE用
-		   g_ccBlocks[idx] &= CC_RETRY_FLAG 保留标志时值为0x80, 若直接
-		   与CC_MAX_BLOCKS(18)比较会误判"已充180分钟"→二次入CC瞬间ERROR
-		   →(v>750)→DETECT→DIO→CC无限循环(B11实测根因之一). */
+		/* 块计数检查屏蔽CC_RETRY_FLAG(bit7): 标志保留时g_ccBlocks=0x80,
+		   若直接与CC_MAX_BLOCKS比较会误判"已充180分钟"→二次入CC瞬间
+		   ERROR→重判死循环. */
 		if((g_ccBlocks[idx] & 0x7FU) >= CC_MAX_BLOCKS)
 		{
-			st = CHG_ERROR;
+			state = CHG_ERROR;
 			break;
 		}
 
 		/* 伪OPEN过滤: 线性锂电池无charger IC, BxAD电容充电至VCC后放电不足→伪OPEN(4091),
 		   伪OPEN不更新g_slotRefV(防4091污染), 不触发CC→CV(等真实电压达标),
 		   继续PEAK_DROP/OV/CC_MAX_BLOCKS等安全检查, CC→CV由真实电压触发 */
-		if(v >= ADC_V_OPEN && ty == BAT_TYPE_LINEAR_LI)
+		if(slot_v >= ADC_V_OPEN && type == BAT_TYPE_LINEAR_LI)
 		{
 			/* g_slotRefV不更新(跳过4091污染), 继续后续检查 */
 		}
-		else if(ct <= CC_NO_PROGRESS_TICKS)
+		else if(charge_ticks <= CC_NO_PROGRESS_TICKS)
 		{
-			/* V50E: CC无进展检测窗口期内冻结g_slotRefV为CC起点基准v0,
-			   不做峰值追踪, 供下方进展判断与PEAK_DROP跌落基准使用.
-			   窗口结束后(进展已确认或超时报ERROR)恢复峰值追踪.
-			   V54W: 冻结窗口从LI_ION扩展到LINEAR_LI, 使16s超时能用
-			   起点ref判断充电进展(区分真实锂电与碳性B3, 见下方注释). */
+			/* CC无进展检测窗口期内冻结g_slotRefV为CC起点基准v0,
+			   不做峰值追踪, 供下方进展判断与PEAK_DROP跌落基准使用
+			   (LI_ION与LINEAR_LI均适用). 窗口结束后恢复峰值追踪. */
 		}
 		else
 		{
-			if(v > g_slotRefV[idx]) g_slotRefV[idx] = v;
+			if(slot_v > g_slotRefV[idx]) g_slotRefV[idx] = slot_v;
 		}
 
-		/* 电压跌落/低压崩溃重判 (V50D):
-		   分类处理, 避免共用g_detectLowCnt互相清零
-		   (V50C缺陷: LINEAR_LI低压计数每帧被原PEAK_DROP的else分支
-		   复位为0, 33tick低压崩溃保护从未生效, 仅200tick超时在起作用):
-		   - LINEAR_LI(碳性误判): v<2000持续33tick(~2.6s@12.5tick/s)→ERROR
-		   - LI_ION(碳性/接触不良): 峰值跌落>500或v<2000, 连续2帧→回DETECT重判
-		     真实恒压锂电CC中电压只升不跌, 不会长期<2000, 安全 */
-		if(ty == BAT_TYPE_LINEAR_LI)
+		/* 电压跌落/低压崩溃重判: 分类处理, 避免共用g_detectLowCnt互相清零
+		   - LINEAR_LI(碳性误判): slot_v<2000持续33tick→ERROR
+		   - LI_ION(碳性/接触不良): 峰值跌落>500或slot_v<2000, 连续2帧→回DETECT重判
+		     真实恒压锂电CC中电压只升不跌, 不会长期<2000 */
+		if(type == BAT_TYPE_LINEAR_LI)
 		{
-			if(v < 2000U)
+			if(slot_v < 2000U)
 			{
 				g_detectLowCnt[idx]++;
 				if(g_detectLowCnt[idx] >= 33U)
 				{
 					g_detectLowCnt[idx] = 0;
-					st = CHG_ERROR;
-					ct = 0;
+					state = CHG_ERROR;
+					charge_ticks = 0;
 					break;
 				}
 			}
@@ -863,49 +861,40 @@ void Slot_Charge_Ctrl(unsigned char idx)
 				g_detectLowCnt[idx] = 0;
 			}
 
-			/* CC超时: LINEAR_LI在CC超过200tick(~16s@12.5tick/s)未进CV→循环重判
-		   首次超时置CC_RETRY_FLAG并回DETECT重判(给真实线性锂/误判电池一次机会);
-		   再次超时(标志已置)直接ERROR锁死, 避免B3碳性被钳位判据误判为LINEAR_LI后
-		   16s超时直接ERROR→DET重判的无限循环. 真实线性锂电CC阶段
-		   电压应快速升过ADC_V_FULL进CV, 不会触发此循环.
-		   V54T修复B4: 满电边缘线性锂(CC末期v缓升, 16s内到不了3100)反复超时
-		   回DETECT无法进CV. 超时时若v已≥2800(接近满电), 直接进CV由CV钳位
-		   电压, 不再循环/ERROR. B3碳性中压(2800~3100)若被放行进CC, 此判据
-		   也会放行进CV, 但CV上爬/拔出检测仍可兜底, 且B3主要经DIODE_TEST
-		   判DRY(高压)或低压<2800走flag循环, 影响可控.
-		   V54W修复低压锂电误杀: V54V恢复flag保留后, 低压锂电(v 2100~2800)
-		   进CC若16s内升不到2800会被二次超时ERROR误杀(如B4第三次v=2260~2324).
-		   现用起点ref(窗口期冻结)判断充电进展: v已上升≥30ADC(充电中) →
-		   置进展标记并延长CC, 直到v≥2800进CV, 不循环不ERROR; 无进展(碳性
-		   B3电压不升)才走flag循环→二次ERROR. 伪OPEN(4091)不满足v<OPEN
-		   分支, 按有进展延长, 由真实电压后续判定. */
-		if(ct >= CC_LINEAR_LI_TICKS)   /* 16s未进CV→回DETECT重判/ERROR锁死 */
+			/* CC超时: LINEAR_LI在CC超过16s未进CV→超时重判
+			   - slot_v≥2800(接近满电): 直接进CV, 由CV钳位电压(满电边缘缓升型)
+			   - 有充电进展(slot_v较起点ref上升≥30ADC): 延长CC继续充(低压锂电)
+			   - 无进展且已二次超时(CC_RETRY_FLAG): ERROR锁死(碳性/异常)
+			   - 无进展且首次超时: 置CC_RETRY_FLAG回DETECT重判
+			   真实线性锂CC阶段电压应快速升过ADC_V_FULL进CV; 伪OPEN(4091)
+			   不满足slot_v<OPEN分支, 按有进展延长, 由真实电压后续判定. */
+		if(charge_ticks >= CC_LINEAR_LI_TICKS)   /* 16s未进CV→回DETECT重判/ERROR锁死 */
 		{
-			ct = 0;
-			if(v >= 2800U && v < ADC_V_OPEN)
+			charge_ticks = 0;
+			if(slot_v >= 2800U && slot_v < ADC_V_OPEN)
 			{
-				st = CHG_CV_CHARGE;
+				state = CHG_CV_CHARGE;
 				g_ccBlocks[idx] = 0;
-				g_slotRefV[idx] = v;
+				g_slotRefV[idx] = slot_v;
 				g_stableCnt[idx] = 0;
 			}
-			else if(v >= g_slotRefV[idx] + CC_NO_PROGRESS_RISE)
+			else if(slot_v >= g_slotRefV[idx] + CC_NO_PROGRESS_RISE)
 			{
 				g_stableCnt[idx] = 1;    /* 真实锂电: CC中有充电进展, 标记后延长 */
-				g_slotRefV[idx] = v;     /* 重置起点, 下一轮窗口冻结新基准 */
+				g_slotRefV[idx] = slot_v;     /* 重置起点, 下一轮窗口冻结新基准 */
 			}
 			else if(g_stableCnt[idx] != 0)
 			{
-				g_slotRefV[idx] = v;     /* 已确认进展: 继续CC充电, 不循环不ERROR */
+				g_slotRefV[idx] = slot_v;     /* 已确认进展: 继续CC充电, 不循环不ERROR */
 			}
 			else if(g_ccBlocks[idx] & CC_RETRY_FLAG)
 			{
-				st = CHG_ERROR;          /* 碳性/异常: 无进展二次超时锁死 */
+				state = CHG_ERROR;          /* 碳性/异常: 无进展二次超时锁死 */
 			}
 			else
 			{
 				g_ccBlocks[idx] |= CC_RETRY_FLAG;
-				st = CHG_DETECT;         /* 首次超时无进展: 回DETECT重判 */
+				state = CHG_DETECT;         /* 首次超时无进展: 回DETECT重判 */
 				g_slotRefV[idx] = 0;
 				g_stableCnt[idx] = 0;
 			}
@@ -914,17 +903,16 @@ void Slot_Charge_Ctrl(unsigned char idx)
 		}
 		else
 		{
-			/* V50E: 跌落检测增加v<g_slotRefV守卫. 无进展窗口期g_slotRefV
-			   冻结为CC起点v0, 电压上升时v>v0, 若直接相减会unsigned回绕
-			   成巨大值→误判跌落→回DETECT死循环 */
-			if((v < g_slotRefV[idx] && g_slotRefV[idx] - v > PEAK_DROP_THRESH) || v < 2000U)
+			/* 跌落检测增加slot_v<g_slotRefV守卫: 无进展窗口期g_slotRefV冻结为
+			   起点v0, 电压上升时slot_v>v0, 直接相减会unsigned回绕→误判跌落死循环 */
+			if((slot_v < g_slotRefV[idx] && g_slotRefV[idx] - slot_v > PEAK_DROP_THRESH) || slot_v < 2000U)
 			{
 				g_detectLowCnt[idx]++;
 				if(g_detectLowCnt[idx] < 2)
 					break;
 				g_detectLowCnt[idx] = 0;
-				st = CHG_DETECT;
-				ct = 0;
+				state = CHG_DETECT;
+				charge_ticks = 0;
 				break;
 			}
 			else
@@ -932,24 +920,20 @@ void Slot_Charge_Ctrl(unsigned char idx)
 				g_detectLowCnt[idx] = 0;
 			}
 
-			/* CC无进展检测(V50E): 漏洞A闭环
-			   真实恒压锂电在CC阶段电压应持续上升至≥ADC_V_FULL进CV.
-			   若进入CC后CC_NO_PROGRESS_TICKS(~60s)内电压上升
-			   <CC_NO_PROGRESS_RISE(30ADC), 即维持中压高位(2000~3100)
-			   不升不降 → 误判LI_ION的碳性/异常电池 → ERROR,
-			   而非等CC_MAX_BLOCKS(最长3h)超时.
+			/* CC无进展检测: 真实恒压锂电CC阶段电压应持续上升至≥ADC_V_FULL进CV.
+			   若60s内上升<30ADC(维持中压高位不升不降)→误判LI_ION的碳性/
+			   异常电池→ERROR, 而非等CC_MAX_BLOCKS(最长3h)超时.
 			   窗口期内g_slotRefV冻结为起点基准v0; g_stableCnt做进展闩锁
-			   (1=已上升≥30ADC), 该数组仅DETECT阶段使用, 进入CC时已在
-			   DETECT_LI_ROUTE/PRECHARGE/FULL路径复位 */
-			if(ct <= CC_NO_PROGRESS_TICKS)
+			   (1=已上升≥30ADC), 进入CC时已复位 */
+			if(charge_ticks <= CC_NO_PROGRESS_TICKS)
 			{
-				if(v >= g_slotRefV[idx] + CC_NO_PROGRESS_RISE)
+				if(slot_v >= g_slotRefV[idx] + CC_NO_PROGRESS_RISE)
 					g_stableCnt[idx] = 1;
 			}
-			if(ct > CC_NO_PROGRESS_TICKS && g_stableCnt[idx] == 0)
+			if(charge_ticks > CC_NO_PROGRESS_TICKS && g_stableCnt[idx] == 0)
 			{
-				st = CHG_ERROR;
-				ct = 0;
+				state = CHG_ERROR;
+				charge_ticks = 0;
 				break;
 			}
 		}
@@ -960,22 +944,22 @@ void Slot_Charge_Ctrl(unsigned char idx)
 		   LI_ION+OPEN在CC阶段出现 → 电芯已充满 → 跳转FULL
 		   线性锂电池排除: 100μs放电不足导致伪OPEN与真实电压交替出现,
 		   伪OPEN不代表充满, 走正常CC→CV→FULL路径 */
-		if(v >= ADC_V_OPEN && ty == BAT_TYPE_LI_ION)
+		if(slot_v >= ADC_V_OPEN && type == BAT_TYPE_LI_ION)
 		{
-			st = CHG_FULL;
-			ct = 0;
+			state = CHG_FULL;
+			charge_ticks = 0;
 			break;
 		}
 
 		/* 过压保护: 线性锂电池排除(无charger IC, ADC读数因电容残留不可靠,
 		   伪OPEN(4091)不是真过压, 且已排除伪OPEN→FULL和PEAK_DROP,
 		   真过压由电池自身保护板处理) */
-		if(v >= ADC_V_OVER && ty != BAT_TYPE_LINEAR_LI)
+		if(slot_v >= ADC_V_OVER && type != BAT_TYPE_LINEAR_LI)
 		{
 			g_ovCnt[idx]++;
 			if(g_ovCnt[idx] >= OV_DEBOUNCE_CNT)
 			{
-				st = CHG_ERROR;
+				state = CHG_ERROR;
 				break;
 			}
 		}
@@ -983,20 +967,19 @@ void Slot_Charge_Ctrl(unsigned char idx)
 		{
 			g_ovCnt[idx] = 0;
 			/* LINEAR_LI伪OPEN不触发CC→CV: 等真实电压≥FULL时转换 */
-			if(v >= ADC_V_FULL && !(v >= ADC_V_OPEN && ty == BAT_TYPE_LINEAR_LI))
+			if(slot_v >= ADC_V_FULL && !(slot_v >= ADC_V_OPEN && type == BAT_TYPE_LINEAR_LI))
 			{
-				st = CHG_CV_CHARGE;
-				ct = 0;
-				g_ccBlocks[idx] = 0;    /* V51C: 复位CV上爬检测起点锁/闩锁
-				                           V54K: 同时清CC_RETRY_FLAG */
+				state = CHG_CV_CHARGE;
+				charge_ticks = 0;
+				g_ccBlocks[idx] = 0;    /* 复位CV上爬检测起点锁与CC_RETRY_FLAG */
 			}
 		}
 		break;
 
 	case CHG_CV_CHARGE:
-		/* ct已在开头按10ms节拍累加 */
-		if(ct > TIME_CV_HOLD)
-			st = CHG_FULL;
+		/* charge_ticks已在开头按10ms节拍累加 */
+		if(charge_ticks > TIME_CV_HOLD)
+			state = CHG_FULL;
 
 		/* 伪OPEN过滤(必须在g_slotRefV更新之前):
 		   线性锂电池(LC9203DC)无charger IC, MOSFET导通时BxAD电容充电至VCC,
@@ -1004,33 +987,30 @@ void Slot_Charge_Ctrl(unsigned char idx)
 		   保持当前充电状态(cvTimer已累加)继续下一周期, 防止:
 		   (a) g_slotRefV被4091污染→后续PEAK_DROP假落差
 		   (b) 拔出检测误判→IMP_CHECK↔CV↔IDLE死循环 */
-		if(v >= ADC_V_OPEN && ty == BAT_TYPE_LINEAR_LI)
+		if(slot_v >= ADC_V_OPEN && type == BAT_TYPE_LINEAR_LI)
 			break;
 
-		/* V51C: CV上爬检测(漏洞B加固)
-		   正常满电锂电进CV后电压被PI钳位不再爬升;
+		/* CV上爬检测: 正常满电锂电进CV后电压被PI钳位不再爬升;
 		   碳性/碱性/镍氢误判进CV时过充电压持续爬升→窗口(60s)内相对起点
 		   上升>CV_NO_PROGRESS_RISE且连续CV_NO_PROGRESS_CNT帧→ERROR,
-		   而非等TIME_CV_HOLD(10分钟)后误判FULL绿灯.
-		   g_ccBlocks复用为"起点已锁定"标志(首帧非伪OPEN读数锁定起点基准),
-		   g_stableCnt复用为上爬消抖计数(DETECT/CC已用完, 进CV时已复位).
-		   排除v≥OPEN: OPEN由下方拔出/满电逻辑处理.
-		   V54K修复B6: 线性锂电(LINEAR_LI)无charger IC, CV阶段电芯电压自然
-		   会持续缓慢爬升, 此检测会误杀正常线性锂; 仅对恒压锂(LI_ION)启用. */
-		if(v < ADC_V_OPEN && ct <= CV_NO_PROGRESS_TICKS && ty == BAT_TYPE_LI_ION)
+		   而非等TIME_CV_HOLD(10分钟)后误判FULL.
+		   g_ccBlocks复用为"起点已锁定"标志, g_stableCnt复用为上爬消抖计数.
+		   仅对恒压锂(LI_ION)启用: 线性锂无charger IC, CV阶段电芯电压
+		   自然缓慢爬升, 此检测会误杀. OPEN由下方拔出/满电逻辑处理. */
+		if(slot_v < ADC_V_OPEN && charge_ticks <= CV_NO_PROGRESS_TICKS && type == BAT_TYPE_LI_ION)
 		{
 			if(g_ccBlocks[idx] == 0)
 			{
-				g_slotRefV[idx] = v;
+				g_slotRefV[idx] = slot_v;
 				g_ccBlocks[idx] = 1;
 			}
-			else if(v >= g_slotRefV[idx] + CV_NO_PROGRESS_RISE)
+			else if(slot_v >= g_slotRefV[idx] + CV_NO_PROGRESS_RISE)
 			{
 				if(++g_stableCnt[idx] >= CV_NO_PROGRESS_CNT)
 				{
 					g_stableCnt[idx] = 0;
-					st = CHG_ERROR;
-					ct = 0;
+					state = CHG_ERROR;
+					charge_ticks = 0;
 					break;
 				}
 			}
@@ -1042,52 +1022,51 @@ void Slot_Charge_Ctrl(unsigned char idx)
 
 		/* 电池拔出检测: 2帧消抖
 		   仅LI_ION(有charger IC)的伪OPEN代表电芯已满→FULL
-		   V54L修复: LINEAR_LI在CV阶段因无charger IC, ADC读数可能接近OPEN(3990)
-		   但仍在真实电池电压范围(3900~4050), 直接判IDLE会导致反复重判.
-		   对LINEAR_LI仅当v≥4050(真正空槽)才判拔出, 3990~4050保持CV继续观察. */
-		if(v >= ADC_V_OPEN)
+		   LINEAR_LI无charger IC, ADC读数可能接近OPEN(3990)但仍在真实电压
+		   范围(3900~4050), 直接判IDLE会导致反复重判. 对LINEAR_LI仅当
+		   slot_v≥4050(真正空槽)才判拔出, 3990~4050保持CV继续观察. */
+		if(slot_v >= ADC_V_OPEN)
 		{
-			if(ty == BAT_TYPE_LI_ION)
+			if(type == BAT_TYPE_LI_ION)
 			{
 				g_detectLowCnt[idx]++;
 				if(g_detectLowCnt[idx] < 2)
 					break;
 				g_detectLowCnt[idx] = 0;
-				st = CHG_FULL;
-				ct = 0;
+				state = CHG_FULL;
+				charge_ticks = 0;
 				break;
 			}
-			if(ty == BAT_TYPE_LINEAR_LI)
+			if(type == BAT_TYPE_LINEAR_LI)
 			{
-				break;    /* 线性锂CV高压伪OPEN: 保持CV, 由CT超时进FULL.
-				              V54N: 移除4050上限, B6实测CV电压达4086仍真实在位. */
+				break;    /* 线性锂CV高压伪OPEN: 保持CV, 由CT超时进FULL
+				              (CV电压可达~4086仍真实在位, 不设上限). */
 			}
 			g_detectLowCnt[idx]++;
 			if(g_detectLowCnt[idx] < 2)
 				break;
 			g_detectLowCnt[idx] = 0;
-			ty = BAT_TYPE_UNKNOWN;
-			st = CHG_IDLE;
-			ct = 0;
+			type = BAT_TYPE_UNKNOWN;
+			state = CHG_IDLE;
+			charge_ticks = 0;
 			break;
 		}
 
-		/* 低压崩溃/跌落重判 (V50D):
-		   - LINEAR_LI(碳性误判进入CV): v<2000持续33tick(~2.6s)→ERROR
-		     碳性被恒压充电后电化学崩溃, 电压跌至中压以下且无法恢复
+		/* 低压崩溃/跌落重判:
+		   - LINEAR_LI(碳性误判进入CV): slot_v<2000持续33tick→ERROR(电化学崩溃)
 		   - LI_ION(碳性/接触不良): 峰值跌落>500, 2帧→回DETECT重判
-		   LINEAR_LI排除跌落判据: 100μs放电不足导致v交替读真实值/伪OPEN,
-		   g_slotRefV跟踪峰值(伪OPEN)与真实值之间大落差是ADC假象非真跌落 */
-		if(ty == BAT_TYPE_LINEAR_LI)
+		   LINEAR_LI排除跌落判据: 100μs放电不足使slot_v交替读真实值/伪OPEN,
+		   峰值与真实值的大落差是ADC假象非真跌落 */
+		if(type == BAT_TYPE_LINEAR_LI)
 		{
-			if(v < 2000U)
+			if(slot_v < 2000U)
 			{
 				g_detectLowCnt[idx]++;
 				if(g_detectLowCnt[idx] >= 33U)
 				{
 					g_detectLowCnt[idx] = 0;
-					st = CHG_ERROR;
-					ct = 0;
+					state = CHG_ERROR;
+					charge_ticks = 0;
 					break;
 				}
 			}
@@ -1098,18 +1077,17 @@ void Slot_Charge_Ctrl(unsigned char idx)
 		}
 		else
 		{
-			if(v < g_slotRefV[idx] && g_slotRefV[idx] - v > PEAK_DROP_THRESH)
+			if(slot_v < g_slotRefV[idx] && g_slotRefV[idx] - slot_v > PEAK_DROP_THRESH)
 			{
 				g_detectLowCnt[idx]++;
 				if(g_detectLowCnt[idx] >= 2)
 				{
 					g_detectLowCnt[idx] = 0;
-					g_ccBlocks[idx]++;    /* V51C: CV崩溃计数, 累计≥CV_DROP_LOOP_MAX
-					                        后DETECT_LI_ROUTE再进CV直接ERROR
-					                        (碳性/碱性误判CV崩溃循环闭环) */
-					ty = BAT_TYPE_UNKNOWN;
-					st = CHG_DETECT;
-					ct = 0;
+					g_ccBlocks[idx]++;    /* CV崩溃计数: 累计≥CV_DROP_LOOP_MAX后
+					                        再进CV直接ERROR(碳性/碱性崩溃循环闭环) */
+					type = BAT_TYPE_UNKNOWN;
+					state = CHG_DETECT;
+					charge_ticks = 0;
 					break;
 				}
 			}
@@ -1119,16 +1097,16 @@ void Slot_Charge_Ctrl(unsigned char idx)
 			}
 		}
 
-		/* 过压保护: CV阶段电压不应超过ADC_V_OVER
-		   V54L修复B6/B9/B10: 线性锂电(LINEAR_LI)无charger IC, CV阶段电芯电压
-		   自然爬升且ADC读数因VCC波动偏高, 过压保护会误杀. 仅对恒压锂(LI_ION)
-		   启用; 恒压锂有charger IC钳位, 正常不会超3850. */
-		if(v >= ADC_V_OVER && ty == BAT_TYPE_LI_ION)
+		/* 过压保护: CV阶段电压不应超过ADC_V_OVER.
+		   仅对恒压锂(LI_ION)启用: 线性锂无charger IC, CV阶段电芯电压自然
+		   爬升且ADC读数因VCC波动偏高, 过压保护会误杀; 恒压锂有charger IC
+		   钳位, 正常不会超3850. */
+		if(slot_v >= ADC_V_OVER && type == BAT_TYPE_LI_ION)
 		{
 			g_ovCnt[idx]++;
 			if(g_ovCnt[idx] >= OV_DEBOUNCE_CNT)
 			{
-				st = CHG_ERROR;
+				state = CHG_ERROR;
 				break;
 			}
 		}
@@ -1139,39 +1117,47 @@ void Slot_Charge_Ctrl(unsigned char idx)
 		break;
 
 	case CHG_FULL:
-		/* 电池拔出检测: 连续N帧v≥OPEN退出FULL回IDLE
+		/* 电池拔出检测: 连续N帧slot_v≥OPEN退出FULL回IDLE
 		   LINEAR_LI(无charger IC)100μs放电不足→伪OPEN(4091)与真实值
 		   交替出现, 2帧消抖容易被伪OPEN连续命中→误判拔出→IDLE→DETECT
 		   →FULL死循环. 改用50帧(0.5秒)消抖:
 		   真拔出时V持续≈VCC, 50帧全部≥OPEN→可靠判定;
 		   电池在位时真实V(<OPEN)出现在else→g_detectLowCnt复位→永不误判 */
-		if(v >= ADC_V_OPEN)
+		if(slot_v >= ADC_V_OPEN)
 		{
 			g_detectLowCnt[idx]++;
-			if(g_detectLowCnt[idx] >= (ty == BAT_TYPE_LINEAR_LI ? 50 : 2))
+			if(g_detectLowCnt[idx] >= (type == BAT_TYPE_LINEAR_LI ? 50 : 2))
 			{
 				g_detectLowCnt[idx] = 0;
-				st = CHG_IDLE;
-				ct = 0;
+				state = CHG_IDLE;
+				charge_ticks = 0;
 			}
 			break;
 		}
 		/* 仅锂电池可补电: NIMH/DRY/AMBIGUOUS/UNKNOWN在DETECT阶段即被拦截,
 		   只有LI_ION/LINEAR_LI能经CC→CV到达FULL
-		   电压显著回落(v<2800≈1.45V)说明电池已放电, 满电电容稳定后v≈2900~3500不触发 */
-		if(v < 2800U)
+		   电压显著回落(slot_v<2800≈1.45V)说明电池已放电, 满电电容稳定后slot_v≈2900~3500不触发 */
+		if(slot_v < 2800U)
 		{
 			g_detectLowCnt[idx]++;
 			if(g_detectLowCnt[idx] < 2)
 				break;
 			g_detectLowCnt[idx] = 0;
-			st = CHG_CC_CHARGE;
-			ct = 0;
+			/* 补电循环限制: 满电后反复回落补电(碳性误判CC→CV→FULL循环特征)
+			   累计超限→ERROR锁死, 杜绝无限循环. 真锂电满电OCV≈3100稳定不回落,
+			   正常补电1次即充满, 不触发. 拔出/新检测周期复位计数. */
+			if(++g_fullRefillCnt[idx] > FULL_REFILL_MAX)
+			{
+				state = CHG_ERROR;
+				charge_ticks = 0;
+				break;
+			}
+			state = CHG_CC_CHARGE;
+			charge_ticks = 0;
 			g_ovCnt[idx] = 0;
-			g_ccBlocks[idx] = 0;   /* V51C: 补电新CC周期复位块计数(防旧CV锁/崩溃计数遗留)
-			                           V54K: 同时清CC_RETRY_FLAG */
-			g_slotRefV[idx] = v;
-			g_stableCnt[idx] = 0;      /* V50E: 复位CC无进展检测闩锁 */
+			g_ccBlocks[idx] = 0;   /* 补电新CC周期复位块计数/崩溃计数与CC_RETRY_FLAG */
+			g_slotRefV[idx] = slot_v;
+			g_stableCnt[idx] = 0;      /* 复位CC无进展检测闩锁 */
 		}
 		else
 		{
@@ -1181,16 +1167,17 @@ void Slot_Charge_Ctrl(unsigned char idx)
 
 	case CHG_ERROR:
 		/* 恢复路径: ADC回OPEN → 电池被拔出 → IDLE, 需连续2帧确认 */
-		if(v >= ADC_V_OPEN)
+		if(slot_v >= ADC_V_OPEN)
 		{
 			g_detectLowCnt[idx]++;
 			if(g_detectLowCnt[idx] < 2)
 				break;
 			g_detectLowCnt[idx] = 0;
-			ty = BAT_TYPE_UNKNOWN;
-			st = CHG_IDLE;
-			ct = 0;
-			g_ccBlocks[idx] = 0;    /* V54K: 电池拔出, 复位CC_RETRY_FLAG */
+			type = BAT_TYPE_UNKNOWN;
+			state = CHG_IDLE;
+			charge_ticks = 0;
+			g_ccBlocks[idx] = 0;    /* 电池拔出, 复位CC_RETRY_FLAG */
+			g_fullRefillCnt[idx] = 0; /* 电池拔出, 复位补电循环计数 */
 			break;
 		}
 		/* NiMH/干电池 重判路径:
@@ -1201,16 +1188,16 @@ void Slot_Charge_Ctrl(unsigned char idx)
 		   才允许重判. 干电池MOSFET关断后ADC电容充电至VCC(实测3780),
 		   V>2700是电容虚高非真电池电压, 无g_highVFlag标记直接锁定ERROR
 		   电压≤2700: 确认真NiMH/干电池, 永久锁定 */
-		if(ty == BAT_TYPE_NIMH || ty == BAT_TYPE_DRY)
+		if(type == BAT_TYPE_NIMH || type == BAT_TYPE_DRY)
 		{
-			if(v > 2700U && (g_highVFlag & ((unsigned int)1 << idx)))
+			if(slot_v > 2700U && (g_highVFlag & ((unsigned int)1 << idx)))
 			{
 				g_detectLowCnt[idx]++;
 				if(g_detectLowCnt[idx] < 2)
 					break;
 				g_detectLowCnt[idx] = 0;
-				st = CHG_DETECT;
-				ct = 0;
+				state = CHG_DETECT;
+				charge_ticks = 0;
 			}
 			else
 			{
@@ -1219,14 +1206,14 @@ void Slot_Charge_Ctrl(unsigned char idx)
 			break;
 		}
 		/* LI_ION/LINEAR_LI/UNKNOWN: 有电压 → 回DETECT重判, 需连续2帧确认 */
-		if(v > ADC_V_ACTIVATE)
+		if(slot_v > ADC_V_ACTIVATE)
 		{
 			g_detectLowCnt[idx]++;
 			if(g_detectLowCnt[idx] < 2)
 				break;
 			g_detectLowCnt[idx] = 0;
-			st = CHG_DETECT;
-			ct = 0;
+			state = CHG_DETECT;
+			charge_ticks = 0;
 		}
 		else
 		{
@@ -1235,16 +1222,16 @@ void Slot_Charge_Ctrl(unsigned char idx)
 		break;
 
 	default:
-		st = CHG_IDLE;
+		state = CHG_IDLE;
 		break;
 	}
 
-	SLOT_WR_ALL(idx, st, ty, v, ct);
+	SLOT_WR_ALL(idx, state, type, slot_v, charge_ticks);
 
 	/* --- 依据结果控制本槽 MOSFET(受温度/VCC保护门控) --- */
-	if((st == CHG_ACTIVATE || st == CHG_PRECHARGE ||
-	    st == CHG_CC_CHARGE || st == CHG_CV_CHARGE ||
-	    st == CHG_IMP_CHECK || st == CHG_DETECT) &&
+	if((state == CHG_ACTIVATE || state == CHG_PRECHARGE ||
+	    state == CHG_CC_CHARGE || state == CHG_CV_CHARGE ||
+	    state == CHG_IMP_CHECK || state == CHG_DETECT) &&
 	   !g_tempProtect && !g_vccProtect)
 	{
 		SLOT_CHARGE_ON(idx);

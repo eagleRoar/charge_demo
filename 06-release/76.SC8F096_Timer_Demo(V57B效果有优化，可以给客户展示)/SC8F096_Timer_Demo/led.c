@@ -79,7 +79,8 @@ void Update_LED_Global(void)
 ========================================================================*/
 void PowerOnLedSequence(void)
 {
-	g_powerOnTimer++;
+	/* V57A: g_powerOnTimer已由ISR按10ms显式节拍递增(自检每阶段1s),
+	   此处不再自增(原按125us递增使自检仅12.5ms/阶段) */
 
 	if(g_powerOnPhase == 0)
 	{

@@ -1,0 +1,91 @@
+====================================================================================================
+测试 1  末帧VCC=5088 mV
+槽    实际     期望    结果     最终状态                           状态轨迹
+B1   碱性     REJ   REJOK  [Dry/NiMH ERR] [[DET]]v3225 | [[DET]]v3177 | [[DET]]v2944 | [[DET]]v2857 | [[DET]]v2937 | [[DIO]]v1777 | [[Dry/NiMH
+B2   镍氢     REJ   REJOK  [Dry/NiMH ERR] [[DET]]v3043 | [[DET]]v2600 | [[DET]]v2374 | [[DET]]v2330 | [[DET]]v2357 | [[DET]]v2282 | [[DIO]]v10
+B3   线性锂    CHG   CHGOK  [CV]       [[DET]]v3618 | [[DET]]v3673 | [[DET]]v3602 | [[DET]]v3555 | [[DET]]v3690 | [[DET]]v3672 | [[DET]]v39
+B4   线性锂    CHG   ?BAD   [IDLE]     [[DET]]v3502 | [[DET]]v3522 | [[DET]]v3421 | [[DET]]v3422 | [[DET]]v3527 | [[DET]]v3513 | [[DET]]v41
+B5   恒压锂    CHG   ?BAD   [IDLE]     [[DET]]v3478 | [[DET]]v3504 | [[DET]]v3417 | [[DET]]v3402 | [[DET]]v3506 | [[DET]]v3491 | [[DET]]v42
+B6   线性锂    CHG   ?BAD   [DET]      [[DET]]v3491 | [[DET]]v2201 | [[DET]]v2924 | [[DET]]v3357 | [[DET]]v3461 | [[DET]]v2980 | [[DET]]v37
+B7   镍氢     REJ   REJOK  [Dry/NiMH ERR] [[DET]]v3271 | [[DET]]v2653 | [[DET]]v2583 | [[DET]]v2527 | [[DET]]v2524 | [[DET]]v2440 | [[DET]]v23
+B8   线性锂    CHG   CHGOK  [CV]       [[DET]]v3473 | [[DET]]v3597 | [[DET]]v3475 | [[DET]]v3420 | [[DET]]v3539 | [[DET]]v3529 | [[DET]]v40
+B9   恒压锂    CHG   CHGOK  [CV]       [[DET]]v2706 | [[DIO]]v2666 | [[CC]]v2582 | [[CC]]v2555 | [[CC]]v2641 | [[CC]]v2635 | [[CV]]v3761 | 
+B10  碳性     REJ   REJOK  [Dry/NiMH ERR] [[DET]]v3378 | [[DET]]v2737 | [[DIO]]v2280 | [[Dry/NiMH ERR]]v2278 | [[Dry/NiMH ERR]]v2294 | [[Dry/N
+B11  碳性     REJ   REJOK  [Dry/NiMH ERR] [[DET]]v3397 | [[DET]]v3310 | [[DET]]v2026 | [[DIO]]v1908 | [[DIO]]v1649 | [[Dry/NiMH ERR]]v2069 | [
+B12  恒压锂    CHG   ?BAD   [IDLE]     [[DET]]v3594 | [[DET]]v3761 | [[DET]]v3471 | [[DET]]v3462 | [[DET]]v3579 | [[DET]]v3573 | [[DET]]v41
+====================================================================================================
+测试 2  末帧VCC=5163 mV
+槽    实际     期望    结果     最终状态                           状态轨迹
+B1   碱性     REJ   REJOK  [Dry/NiMH ERR] [[DET]]v3263 | [[DET]]v3216 | [[DET]]v3161 | [[DET]]v3116 | [[DET]]v3061 | [[DET]]v3022 | [[DIO]]v26
+B2   镍氢     REJ   REJOK  [Dry/NiMH ERR] [[DET]]v2603 | [[DIO]]v1963 | [[Dry/NiMH ERR]]v1928 | [[Dry/NiMH ERR]]v1078 | [[Dry/NiMH ERR]]v1930 
+B3   线性锂    CHG   ?BAD   [IDLE]     [[DET]]v3859 | [[DET]]v4018 | [[DET]]v4035 | [[DET]]v4078 | [[DET]]v4047 | [[IDLE]]v4068 | [[IDLE]]v
+B4   线性锂    CHG   ?BAD   [IDLE]     [[DET]]v3939 | [[DET]]v4087 | [[DET]]v4104 | [[DET]]v4109 | [[DET]]v4116 | [[DET]]v4158 | [[DET]]v41
+B5   恒压锂    CHG   ?BAD   [IDLE]     [[DET]]v4011 | [[DET]]v4138 | [[DET]]v4147 | [[DET]]v4187 | [[DET]]v4152 | [[IDLE]]v4080 | [[IDLE]]v
+B6   线性锂    CHG   REJBAD [Dry/NiMH ERR] [[DET]]v3939 | [[DET]]v4058 | [[DET]]v4084 | [[DET]]v4132 | [[DET]]v4109 | [[Dry/NiMH ERR]]v3973 | [
+B7   镍氢     REJ   REJOK  [Dry/NiMH ERR] [[DET]]v3012 | [[DET]]v2815 | [[DIO]]v2295 | [[Dry/NiMH ERR]]v1866 | [[Dry/NiMH ERR]]v2275 | [[Dry/N
+B8   线性锂    CHG   CHGOK  [CV]       [[DET]]v3845 | [[DET]]v4003 | [[DET]]v4016 | [[DET]]v4056 | [[DET]]v4025 | [[CV]]v3970 | [[CV]]v3970
+B9   恒压锂    CHG   ?BAD   [DET]      [[DET]]v3885 | [[DET]]v3993 | [[DET]]v3979 | [[DET]]v4073 | [[DET]]v4049 | [[DET]]v4103 | [[DET]]v40
+B10  碳性     REJ   CHGBAD [CV]       [[DET]]v3446 | [[DET]]v3570 | [[DET]]v3613 | [[CV]]v3690 | [[CV]]v3693 | [[CV]]v3739 | [[CV]]v3730 |
+B11  碳性     REJ   REJOK  [Dry/NiMH ERR] [[DET]]v2746 | [[DET]]v2529 | [[DET]]v2398 | [[DIO]]v2252 | [[DIO]]v2385 | [[Dry/NiMH ERR]]v2180 | [
+B12  恒压锂    CHG   ?BAD   [IDLE]     [[DET]]v3952 | [[DET]]v4109 | [[DET]]v4119 | [[DET]]v4159 | [[DET]]v4128 | [[IDLE]]v4104 | [[IDLE]]v
+====================================================================================================
+测试 3  末帧VCC=5163 mV
+槽    实际     期望    结果     最终状态                           状态轨迹
+B1   碱性     REJ   REJOK  [Dry/NiMH ERR] [[DIO]]v2522 | [[Dry/NiMH ERR]]v2445 | [[Dry/NiMH ERR]]v2366 | [[Dry/NiMH ERR]]v2422 | [[Dry/NiMH ER
+B2   镍氢     REJ   REJOK  [Dry/NiMH ERR] [[DET]]v2638 | [[DIO]]v2238 | [[Dry/NiMH ERR]]v1555 | [[Dry/NiMH ERR]]v2178 | [[Dry/NiMH ERR]]v1489 
+B3   线性锂    CHG   ?BAD   [IDLE]     [[DET]]v4031 | [[DET]]v4040 | [[DET]]v4089 | [[DET]]v4049 | [[DET]]v4089 | [[IDLE]]v4043 | [[IDLE]]v
+B4   线性锂    CHG   ?BAD   [IDLE]     [[DET]]v4109 | [[DET]]v4140 | [[DET]]v4192 | [[DET]]v4154 | [[DET]]v4190 | [[IDLE]]v4043 | [[IDLE]]v
+B5   恒压锂    CHG   ?BAD   [IDLE]     [[DET]]v4133 | [[DET]]v4144 | [[DET]]v4198 | [[DET]]v4156 | [[DET]]v4197 | [[IDLE]]v4074 | [[IDLE]]v
+B6   线性锂    CHG   ?BAD   [IDLE]     [[DET]]v4107 | [[DET]]v4120 | [[DET]]v4169 | [[DET]]v4135 | [[DET]]v4173 | [[IDLE]]v4000 | [[DET]]v4
+B7   镍氢     REJ   REJOK  [Dry/NiMH ERR] [[DET]]v2469 | [[DET]]v2441 | [[DIO]]v2023 | [[DIO]]v2227 | [[Dry/NiMH ERR]]v1764 | [[Dry/NiMH ERR]]
+B8   线性锂    CHG   CHGOK  [CV]       [[DET]]v3991 | [[DET]]v4001 | [[DET]]v4047 | [[DET]]v4015 | [[DET]]v4050 | [[CV]]v3978 | [[CV]]v3978
+B9   恒压锂    CHG   ?BAD   [IDLE]     [[DET]]v4068 | [[DET]]v4064 | [[DET]]v4102 | [[DET]]v4018 | [[DET]]v4094 | [[IDLE]]v3991 | [[DET]]v4
+B10  碳性     REJ   CHGBAD [CV]       [[DET]]v3845 | [[DET]]v3874 | [[DET]]v3926 | [[DET]]v3902 | [[DET]]v3943 | [[IMP]]v3922 | [[CV]]v396
+B11  碳性     REJ   CHGBAD [CV]       [[DET]]v2374 | [[DET]]v2406 | [[DET]]v2072 | [[DET]]v2368 | [[DIO]]v2653 | [[CC]]v2366 | [[CC]]v2131
+B12  恒压锂    CHG   ?BAD   [IDLE]     [[DET]]v4106 | [[DET]]v4125 | [[DET]]v4175 | [[DET]]v4137 | [[DET]]v4175 | [[IDLE]]v4080 | [[IDLE]]v
+====================================================================================================
+测试 4  末帧VCC=5020 mV
+槽    实际     期望    结果     最终状态                           状态轨迹
+B1   碱性     REJ   REJOK  [Dry/NiMH ERR] [[DIO]]v2442 | [[Dry/NiMH ERR]]v2416 | [[Dry/NiMH ERR]]v2268 | [[Dry/NiMH ERR]]v2202 | [[Dry/NiMH ER
+B2   镍氢     REJ   REJOK  [Dry/NiMH ERR] [[DET]]v2442 | [[DIO]]v2140 | [[Dry/NiMH ERR]]v1301 | [[Dry/NiMH ERR]]v1698 | [[Dry/NiMH ERR]]v1335 
+B3   线性锂    CHG   CHGOK  [CV]       [[DET]]v4008 | [[DET]]v4039 | [[DET]]v4063 | [[DET]]v4102 | [[DET]]v2215 | [[DET]]v2087 | [[CV]]v209
+B4   线性锂    CHG   CHGOK  [CC]       [[DET]]v4142 | [[DET]]v4129 | [[DET]]v4151 | [[DET]]v4196 | [[DET]]v2209 | [[DET]]v2077 | [[DET]]v20
+B5   恒压锂    CHG   CHGOK  [CC]       [[DET]]v4158 | [[DET]]v4130 | [[DET]]v4152 | [[DET]]v4202 | [[DET]]v2210 | [[DET]]v2075 | [[DET]]v20
+B6   线性锂    CHG   CHGOK  [CC]       [[DET]]v4125 | [[DET]]v4101 | [[DET]]v4121 | [[DET]]v4172 | [[DET]]v2211 | [[DET]]v2083 | [[DET]]v20
+B7   镍氢     REJ   CHGBAD [CC]       [[DET]]v2833 | [[DET]]v2367 | [[DET]]v2326 | [[DIO]]v1904 | [[CC]]v1678 | [[CC]]v970 | [[DET]]v1684 
+B8   线性锂    CHG   REJBAD [Dry/NiMH ERR] [[DET]]v3942 | [[DET]]v3971 | [[DET]]v3990 | [[DET]]v4031 | [[DET]]v2117 | [[DET]]v2103 | [[DIO]]v20
+B9   恒压锂    CHG   REJBAD [Dry/NiMH ERR] [[DET]]v3392 | [[DET]]v4061 | [[DET]]v4063 | [[DET]]v4124 | [[DET]]v1810 | [[DET]]v1697 | [[DET]]v18
+B10  碳性     REJ   CHGBAD [CV]       [[DET]]v3921 | [[DET]]v3948 | [[DET]]v3979 | [[DET]]v4025 | [[DET]]v2114 | [[DET]]v2099 | [[DET]]v20
+B11  碳性     REJ   REJOK  [Dry/NiMH ERR] [[DET]]v2804 | [[DET]]v2536 | [[DET]]v2464 | [[DET]]v2227 | [[DIO]]v2068 | [[Dry/NiMH ERR]]v2044 | [
+B12  恒压锂    CHG   CHGOK  [CV]       [[DET]]v4082 | [[DET]]v4093 | [[DET]]v4114 | [[DET]]v4157 | [[DET]]v2110 | [[DIO]]v2100 | [[CV]]v208
+====================================================================================================
+DIO 轨迹特征 (pre, 当前v, VCC, 判定后, tr偏移)
+T1 B9   v=2666  pre=2621  VCC=4925  VCCn=4034  diff=+45   tr=+264,+184,+236,+240      ty=5 实际=恒压锂
+T1 B10  v=2280  pre=2735  VCC=4699  VCCn=3849  diff=-455  tr=-428,-424,-452,-440      ty=5 实际=碳性
+T1 B11  v=1908  pre=2005  VCC=4636  VCCn=3797  diff=-97   tr=-80,-92,-100             ty=5 实际=碳性
+T1 B11  v=1649  pre=2005  VCC=4847  VCCn=3970  diff=-356  tr=None                     ty=5 实际=碳性
+T1 B1   v=1777  pre=2885  VCC=4823  VCCn=3951  diff=-1108 tr=-360,-444,-448,-480      ty=5 实际=碱性
+T1 B2   v=1074  pre=1643  VCC=5173  VCCn=4237  diff=-569  tr=+200,+184,+180,+188      ty=5 实际=镍氢
+T1 B7   v=2277  pre=2374  VCC=5163  VCCn=4229  diff=-97   tr=-80                      ty=5 实际=镍氢
+T1 B7   v=1750  pre=2374  VCC=5163  VCCn=4229  diff=-624  tr=None                     ty=5 实际=镍氢
+T2 B2   v=1963  pre=2409  VCC=5088  VCCn=4168  diff=-446  tr=-356,-392,-408,-420      ty=5 实际=镍氢
+T2 B7   v=2295  pre=2721  VCC=5098  VCCn=4176  diff=-426  tr=-284,-332,-360,-380      ty=5 实际=镍氢
+T2 B11  v=2252  pre=2324  VCC=5152  VCCn=4220  diff=-72   tr=-72                      ty=5 实际=碳性
+T2 B11  v=2385  pre=2324  VCC=5104  VCCn=4181  diff=+61   tr=None                     ty=5 实际=碳性
+T2 B1   v=2630  pre=3007  VCC=5114  VCCn=4189  diff=-377  tr=-144,-212,-236,-252      ty=5 实际=碱性
+T3 B1   v=2522  pre=2844  VCC=5082  VCCn=4163  diff=-322  tr=-136,-172,-196,-216      ty=5 实际=碱性
+T3 B2   v=2238  pre=2549  VCC=5093  VCCn=4172  diff=-311  tr=-152,-192,-220,-240      ty=5 实际=镍氢
+T3 B7   v=2023  pre=2349  VCC=5152  VCCn=4220  diff=-326  tr=-208,-276,-328           ty=5 实际=镍氢
+T3 B7   v=2227  pre=2349  VCC=5104  VCCn=4181  diff=-122  tr=None                     ty=5 实际=镍氢
+T3 B11  v=2653  pre=2394  VCC=5157  VCCn=4224  diff=+259  tr=-4,0,+4,+4               ty=5 实际=碳性
+T4 B1   v=2442  pre=2677  VCC=5093  VCCn=4172  diff=-235  tr=-108,-124,-148,-160      ty=5 实际=碱性
+T4 B2   v=2140  pre=2401  VCC=5114  VCCn=4189  diff=-261  tr=-96,-132,-156,-176       ty=5 实际=镍氢
+T4 B7   v=1904  pre=2090  VCC=5168  VCCn=4233  diff=-186  tr=-96,-144,-188            ty=5 实际=镍氢
+T4 B11  v=2068  pre=2406  VCC=4392  VCCn=3597  diff=-338  tr=+32,+40,-324,-360        ty=5 实际=碳性
+T4 B12  v=2100  pre=2090  VCC=4432  VCCn=3630  diff=+10   tr=+8                       ty=5 实际=恒压锂
+T4 B8   v=2090  pre=2431  VCC=4432  VCCn=3630  diff=-341  tr=+16,-340,-324,-344       ty=5 实际=线性锂
+T4 B9   v=2062  pre=1809  VCC=4432  VCCn=3630  diff=+253  tr=+124,+244,+256,+248      ty=5 实际=恒压锂
+T4 B10  v=2036  pre=2039  VCC=4428  VCCn=3627  diff=-3    tr=+8,-8,+8,+4              ty=5 实际=碳性
+T4 B4   v=2046  pre=2161  VCC=4412  VCCn=3614  diff=-115  tr=-120,-120,-124,-124      ty=5 实际=线性锂
+T4 B7   v=1702  pre=1696  VCC=5179  VCCn=4242  diff=+6    tr=None                     ty=5 实际=镍氢
+T4 B7   v=1940  pre=1696  VCC=5020  VCCn=4112  diff=+244  tr=+276,+276,+276,+276      ty=5 实际=镍氢

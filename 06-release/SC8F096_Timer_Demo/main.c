@@ -2,26 +2,9 @@
   L1211 12槽充电器 - 主程序
   MCU: SC8F096AD832 QFN32 @ 16MHz
   功能: 系统初始化 + Timer0 ISR(软件PWM/上电自检/NTC计时/UART计时) + 主循环轮询
-  版本: 2026/08/23 <V57B> 修复V57A两个误判(基于V55A):
-         1. B3线性锂DIODE_TEST高压段(pre>3500)误判DRY: 删V54R"无爬升→DRY"
-            分支, 高压段VCC不塌一律放行线性锂(真实线性锂体二极管钳位节点,
-            tr=+4平直, 并非碳性特征).
-         2. B11碳性DET/DIO/CC无限循环: g_ccBlocks bit7(CC_RETRY_FLAG)置位后
-            值为0x80被CC_MAX_BLOCKS(18)误判为已充180分钟→二次入CC瞬间ERROR
-            →重判死循环; 块计数检查屏蔽bit7; 且标志置位后imp_linear_li拒绝
-            再次放行并清highVFlag直接DRY锁死(真实线性锂CC必升压, 不受影响).
-  (V57A: 显式节拍改造(基于V55A):
-         1. 新增ISR 10ms硬件节拍g_hwTick, 状态机chargeTimer按真实经过的10ms数
-            累加(charge_mgr.c), 与主循环轮速/UART打印阻塞完全解耦.
-         2. UART打印触发从TICK_PER_SEC(12.5ms/次→主循环几乎全被打印占用)
-            改为独立10ms节拍计数PRINT_INTERVAL_TICKS=200(每2秒一次),
-            PWM冻结占比从~86%降至~35%.
-         3. 时间常量按注释设计物理时长/10ms重新校准(DETECT 2.4s/8s,
-            NO_PROGRESS 60s, DIODE 2.4s等); 原V55A因打印阻塞这些常量
-            实际慢~81倍(如DETECT实为24s).
-  (V54X: 单槽同步控制架构重构; 去除ISR三阶段扫描状态机, 主循环顺序调用
-         Slot_Charge_Ctrl(i) 处理12槽. 单槽内同步完成 ADC采样+VCC+检测+充电+MOSFET,
-         全部ADC值经Adc_Norm()归一化到VCC=5000mV基准.)
+  版本: V57O
+  计时架构: 显式10ms硬件节拍(ISR维护g_hwTick), 状态机chargeTimer按真实经过的
+  10ms数累加, 与主循环轮速/UART打印阻塞完全解耦; UART打印每2秒一次.
 -------------------------------------------*/
 #include "config.h"
 
@@ -38,7 +21,7 @@ signed int g_cvIntegral = 0;                    /* CV PI积分累加器 */
 volatile unsigned int  g_powerOnTimer = 0;      /* 上电自检计时器 */
 volatile unsigned char g_powerOnPhase = 0;      /* 上电自检阶段: 0→1→2 */
 
-/* 显式节拍(V57A): ISR维护10ms硬件节拍, 主循环每轮计算经过的节拍数,
+/* 显式10ms节拍: ISR维护硬件节拍, 主循环每轮计算经过的节拍数,
    状态机chargeTimer按真实时间累加(charge_mgr.c), 与打印阻塞/轮速解耦 */
 volatile unsigned int  g_hwTick = 0;            /* 10ms硬件节拍(ISR递增) */
 volatile unsigned char g_hwTickDiv = 0;         /* 125us中断分频计数(80次=10ms) */
@@ -188,11 +171,10 @@ void interrupt Isr_Timer(void)
 		else
 			PIN_PWM = 0;
 
-		/* === 2. 显式节拍(V57A): 10ms硬件节拍(状态机计时基准, 与打印解耦) ===
+		/* === 2. 显式10ms节拍(状态机计时基准, 与打印解耦) ===
 		   125us×80=10ms → g_hwTick++; chargeTimer按此节拍累加,
-		   状态机计时不再受UART打印阻塞/主循环轮速影响.
-		   打印触发同时挂在10ms节拍上(PRINT_INTERVAL_TICKS=200 → 每2秒一次).
-		   上电自检计时同样改用10ms节拍(V55A按125us递增使自检仅12.5ms/阶段). */
+		   状态机计时不受UART打印阻塞/主循环轮速影响.
+		   打印触发与上电自检计时同样挂在10ms节拍上(打印每2秒, 自检每阶段1秒). */
 		if(++g_hwTickDiv >= 80U)
 		{
 			g_hwTickDiv = 0;
@@ -449,9 +431,9 @@ void main(void)
 	{
 		asm("clrwdt");
 
-		/* --- 显式节拍(V57A): 计算本轮到现在的真实经过时间(10ms节拍) ---
-		   打印阻塞期间GIE关ISR暂停→g_hwTick不增→elapsed=0, 状态机同步暂停,
-		   与V55A(打印时状态机不走)语义一致; 恢复后按真实时间补回. */
+		/* --- 显式节拍: 计算本轮到现在的真实经过时间(10ms节拍) ---
+		   打印阻塞期间GIE关ISR暂停→g_hwTick不增→elapsed=0, 状态机同步
+		   暂停; 恢复后按真实时间补回. */
 		g_elapsedTicks = g_hwTick - g_lastHwTick;
 		g_lastHwTick = g_hwTick;
 		if(g_elapsedTicks == 0U)
