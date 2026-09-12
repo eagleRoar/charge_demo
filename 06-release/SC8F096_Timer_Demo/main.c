@@ -2,7 +2,7 @@
   L1211 12槽充电器 - 主程序
   MCU: SC8F096AD832 QFN32 @ 16MHz
   功能: 系统初始化 + Timer0 ISR(软件PWM/上电自检/NTC计时/UART计时) + 主循环轮询
-  版本: V57O
+  版本: V57U
   计时架构: 显式10ms硬件节拍(ISR维护g_hwTick), 状态机chargeTimer按真实经过的
   10ms数累加, 与主循环轮速/UART打印阻塞完全解耦; UART打印每2秒一次.
 -------------------------------------------*/
@@ -274,8 +274,8 @@ void Print_SystemStatus(void)
 	uart_send_number(g_temperature / 10U);
 	uart_send_string(".");
 	uart_send_number(g_temperature % 10U);
-	uart_send_string("C IMP_LOCK=");
-	uart_send_number(g_impCheckSlot == 0xFF ? 0xFFU : (unsigned int)g_impCheckSlot);
+	uart_send_string("C TOKEN=");
+	uart_send_number(g_detectOwner == 0xFF ? 0xFFU : (unsigned int)g_detectOwner);
 	uart_send_string("\r\n");
 
 #if PRINT_B1_B6

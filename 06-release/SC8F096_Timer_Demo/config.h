@@ -7,7 +7,7 @@
   固件版本字符串(烧录后通过串口输出, 每次修改代码后迭代)
   格式: Vxx[字母], 例如 V48A, V48B, V49
 */
-#define FIRMWARE_VERSION  "V57O"
+#define FIRMWARE_VERSION  "V57U"
 
 /*
   原理图参考: L1211 TOP V2.3 (20260624)
@@ -195,11 +195,6 @@
    校准: 6000tick=60秒; 30ADC≈37mV */
 #define CC_NO_PROGRESS_TICKS (6000)   /* 无进展检测窗口: 60秒 */
 #define CC_NO_PROGRESS_RISE  (30)    /* 窗口内最小电压上升: 30ADC */
-
-/* FULL→CC补电循环限制: 碳性误判LINEAR_LI后CC→CV→FULL→回落补电无限循环,
-   真锂电满电后OCV≈3100稳定不回落到<2800, 仅异常电池反复回落.
-   补电累计超过上限→ERROR锁死, 杜绝无限循环. 拔出/新检测周期复位. */
-#define FULL_REFILL_MAX      2       /* 满电回落补电最大次数: 超过判碳性循环锁死 */
 
 /* CV上爬检测: 漏洞B加固
    进入CV后窗口期内电压相对起点持续爬升超阈值 → 过充特征
@@ -432,7 +427,7 @@ extern unsigned char g_ovCnt[12];           /* 过压消抖计数器 */
 
 /* g_slotRefV[12]: 槽位参考电压(DETECT初始值+CC/CV峰值), g_capFlag: 电容虚高标记, g_impData: IMP_CHECK共享数据 */
 extern unsigned int g_slotRefV[BATTERY_SLOTS];  /* 槽位参考电压(DETECT基准/CC-CV峰值, 打印ref用) */
-extern unsigned char g_impCheckSlot;        /* IMP_CHECK串行锁: 0xFF=空闲, 其他=持有锁的槽号 */
+extern unsigned char g_detectOwner;        /* 检测链令牌: 0xFF=空闲, 其他=持有令牌的槽号 */
 extern unsigned int g_impData;              /* IMP_CHECK共享数据: 低12位脉冲前电压+高4位VCC编码 */
 extern unsigned char g_diodeTrace[4];  /* DIODE_TEST v偏移轨迹: 4点(ct=7,14,21,28), 每点1字节存(v-pre)/4+128 */
 extern unsigned char g_diodeTraceCnt;  /* DIODE_TEST v轨迹采样点数, 主循环打印后清零 */
