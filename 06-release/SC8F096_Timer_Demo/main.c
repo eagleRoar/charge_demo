@@ -2,7 +2,7 @@
   L1211 12槽充电器 - 主程序
   MCU: SC8F096AD832 QFN32 @ 16MHz
   功能: 系统初始化 + Timer0 ISR(软件PWM/上电自检/NTC计时/UART计时) + 主循环轮询
-  版本: V57U
+  版本: V58C
   计时架构: 显式10ms硬件节拍(ISR维护g_hwTick), 状态机chargeTimer按真实经过的
   10ms数累加, 与主循环轮速/UART打印阻塞完全解耦; UART打印每2秒一次.
 -------------------------------------------*/
@@ -432,12 +432,13 @@ void main(void)
 		asm("clrwdt");
 
 		/* --- 显式节拍: 计算本轮到现在的真实经过时间(10ms节拍) ---
-		   打印阻塞期间GIE关ISR暂停→g_hwTick不增→elapsed=0, 状态机同步
-		   暂停; 恢复后按真实时间补回. */
+		   主循环一轮耗时<10ms时硬件节拍可能未跨越10ms边界,
+		   对0值兜底为1(每轮至少推进1tick), 保证状态机时间单调前进,
+		   与打印阻塞/主循环轮速解耦. */
 		g_elapsedTicks = g_hwTick - g_lastHwTick;
-		g_lastHwTick = g_hwTick;
 		if(g_elapsedTicks == 0U)
-			g_elapsedTicks = 1U;    /* 防0: 主循环一轮至少推进1tick(10ms) */
+			g_elapsedTicks = 1U;
+		g_lastHwTick = g_hwTick;
 
 		/* --- 每轮一次 VCC 采样: 作为归一化基准(VCC为慢变量) --- */
 		Get_Vcc();

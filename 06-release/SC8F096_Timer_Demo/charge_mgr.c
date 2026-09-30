@@ -28,10 +28,14 @@ unsigned char g_ovCnt[12];              /* 过压消抖计数器: 连续过压�
 unsigned char g_detectLowCnt[12];       /* 通用消抖计数器(短路消抖/AMBIGUOUS消抖/LI_ION消抖) */
 unsigned char g_detectOwner = 0xFF;     /* 检测链令牌: 0xFF=空闲, 其他=持有令牌的槽号.
                                            只有持令牌槽可执行 DETECT→IMP_CHECK→DIODE_TEST
-                                           全链; 期间其余槽冻结(门极关断+不推进状态机/
-                                           不采样), 复刻单颗电池测试的干净环境, 消除多槽
-                                           共轨电流对采样节点与VCC归一化基准的污染.
-                                           令牌由IDLE→DETECT申请, 离开检测链时兜底释放. */
+                                           全链; 其余IDLE槽在入链前等待令牌, 保证同一时间
+                                           只有一槽在跑检测链, 避免多槽共轨检测相互串扰
+                                           (采样节点/VCC归一化基准被其他槽充电电流污染).
+                                           令牌由进入检测链时申请, 离开检测链时释放. */
+unsigned char g_detectWaiter = 0xFF;     /* 检测链等待者: 0xFF=无, 其他=有槽在检测链被冻结等待令牌.
+                                           冻结槽登记后, IDLE空槽不再抢令牌, 保证等待者下次可
+                                           优先获令牌, 避免令牌在连续空槽间单向传递导致先入链的
+                                           重判槽(CC超时回DETECT)长期饥饿. */
 unsigned char g_stableCnt[12];           /* DETECT高压稳定循环专用计数器 */
 unsigned int g_capFlag;                  /* 电容虚高标记位掩码: bit[i]=1表示槽i需扩展等待电容放电 */
 unsigned int g_impData;                  /* IMP_CHECK共享数据: 低12位脉冲前电压+高4位VCC编码(100mV步进)
@@ -45,6 +49,7 @@ unsigned char g_diodeTraceSlot;        /* 轨迹归属槽号(打印时匹配) */
 unsigned int g_highVFlag;                /* DETECT高压确认标记: bit[i]=1表示槽i在高压稳定循环中
                                            连续≥DETECT_STABLE_TICKS维持V>2900, 用于IMP_CHECK
                                            区分恒压锂电池charger IC断开(false low)和真干电池 */
+
 
 /*========================================================================
   函数: Get_Vcc
@@ -191,8 +196,14 @@ volatile BatterySlot_t g_slot[12];
 /* IMP_CHECK阶段脉冲前电压解码: 从g_impData低12位还原脉冲前归一化电压(pre) */
 #define IMP_PRE_VOLT(data)  ((data) & 0x0FFFU)
 
-/* IMP_CHECK阶段g_impData打包: 低12位=脉冲前电压pre_v, 高4位=脉冲前VCC编码(100mV步进) */
-#define IMP_PACK(pre_v, vcc_mv)  ((pre_v) | ((unsigned int)((((vcc_mv) + 50U) / 100U) - 38U) << 12))
+/* IMP_CHECK阶段g_impData打包: 低12位=脉冲前电压pre_v, 高4位=脉冲前VCC编码(100mV步进)
+   pre_v钳位到12位上界: 归一化空槽读数=(ADC满量程4095)*VCC/5000, 在VCC>5000mV时
+   可达~4240, 超过12位(0~4095). 若直接打包, 溢出位会撞入高4位VCC字段, 使解码出的
+   pre被截断成小值(如4151→55)且VCC被抬高一级, 导致IMP_CHECK空槽识别失效、
+   DIODE_TEST误判pre<DIODE_PRE_MIN而拒充DRY. 钳位到4095后空槽pre与slot_v均≥4050,
+   由IMP_CHECK空槽判据正常拦截. 真实电池归一化读数≤ADC_V_OPEN(3990)<4095, 不受影响. */
+#define IMP_PACK(pre_v, vcc_mv)  ((((pre_v) > 0x0FFFU) ? 0x0FFFU : (pre_v)) | \
+                                  ((unsigned int)((((vcc_mv) + 50U) / 100U) - 38U) << 12))
 
 /* VCC归一化满量程: 该VCC下空槽/爬升至顶读数的归一化ADC(=VCC*4096/5000) */
 #define VCC_NORM(vcc_mv)  ((unsigned int)(((unsigned long)(vcc_mv) * 4096UL) / VCC_REF_MV))
@@ -206,23 +217,28 @@ void Slot_Charge_Ctrl(unsigned char idx)
 
 	SLOT_RD_ALL(idx, state, type, slot_v, charge_ticks);
 
-	/* --- 检测独占: 非令牌槽本轮冻结 ---
-	   有槽在跑检测链(DETECT/IMP_CHECK/DIODE_TEST)时, 其余槽必须无电流:
-	   门极强制关断, 且不推进状态机/不采样(保持状态与计时原样).
-	   这样被检测槽看到的是"其余槽为空槽"的干净环境, 复刻单颗电池测试,
-	   消除共轨充电电流对采样节点与VCC基准的污染. 令牌释放后各槽
-	   下一轮自动恢复(按自身状态重断言门极), 无需额外记录. --- */
-	if(g_detectOwner != 0xFF && g_detectOwner != idx)
-	{
-		SLOT_CHARGE_OFF(idx);
-		return;
-	}
-
 	/* --- charge_ticks按ISR 10ms硬件节拍累加(与打印/主循环轮速解耦).
 	   累加粒度可能>1tick, 因此所有"charge_ticks==N"精确判断
 	   必须用 charge_ticks_prev/charge_ticks 跨越检测, 不能直接比较. --- */
 	charge_ticks_prev = charge_ticks;
 	charge_ticks += (unsigned int)g_elapsedTicks;
+
+	/* --- 检测链令牌门控(覆盖整个检测链, 含DETECT段) ---
+	   此前令牌仅在IDLE入链门控与AMBIGUOUS→IMP_CHECK交接处检查, DETECT段最长
+	   ~10s不受令牌约束, 使多个槽可同时在DETECT中采样且MOSFET同时导通相互串扰.
+	   此处扩展为整链独占: 非持令牌槽在此冻结(不采样/不推进状态/关MOSFET),
+	   由持令牌槽跑完整链后释放, 是检测链唯一的时间互斥点. --- */
+	if((state == CHG_DETECT || state == CHG_IMP_CHECK || state == CHG_IMP_DIODE_TEST) &&
+	   g_detectOwner != 0xFF && g_detectOwner != idx)
+	{
+		/* 登记本槽为等待者: 阻止IDLE空槽抢占令牌, 使令牌在持令牌槽完成后
+		   优先交给等待槽, 避免重判槽(CC超时回DETECT)在连续空槽间被长期饥饿. */
+		if(g_detectWaiter == 0xFF)
+			g_detectWaiter = idx;
+		SLOT_CHARGE_OFF(idx);
+		SLOT_WR_ALL(idx, state, type, slot_v, charge_ticks);
+		return;
+	}
 
 	/* --- 单槽同步采样: 关MOSFET → 稳定延时 → 采样并归一化 --- */
 	SLOT_CHARGE_OFF(idx);
@@ -252,13 +268,20 @@ void Slot_Charge_Ctrl(unsigned char idx)
 	{
 	case CHG_IDLE:
 		/* 空槽轮询停留: 空槽(slot_v≥OPEN)停留IDLE_POLL_TICKS后再转DETECT,
-		   避免空槽在DETECT→IMP_CHECK→IDLE间循环导致红灯常亮.
-		   插入电池(slot_v<OPEN)立即转DETECT. */
+		   避免空槽在DETECT→IMP_CHECK→IDLE间循环导致红灯常亮. */
 		if(slot_v >= ADC_V_OPEN)
 		{
 			if(charge_ticks < IDLE_POLL_TICKS)
 				break;              /* charge_ticks已在开头按10ms节拍累加 */
 		}
+
+		/* 单槽串行化: 检测链(检测令牌)被其他槽占用, 或已有槽在等待令牌时,
+		   本槽等待入链, 避免多槽同时跑检测链相互串扰; 等待者优先获令牌,
+		   防止令牌在连续空槽间单向传递使先入链的重判槽长期饥饿 */
+		if((g_detectOwner != 0xFF && g_detectOwner != idx) ||
+		   (g_detectWaiter != 0xFF && g_detectWaiter != idx))
+			break;
+
 		charge_ticks = 0;
 		state = CHG_DETECT;       /* 令牌在switch后统一申请(见下方单点判定) */
 		g_ccBlocks[idx] = 0;      /* 新检测周期复位块计数/CV崩溃计数与CC_RETRY_FLAG */
@@ -1270,22 +1293,45 @@ void Slot_Charge_Ctrl(unsigned char idx)
 	     [入链] IDLE→DETECT(首次) + CC无进展超时/PEAK_DROP回落/CV崩溃/
 	            ERROR重判(这4条直接把状态置回CHG_DETECT, 不经过IDLE)
 	     [出链] 归类到ACTIVATE/CC/CV/FULL/ERROR或回IDLE, 含default/异常分支
-	   同tick内完成申请, 故持令牌槽进入检测链的那一tick起, 后续槽即被上方
-	   冻结分支逐出(门极关断), 且CCCV_Control按令牌槽状态算占空比(检测态→0),
-	   双重保证检测期间其余槽零电流. 单点读写避免多申请点漏覆盖. --- */
+	   空闲时才占用(不抢占他人令牌), 避免多槽同时跑检测链;
+	   本槽非持令牌时进入检测链的处理在DETECT/IMP入口处等待(见amb_check),
+	   出链即释放, 单点读写避免多申请点漏覆盖. --- */
 	if(state == CHG_DETECT || state == CHG_IMP_CHECK ||
 	   state == CHG_IMP_DIODE_TEST)
-		g_detectOwner = idx;
-	else if(g_detectOwner == idx)
-		g_detectOwner = 0xFF;
+	{
+		if(g_detectOwner == 0xFF)
+			g_detectOwner = idx;
+	}
+	else
+	{
+		if(g_detectOwner == idx)
+			g_detectOwner = 0xFF;
+	}
+
+	/* 等待者生命周期: 本槽已不在检测链(获令牌跑完或退出)即撤销等待登记,
+	   使后续IDLE空槽恢复可入链, 避免等待者僵死阻塞检测 */
+	if(g_detectWaiter == idx &&
+	   !(state == CHG_DETECT || state == CHG_IMP_CHECK ||
+	     state == CHG_IMP_DIODE_TEST))
+		g_detectWaiter = 0xFF;
 
 	SLOT_WR_ALL(idx, state, type, slot_v, charge_ticks);
 
-	/* --- 依据结果控制本槽 MOSFET(受温度/VCC保护门控) --- */
+	/* --- 依据结果控制本槽 MOSFET(受温度/VCC保护门控) ---
+	   充电闸门: 只要检测链被某槽占用(g_detectOwner≠0xFF), 充电槽(ACTIVATE/
+	   PRECHARGE/CC/CV)一律关闭MOSFET, 暂停充电电流, 避免其污染正在进行的检测;
+	   检测槽(DETECT/IMP_CHECK)仅自身持令牌时导通; 无槽在检测链时恢复正常充电.
+	   由此检测与充电在时间上互斥, 消除"边充边测"造成的采样串扰. --- */
 	if((state == CHG_ACTIVATE || state == CHG_PRECHARGE ||
-	    state == CHG_CC_CHARGE || state == CHG_CV_CHARGE ||
-	    state == CHG_IMP_CHECK || state == CHG_DETECT) &&
-	   !g_tempProtect && !g_vccProtect)
+	    state == CHG_CC_CHARGE || state == CHG_CV_CHARGE) &&
+	   g_detectOwner != 0xFF)
+	{
+		SLOT_CHARGE_OFF(idx);
+	}
+	else if((state == CHG_ACTIVATE || state == CHG_PRECHARGE ||
+	         state == CHG_CC_CHARGE || state == CHG_CV_CHARGE ||
+	         ((state == CHG_IMP_CHECK || state == CHG_DETECT) && g_detectOwner == idx)) &&
+	        !g_tempProtect && !g_vccProtect)
 	{
 		SLOT_CHARGE_ON(idx);
 	}
@@ -1344,13 +1390,6 @@ void CCCV_Control(void)
 	for(i = 0; i < BATTERY_SLOTS; i++)
 	{
 		unsigned char s = S_STATE(i);
-
-		/* 检测独占: 有令牌槽时PWM只按令牌槽状态计算.
-		   这使PWM行为与单颗电池测试逐相位一致:DETECT阶段无充电槽→PWM=0,
-		   IMP_CHECK阶段→78%脉冲, DIODE_TEST阶段→PWM=0;
-		   同时避免被冻结槽的陈旧状态干扰CV的PI闭环. */
-		if(g_detectOwner != 0xFF && i != g_detectOwner)
-			continue;
 
 		if(s == CHG_ACTIVATE || s == CHG_PRECHARGE ||
 		   s == CHG_CC_CHARGE || s == CHG_CV_CHARGE ||

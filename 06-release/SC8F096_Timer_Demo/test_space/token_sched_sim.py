@@ -1,24 +1,37 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-V57U 检测链令牌调度 离线仿真
+V57W 检测链令牌调度 离线仿真
 =============================
 验证对象: charge_mgr.c 中 Slot_Charge_Ctrl() / CCCV_Control() 的
-          "检测链令牌"(g_detectOwner) 调度规则, 不涉及任何判定阈值。
+          "检测链令牌"(g_detectOwner) 调度规则 + DETECT窄带重置上限
+          + 上电静默窗(A) + 插入沿门控(B), 不涉及任何判定阈值。
 
 [A] 不变量验证(压缩tick, 快): 把 C 的调度骨架逐条翻译为 Python 离散时间
-    仿真, 多场景跑 tick, 断言 4 条不变量:
+    仿真, 多场景跑 tick, 断言 6 条不变量:
       I1 无越权持有: 令牌持有者必处于检测链状态
       I2 检测互斥:   同一 tick 至多一个槽在推进检测链
       I3 隔离完备:   有槽在跑检测链(未冻结)时, 其余槽必须无充电电流
       I4 无死锁:     单槽单次入链的"非冻结推进"tick 数有界
+      I5 重置有界:   窄带重置次数不超过 NARROW_RST_MAX
+      I6 插入沿:     被令牌看门狗强制回IDLE的槽, 在重新观测为空槽
+                     (重新武装)前不得再次进入检测链
     另以 single_point=False 跑同一场景(等价 V57T 缺陷态: 令牌仅在
     IDLE→DETECT 申请, 4 条重判入链路径不申请), 要求必须报出违规
     —— 确认仿真能捕获该缺陷。
+    [A4] 为窄带重置活锁反向对照: narrow_rst_max=None(无上限=V57U活锁态)
+    必须被 I4 捕获; narrow_rst_max=3(V57V)必须 0 违规。
+    [A5] 上电静默窗(A)验证: 静默窗内令牌须始终FREE且12槽均被采样;
+    boot_settle=0(无窗)时首tick即 owner!=FREE —— 反向对照。
+    [A6] 插入沿(B)验证: 看门狗强制回IDLE的槽, edge_gate=False(关闭B)
+    必须被 I6 捕获, edge_gate=True(开启B)必须 0 违规。
 
 [B] 令牌占用率量化(真实tick量级): 用 config.h 的真实 tick 常量跑长时间,
     统计"检测链占用tick / 总tick", 即充电被暂停的时间占比
     (串行化的必然代价), 并给出插电池检测延迟。
+    注: [B] 的 tick秒换算成立的前提是 charge_ticks 严格等于真实经过的
+    10ms 数(即 V57V 取消 min-1-tick 下限后的行为); V57U 及更早版本在
+    令牌冻结环境下 tick 相对真实时间放快 2~5 倍, 该换算不成立。
 
 说明(重要):
   - 仅仿真"谁在何时持令牌、谁被冻结/是否有电流", 不复现 ADC/判定阈值细节。
@@ -33,7 +46,9 @@ CHAIN = (DETECT, IMP, DIODE)                 # 检测链三态(C: DETECT/IMP_CHE
 GATE_ON = (DETECT, IMP, CC, CV)              # C L1280-1290: 这些状态门极ON
 
 EMPTY, DRY, LI_ION, LINEAR_LI = "EMPTY", "DRY", "LI_ION", "LINEAR_LI"
+RST_LOOP = "RST_LOOP"     # 采样值持续落在DETECT窄带→反复命中重置门禁的槽(见[A4])
 FREE = 0xFF
+NARROW_RST_MAX = 3        # 对齐 charge_mgr.c NARROW_RST_MAX
 
 # ---------------- [A] 压缩tick量级(只验调度正确性) ----------------
 T_FAST = dict(IDLE_POLL=5, DETECT=8, IMP=1, DIODE=8, CC=12, CV=15,
@@ -52,17 +67,28 @@ T_REAL = dict(IDLE_POLL=2400,   # IDLE_POLL_TICKS  : 空槽轮询停留 24s
 class Sim:
     """12槽调度仿真: owner 等价 g_detectOwner(FREE=空闲)"""
 
-    def __init__(self, types, states=None, single_point=True, timing=None):
+    def __init__(self, types, states=None, single_point=True, timing=None,
+                 narrow_rst_max=NARROW_RST_MAX, boot_settle=0,
+                 edge_gate=True, owner_timeout=None):
         self.single_point = single_point   # True=V57U单点判定, False=V57T仅IDLE申请
+        self.narrow_rst_max = narrow_rst_max  # None=无上限(V57U活锁态)
+        self.boot_settle = boot_settle     # [A] 上电静默窗长度(tick), 0=关闭
+        self.edge_gate = edge_gate         # [B] 插入沿门控开关, False=等价未加B
+        self.owner_timeout = owner_timeout # 令牌看门狗阈值(tick), None=不建模
         self.T = dict(timing or T_FAST)
         self.typ = list(types)
         self.state = list(states) if states else [IDLE] * 12
         self.ct = [0] * 12
+        self.nrst = [0] * 12           # 本次入链的窄带重置次数(C: g_narrowRstCnt)
         self.gate = [False] * 12
         self.pchain = [0] * 12         # 本次入链的"非冻结推进"tick计数
         self.owner = FREE
         self.rejudge = [0] * 12
         self.done = [False] * 12       # 是否已完成一次归类
+        self.boot = boot_settle        # [A] 静默窗剩余tick
+        self.armed = 0x0FFF            # [B] 插入沿武装掩码(C: g_slotOpen), 上电全武装
+        self.sampled = [False] * 12    # [A] 是否已在静默窗内被采样过
+        self.forced = [False] * 12     # [I6] 是否被看门狗强制回IDLE且尚未重新武装
         self.viol = []
         self.t = 0
         self.busy = 0                  # 令牌被占用的tick数(=充电暂停tick数)
@@ -84,6 +110,9 @@ class Sim:
     def step(self):
         self.t += 1
         T = self.T
+
+        if self.boot > 0:
+            self.boot -= 1                 # [A] 上电静默窗递减(对齐 main.c)
 
         for idx in range(12):
             s = self.state[idx]
@@ -109,6 +138,15 @@ class Sim:
 
             self.ct[idx] += 1
             self._run(idx)
+
+            # [看门狗] 检测链驻留超时→强制回IDLE. 注意不重新武装(armed保持0),
+            # 故B(edge_gate)会挡住它立刻重入链 —— 这正是[I6]要验证的.
+            if (self.owner_timeout is not None and self.state[idx] in CHAIN
+                    and self.pchain[idx] >= self.owner_timeout):
+                self.state[idx] = IDLE
+                self.ct[idx] = 0
+                self.pchain[idx] = 0
+                self.forced[idx] = True
 
             # [C L1268-1280] 令牌单点判定: 处于检测链即持有, 离开检测链即释放
             if self.single_point:
@@ -138,19 +176,43 @@ class Sim:
         s, ct, T = self.state[idx], self.ct[idx], self.T
 
         if s == IDLE:
-            # C L253-264: 空槽需轮询停留IDLE_POLL; 有电池(slot_v<OPEN)立即转DETECT
-            if self.typ[idx] == EMPTY and ct < T["IDLE_POLL"]:
+            # [A] 上电静默窗(C L278): 窗口内保持IDLE只采样不入链, 12槽基线得以建立
+            if self.boot > 0:
+                self.ct[idx] = 0
+                self.sampled[idx] = True
                 return
+            # C L253-264: 空槽需轮询停留IDLE_POLL; 有电池(slot_v<OPEN)转DETECT
+            if self.typ[idx] == EMPTY:
+                if self.edge_gate:
+                    self.armed |= 1 << idx        # [B] 观测为空槽 → 武装插入沿
+                if ct < T["IDLE_POLL"]:
+                    return
+            else:
+                # [B] 插入沿门控: 仅"曾观测为空槽"的槽转有电池才允许入链(申请令牌)
+                if self.edge_gate and not (self.armed & (1 << idx)):
+                    return
+                if self.edge_gate:
+                    self.armed &= ~(1 << idx)     # 消费本次插入沿
             if self.owner != FREE and self.owner != idx:
                 self.bad("I2", "槽B%d在令牌被%s占用时入链" % (idx + 1, self.owner_name()))
             self.ct[idx] = 0
             self.state[idx] = DETECT
             self.pchain[idx] = 0
+            self.nrst[idx] = 0
             if not self.single_point:
                 self.owner = idx                  # V57T: 仅此处(C L264)申请令牌
             return
 
         if s == DETECT:
+            # 窄带重置活锁模型(C L334-352): 采样值持续落在(NIMH_MAX,OPEN)
+            # 且无capFlag时固件把进度清零重读. RST_LOOP槽即此类.
+            # narrow_rst_max=None 等价"无上限"= V57U 活锁形态(重置→清capFlag
+            # →再重置), 进度永远到不了出链tick → 令牌被永久占用.
+            if self.typ[idx] == RST_LOOP and ct >= T["DETECT"]:
+                if self.narrow_rst_max is None or self.nrst[idx] < self.narrow_rst_max:
+                    self.nrst[idx] += 1
+                    self.ct[idx] = 0
+                    return
             if ct < T["DETECT"]:
                 return
             self.ct[idx] = 0
@@ -210,6 +272,9 @@ class Sim:
                 return
             self.ct[idx] = 0
             self.state[idx] = IDLE             # 拔出/补电循环 → 回IDLE(可再插入)
+            if self.edge_gate:
+                self.armed |= 1 << idx         # C L1202: 回IDLE前已确认读出OPEN → 重新武装
+                self.forced[idx] = False
             return
 
         if s == ERROR:
@@ -227,6 +292,15 @@ class Sim:
 
     # ---------- 每 tick 安全断言 ----------
     def _check_tick(self):
+        # I5: 窄带重置次数不得超过上限(上限存在时). 与I4(入链推进tick有界)
+        #     共同覆盖"重置→清capFlag→再重置"自锁: 无上限时I4必报,
+        #     有上限时必须始终≤上限且最终离开检测链.
+        if self.narrow_rst_max is not None:
+            for i in range(12):
+                if self.nrst[i] > self.narrow_rst_max:
+                    self.bad("I5", "槽B%d窄带重置%d次超上限%d"
+                             % (i + 1, self.nrst[i], self.narrow_rst_max))
+
         # 未冻结的检测态槽 = 本 tick 真正在推进检测链的槽
         active = [i for i in range(12)
                   if self.state[i] in CHAIN and not (self.owner != FREE and self.owner != i)]
@@ -250,6 +324,12 @@ class Sim:
                 self.bad("I3", "槽%s在跑检测链, 但槽%s仍在充电(隔离失效)"
                          % ([i + 1 for i in active], charging))
 
+        # I6: 被看门狗强制回IDLE的槽, 在重新观测为空槽(重新武装)前不得再入链
+        for i in range(12):
+            if self.forced[i] and self.state[i] in CHAIN:
+                self.bad("I6", "槽B%d被看门狗强制回IDLE后未观测为空槽即重入链"
+                         % (i + 1))
+
     def all_done(self):
         return all(self.done)
 
@@ -267,8 +347,12 @@ def mix_with_reentry():
     return st
 
 
-def run(name, types, states=None, ticks=1500, single_point=True):
-    sim = Sim(types, states, single_point)
+def run(name, types, states=None, ticks=1500, single_point=True,
+        narrow_rst_max=NARROW_RST_MAX, boot_settle=0, edge_gate=True,
+        owner_timeout=None):
+    sim = Sim(types, states, single_point, narrow_rst_max=narrow_rst_max,
+              boot_settle=boot_settle, edge_gate=edge_gate,
+              owner_timeout=owner_timeout)
     first_all_done = None
     for _ in range(ticks):
         sim.step()
@@ -298,7 +382,7 @@ def duty_test(k_empty, ticks=40000):
 def main():
     bad = 0
     print("=" * 76)
-    print("V57U 检测链令牌调度离线仿真  (single_point=True = 当前代码)")
+    print("V57W 检测链令牌调度离线仿真  (single_point=True = 当前代码)")
     print("=" * 76)
 
     print("\n[A1] 调度不变量: 场景验证(要求 0 违规)")
@@ -345,6 +429,60 @@ def main():
     else:
         print("    -> 未捕获缺陷! 仿真灵敏度不足")
         bad += 1
+
+    print("\n[A4] 反向对照: DETECT窄带重置活锁(要求 无上限必报 / 有上限不报)")
+    s = run("V57U态: 重置无上限→永久驻留", [RST_LOOP] + [EMPTY] * 11, None,
+            ticks=200, narrow_rst_max=None)
+    if s.viol:
+        print("    -> 已捕获活锁(证明仿真有效), 首次违规: %s" % s.viol[0])
+    else:
+        print("    -> 未捕获活锁! 仿真灵敏度不足")
+        bad += 1
+    s = run("V57V: 重置上限%d→正常出链" % NARROW_RST_MAX,
+            [RST_LOOP] + [EMPTY] * 11, None, ticks=600)
+    if s.viol:
+        bad += 1
+
+    print("\n[A5] 上电静默窗(A): 窗口内令牌FREE且12槽均被采样")
+    BOOT = 30
+    s = Sim(MIX, [IDLE] * 12, boot_settle=BOOT)
+    for _ in range(BOOT):
+        s.step()
+        if s.boot > 0 and s.owner != FREE and len(s.viol) == 0:
+            s.bad("A5", "静默窗内 t=%d 令牌已被B%d占用" % (s.t, s.owner + 1))
+    miss = [i + 1 for i in range(12) if not s.sampled[i]]
+    if miss:
+        s.bad("A5", "静默窗内未采样的槽: %s" % miss)
+    print("  %-30s %-10s" % ("静默窗%d tick内采样12槽" % BOOT,
+                              "OK" if not s.viol else "违规%d条" % len(s.viol)))
+    for v in s.viol:
+        print("      " + v)
+    if s.viol:
+        bad += 1
+    s0 = Sim(MIX, [IDLE] * 12, boot_settle=0)
+    s0.step()
+    print("  %-30s %-10s" % ("反向: 无静默窗→首tick即持令牌",
+                              "OK" if s0.owner != FREE else "未复现! 对照无效"))
+    if s0.owner == FREE:
+        bad += 1
+
+    print("\n[A6] 插入沿(B): 看门狗强制回IDLE后不得未武装重入链")
+    t6 = dict(T_FAST)
+    t6["MAX_CHAIN"] = 100000            # 关掉I4噪声, 只观察I6
+    for gate, exp in ((True, "B开: 强制后需拔插(应0违规)"),
+                      (False, "B关: 应立刻重抢(须被I6捕获)")):
+        s = Sim([RST_LOOP] + [EMPTY] * 11, [IDLE] * 12, timing=t6,
+                narrow_rst_max=NARROW_RST_MAX, owner_timeout=20, edge_gate=gate)
+        for _ in range(300):
+            s.step()
+        print("  %-30s %-10s" % (exp, "违规%d条" % len(s.viol) if s.viol else "OK"))
+        for v in s.viol[:2]:
+            print("      " + v)
+        if gate and s.viol:
+            bad += 1
+        if not gate and not s.viol:
+            print("      -> 未捕获! 仿真灵敏度不足")
+            bad += 1
 
     print("\n[B] 真实tick量级: 串行化对充电的占用(串行化代价量化)")
     print("    空槽数 | 令牌占用率(充电暂停) | 充电占空比 | 单次空槽链占用")

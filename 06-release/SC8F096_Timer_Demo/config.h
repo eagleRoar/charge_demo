@@ -7,7 +7,7 @@
   固件版本字符串(烧录后通过串口输出, 每次修改代码后迭代)
   格式: Vxx[字母], 例如 V48A, V48B, V49
 */
-#define FIRMWARE_VERSION  "V57U"
+#define FIRMWARE_VERSION  "V58C"
 
 /*
   原理图参考: L1211 TOP V2.3 (20260624)
@@ -427,10 +427,18 @@ extern unsigned char g_ovCnt[12];           /* 过压消抖计数器 */
 
 /* g_slotRefV[12]: 槽位参考电压(DETECT初始值+CC/CV峰值), g_capFlag: 电容虚高标记, g_impData: IMP_CHECK共享数据 */
 extern unsigned int g_slotRefV[BATTERY_SLOTS];  /* 槽位参考电压(DETECT基准/CC-CV峰值, 打印ref用) */
-extern unsigned char g_detectOwner;        /* 检测链令牌: 0xFF=空闲, 其他=持有令牌的槽号 */
+extern unsigned char g_detectOwner;        /* 检测链令牌: 0xFF=空闲, 其他=持有令牌的槽号.
+                                              同一时间仅持令牌槽可执行 DETECT→IMP_CHECK→
+                                              DIODE_TEST 全链, 其余IDLE槽等待入链,
+                                              避免多槽共轨检测相互串扰 */
+extern unsigned char g_detectWaiter;       /* 检测链等待者: 0xFF=无, 其他=被冻结等待令牌的槽号.
+                                              有等待者时IDLE空槽不再抢令牌, 使等待槽优先
+                                              获令牌, 避免重判槽在连续空槽间长期饥饿 */
 extern unsigned int g_impData;              /* IMP_CHECK共享数据: 低12位脉冲前电压+高4位VCC编码 */
-extern unsigned char g_diodeTrace[4];  /* DIODE_TEST v偏移轨迹: 4点(ct=7,14,21,28), 每点1字节存(v-pre)/4+128 */
-extern unsigned char g_diodeTraceCnt;  /* DIODE_TEST v轨迹采样点数, 主循环打印后清零 */
+extern unsigned char g_diodeTrace[4];  /* DIODE_TEST共享轨迹缓冲(单槽独占, 复用不新增RAM):
+                                          4点(ct=7,14,21,28)槽压轨迹, 每点1字节存
+                                          (v-pre)/4+128; cnt=1~4 */
+extern unsigned char g_diodeTraceCnt;  /* DIODE_TEST轨迹点数(1~4), 主循环打印后清零 */
 extern unsigned char g_diodeTraceSlot; /* 轨迹归属槽号(打印时匹配) */
 extern volatile unsigned int  g_vcc_mv;       /* 系统电压(mV), 由VREF反推, 每轮采样更新 */
 extern volatile unsigned int  g_powerOnTimer;  /* 上电自检计时器 */
