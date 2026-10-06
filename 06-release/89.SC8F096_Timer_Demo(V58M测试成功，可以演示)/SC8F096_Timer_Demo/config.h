@@ -7,7 +7,7 @@
   固件版本字符串(烧录后通过串口输出, 每次修改代码后迭代)
   格式: Vxx[字母], 例如 V48A, V48B, V49
 */
-#define FIRMWARE_VERSION  "V58P"
+#define FIRMWARE_VERSION  "V58M"
 
 /*
   原理图参考: L1211 TOP V2.3 (20260624)
@@ -81,9 +81,9 @@
 #define ALPHA_NUM           124UL    /* α * 1000 */
 #define BETA_NUM            206UL    /* β * 1000 (注意: 公式改为加法, β为正) */
 #define CAL_DEN             1000UL
-#define UART_PRINT_EN       0       /* UART调试输出开关: 1=启用, 0=禁用
+#define UART_PRINT_EN      1       /* UART调试输出开关: 1=启用, 0=禁用
                                        V2.3中RC4=LED_IO2(绿灯), 与UART TX冲突,
-                                       生产固件必须=0; 调试时置1会占用绿灯引脚 *///Justin
+                                       生产固件必须=0; 调试时置1会占用绿灯引脚 */
 #define SW_TX              RC4     /* 软件UART TX引脚(复用CLK, 9600bps) */
 #define BIT_TIME           104     /* 9600bps @16MHz */
 

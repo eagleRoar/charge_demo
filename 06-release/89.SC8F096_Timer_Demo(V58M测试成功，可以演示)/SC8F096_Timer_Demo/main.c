@@ -19,8 +19,7 @@ signed int g_cvIntegral = 0;                    /* CV PI积分累加器 */
 
 /* 系统计时 */
 volatile unsigned int  g_powerOnTimer = 0;      /* 上电自检计时器 */
-volatile unsigned char g_powerOnPhase = 0;      /* 上电自检阶段: V58P=0→1→2→3(仅红3s→红绿3s→仅绿3s→正常)
-                                                   ⚠ 相位总数必须与 led.c/mian.c 的门限一致 */
+volatile unsigned char g_powerOnPhase = 0;      /* 上电自检阶段: 0→1→2 */
 
 /* 显式10ms节拍: ISR维护硬件节拍, 主循环每轮计算经过的节拍数,
    状态机chargeTimer按真实时间累加(charge_mgr.c), 与打印阻塞/轮速解耦 */
@@ -180,7 +179,7 @@ void interrupt Isr_Timer(void)
 		{
 			g_hwTickDiv = 0;
 			g_hwTick++;
-			if(g_powerOnPhase < 3U)     /* (V58P诊断)自检扩为3段: 相位0/1/2 */
+			if(g_powerOnPhase < 2U)
 				g_powerOnTimer++;
 #if UART_PRINT_EN
 			if(++g_printTick >= PRINT_INTERVAL_TICKS)
@@ -191,12 +190,8 @@ void interrupt Isr_Timer(void)
 #endif
 		}
 
-		/* === 3. 上电自检序列 ===
-		   (V58P诊断)自检由"2秒(仅红1s + 仅绿1s)"扩为"9秒":
-		     相位0 = 仅红3s  →  相位1 = 红绿同亮3s  →  相位2 = 仅绿3s
-		   目的: 定位"绿灯不亮"故障(LED/Q8/VCC2 硬件 vs 1秒太短看不见),
-		         3段各3秒便于目测对比和万用表实测. 定位后恢复为2段各1秒. */
-		if(g_powerOnPhase < 3)
+		/* === 3. 上电自检序列(前2秒) === */
+		if(g_powerOnPhase < 2)
 		{
 			PowerOnLedSequence();   /* 仅延时稳定电路, 无其他功能 */
 			return;                 /* 自检期间不进行槽位/温度/打印计时 */
@@ -457,13 +452,8 @@ void main(void)
 		/* --- 全局PWM占空比调节 --- */
 		CCCV_Control();
 
-		/* --- 全局LED状态显示 ---
-		   (V58O修正)上电自检期间红/绿引脚由ISR的PowerOnLedSequence独占,
-		   主循环此处不得同时驱动(两个写者互相覆盖会破坏自检图案:
-		   自检期间槽状态多为"空槽在DETECT", 本函数会算出红灯常亮, 与自检图案冲突)
-		   (V58P诊断)自检扩为3段(相位0/1/2) → 门限由 2U 改为 3U */
-		if(g_powerOnPhase >= 3U)
-			Update_LED_Global();
+		/* --- 全局LED状态显示 --- */
+		Update_LED_Global();
 
 		/* --- NTC温度读取: ISR建立完成后触发 --- */
 		if(g_doNtcRead)
