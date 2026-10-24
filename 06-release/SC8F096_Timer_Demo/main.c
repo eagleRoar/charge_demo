@@ -1,12 +1,16 @@
 /*-------------------------------------------
   L1211 12槽充电器 - 主程序
   MCU: SC8F096AD832 QFN32 @ 16MHz
-  功能: 系统初始化 + Timer0 ISR(软件PWM/上电自检/NTC计时/UART计时) + 主循环轮询
-  版本: V58C
+  功能: 系统初始化 + Timer0 ISR(软件PWM/上电自检/NTC计时/UART计时/LED显示窗) + 主循环轮询
+  版本: V0.0.28-SLOW180
   计时架构: 显式10ms硬件节拍(ISR维护g_hwTick), 状态机chargeTimer按真实经过的
   10ms数累加, 与主循环轮速/UART打印阻塞完全解耦; UART打印每2秒一次.
 -------------------------------------------*/
 #include "config.h"
+
+/* 慢循环节拍整形: 主循环每2秒做一次该毫秒数的阻塞, 使检测链采样节奏回到标定环境.
+   二分调参记录: 650ms/300ms(通过) → 150ms(失效) → 225ms → 180ms(通过, 最小可行值) */
+#define SLOW_BLOCK_MS   180
 
 /*========================================================================
   全局变量定义 (符合config.h extern声明)
@@ -19,8 +23,8 @@ signed int g_cvIntegral = 0;                    /* CV PI积分累加器 */
 
 /* 系统计时 */
 volatile unsigned int  g_powerOnTimer = 0;      /* 上电自检计时器 */
-volatile unsigned char g_powerOnPhase = 0;      /* 上电自检阶段: V58P=0→1→2→3(仅红3s→红绿3s→仅绿3s→正常)
-                                                   ⚠ 相位总数必须与 led.c/mian.c 的门限一致 */
+volatile unsigned char g_powerOnPhase = 0;      /* 上电自检阶段: V58R=0→1→2(仅绿1s→仅红1s→正常)
+                                                   ⚠ 相位总数必须与 led.c/main.c 的门限一致 */
 
 /* 显式10ms节拍: ISR维护硬件节拍, 主循环每轮计算经过的节拍数,
    状态机chargeTimer按真实时间累加(charge_mgr.c), 与打印阻塞/轮速解耦 */
@@ -28,6 +32,16 @@ volatile unsigned int  g_hwTick = 0;            /* 10ms硬件节拍(ISR递增) *
 volatile unsigned char g_hwTickDiv = 0;         /* 125us中断分频计数(80次=10ms) */
 unsigned int  g_elapsedTicks = 1;               /* 主循环本轮经过的10ms节拍数(仅主循环读写) */
 unsigned int  g_lastHwTick = 0;                 /* 上一轮记录的g_hwTick快照(仅主循环读写) */
+
+/* LED显示窗/按槽下沉(AD脚时分复用点灯, 详见config.h/led.c说明) */
+volatile unsigned int g_sinkMask = 0;           /* 12bit下沉掩码(led.c写, ISR读) */
+volatile bit  g_dispWin = 0;                    /* ISR: 1=显示窗进行中(AD脚下沉) */
+volatile bit  g_adcBusy = 0;                    /* 主循环: 1=采样进行中, ISR暂不进显示窗 */
+
+/* FULL槽周期熄灯采样(led.c计算相位, 主循环据此避让; 详见 led.c Update_LED_Global) */
+volatile bit  g_fullDark = 0;                   /* 1=FULL槽熄灭相位(回稳+采样) */
+volatile bit  g_fullSample = 0;                 /* 1=FULL槽可采样(节点已回稳且未下沉);
+                                                   led.c 每轮刷新, 上电无FULL槽故默认0无关 */
 
 /* NTC温度读取状态机(ISR中计时, 主循环中执行ADC) */
 volatile unsigned char g_tempPhase = 0;         /* 0=等待间隔, 1=建立中 */
@@ -144,6 +158,73 @@ void System_Init(void)
 }
 
 /*========================================================================
+  函数: Sink_Slot_On / Sink_Slot_Off
+  功能: 把指定槽的AD采样脚单独切为"数字输出低"(Sink_Slot_On) / 还原为
+        "模拟输入"(Sink_Slot_Off). 用于LED显示窗内的按槽下沉点灯.
+  引脚映射(与config.h ANSEL注释一致):
+    B1=RC1 B2=RC0 B3=RB4 B4=RB5 B5=RA5 B6=RA4
+    B7=RD4 B8=RD5 B9=RD3 B10=RD2 B11=RA7 B12=RA6
+  注: 仅改本槽1个引脚, 不触碰相邻槽/NTC(RC2)/LED(RC4/RC5);
+      下沉灌流≈亚mA级(见原理图), 不构成对电池的低阻放电.
+========================================================================*/
+static void Sink_Slot_On(unsigned char idx)
+{
+	switch(idx)
+	{
+	case 0:  ANSEL2 &= 0xFD; TRISC &= 0xFD; RC1 = 0; break;  /* B1  RC1/AN17 */
+	case 1:  ANSEL2 &= 0xFE; TRISC &= 0xFE; RC0 = 0; break;  /* B2  RC0/AN16 */
+	case 2:  ANSEL1 &= 0xEF; TRISB &= 0xEF; RB4 = 0; break;  /* B3  RB4/AN12 */
+	case 3:  ANSEL1 &= 0xDF; TRISB &= 0xDF; RB5 = 0; break;  /* B4  RB5/AN13 */
+	case 4:  ANSEL0 &= 0xDF; TRISA &= 0xDF; RA5 = 0; break;  /* B5  RA5/AN5  */
+	case 5:  ANSEL0 &= 0xEF; TRISA &= 0xEF; RA4 = 0; break;  /* B6  RA4/AN4  */
+	case 6:  ANSEL3 &= 0xEF; TRISD &= 0xEF; RD4 = 0; break;  /* B7  RD4/AN28 */
+	case 7:  ANSEL3 &= 0xDF; TRISD &= 0xDF; RD5 = 0; break;  /* B8  RD5/AN29 */
+	case 8:  ANSEL3 &= 0xF7; TRISD &= 0xF7; RD3 = 0; break;  /* B9  RD3/AN27 */
+	case 9:  ANSEL3 &= 0xFB; TRISD &= 0xFB; RD2 = 0; break;  /* B10 RD2/AN26 */
+	case 10: ANSEL0 &= 0x7F; TRISA &= 0x7F; RA7 = 0; break;  /* B11 RA7/AN7  */
+	case 11: ANSEL0 &= 0xBF; TRISA &= 0xBF; RA6 = 0; break;  /* B12 RA6/AN6  */
+	default: break;
+	}
+}
+
+static void Sink_Slot_Off(unsigned char idx)
+{
+	switch(idx)
+	{
+	case 0:  TRISC |= 0x02; ANSEL2 |= 0x02; break;  /* B1  回模拟输入 */
+	case 1:  TRISC |= 0x01; ANSEL2 |= 0x01; break;  /* B2 */
+	case 2:  TRISB |= 0x10; ANSEL1 |= 0x10; break;  /* B3 */
+	case 3:  TRISB |= 0x20; ANSEL1 |= 0x20; break;  /* B4 */
+	case 4:  TRISA |= 0x20; ANSEL0 |= 0x20; break;  /* B5 */
+	case 5:  TRISA |= 0x10; ANSEL0 |= 0x10; break;  /* B6 */
+	case 6:  TRISD |= 0x10; ANSEL3 |= 0x10; break;  /* B7 */
+	case 7:  TRISD |= 0x20; ANSEL3 |= 0x20; break;  /* B8 */
+	case 8:  TRISD |= 0x08; ANSEL3 |= 0x08; break;  /* B9 */
+	case 9:  TRISD |= 0x04; ANSEL3 |= 0x04; break;  /* B10 */
+	case 10: TRISA |= 0x80; ANSEL0 |= 0x80; break;  /* B11 */
+	case 11: TRISA |= 0x40; ANSEL0 |= 0x40; break;  /* B12 */
+	default: break;
+	}
+}
+
+/* 按12bit掩码批量设置/还原: on=1下沉(点灯), on=0还原模拟输入 */
+static void Sink_Set(unsigned int mask, unsigned char on)
+{
+	unsigned char i;
+	for(i = 0; i < BATTERY_SLOTS; i++)
+	{
+		if(mask & 1U)
+		{
+			if(on)
+				Sink_Slot_On(i);
+			else
+				Sink_Slot_Off(i);
+		}
+		mask >>= 1;
+	}
+}
+
+/*========================================================================
   Timer0 中断服务程序
   周期: ~125μs (Timer0重载值6, 预分频1:2)
   功能:
@@ -180,7 +261,7 @@ void interrupt Isr_Timer(void)
 		{
 			g_hwTickDiv = 0;
 			g_hwTick++;
-			if(g_powerOnPhase < 3U)     /* (V58P诊断)自检扩为3段: 相位0/1/2 */
+			if(g_powerOnPhase < 2U)     /* (V58Q)自检2段: 相位0/1 */
 				g_powerOnTimer++;
 #if UART_PRINT_EN
 			if(++g_printTick >= PRINT_INTERVAL_TICKS)
@@ -192,11 +273,10 @@ void interrupt Isr_Timer(void)
 		}
 
 		/* === 3. 上电自检序列 ===
-		   (V58P诊断)自检由"2秒(仅红1s + 仅绿1s)"扩为"9秒":
-		     相位0 = 仅红3s  →  相位1 = 红绿同亮3s  →  相位2 = 仅绿3s
-		   目的: 定位"绿灯不亮"故障(LED/Q8/VCC2 硬件 vs 1秒太短看不见),
-		         3段各3秒便于目测对比和万用表实测. 定位后恢复为2段各1秒. */
-		if(g_powerOnPhase < 3)
+		   (V58Q)相位0 = 仅红3s → 相位1 = 仅绿3s → 正常显示(各3s便于目视)
+		   注意: LED为单槽两脚双色灯, 灯回路经该槽电池与MOSFET(见led.c/原理图),
+		         所以自检图案必须在"插有电池且该槽导通"的槽上才能看到. */
+		if(g_powerOnPhase < 2)
 		{
 			PowerOnLedSequence();   /* 仅延时稳定电路, 无其他功能 */
 			return;                 /* 自检期间不进行槽位/温度/打印计时 */
@@ -221,6 +301,35 @@ void interrupt Isr_Timer(void)
 				g_doNtcRead = 1;
 				g_tempSettleCnt = 0;
 				g_tempPhase = 0;
+			}
+		}
+
+		/* === 5. LED显示窗(AD脚按槽下沉点灯) ===
+		   窗口取PWM帧尾计数值[PWM_DISPLAY_START..31](4拍=0.5ms), 该段恒为关断相
+		   (g_pwmDuty已钳到≤28), 下沉不干扰充电电流.
+		   进入条件: 主循环未在采样(g_adcBusy=0) 且 确有槽需要点灯(g_sinkMask≠0);
+		   结束后(计数值回0)还原模拟输入.
+		   ⚠ 必须带 g_sinkMask≠0 门限: 掩码为0(检测链槽不下沉/全空闲)时若仍开窗,
+		     主循环Wait_Display_Idle会白等每帧半窗(4ms周期×12槽), 使采样相位被锁到
+		     PWM帧并拖慢主循环轮速, 改变DETECT采样条件(实测致NiMH脉冲前电压pre偏低,
+		     落入DIODE_TEST低压锂预充放行误判为LINEAR_LI)。掩码为0时不开窗, 主循环
+		     时序即恢复与V58W等价(无等待), 测量条件完全一致. */
+		if(g_pwmCounter == PWM_DISPLAY_START)
+		{
+			if(!g_adcBusy && g_sinkMask != 0U)
+			{
+				Sink_Set(g_sinkMask, 1);
+				g_dispWin = 1;
+			}
+		}
+		else if(g_pwmCounter == 0U)
+		{
+			if(g_dispWin)
+			{
+				/* 还原全部12槽AD脚为模拟输入(不依赖当前掩码, 避免掩码中途变化
+				   导致曾被下沉的脚漏还原而污染其采样) */
+				Sink_Set((unsigned int)0x0FFFU, 0);
+				g_dispWin = 0;
 			}
 		}
 	}
@@ -415,6 +524,82 @@ void Print_SystemStatus(void)
        - UART状态打印(g_printFlag标志)
        - 喂狗
 ========================================================================*/
+/*========================================================================
+  函数: Sense_Pins_AsSink / Sense_Pins_Restore   (V58W)
+  功能: 上电自检期(相位0/1)把12个槽采样引脚临时改为数字输出并驱动低电平, 自检
+        结束后恢复为模拟输入.
+  原因: 每槽双色LED(红管芯+绿管芯各一颗2脚LED)的"第2脚"经顶针压在该槽采样节点
+        上; 两条颜色公共轨"LED VCC1"/"LED VCC2"由Q11/Q8(P沟道, 源=VCC)供电.
+        有电池时LED回流走"电池+ → 电池- → GND"; 空板时该节点到GND的唯一通路
+        就是MCU采样引脚本身:
+          · 采样脚保持模拟高阻 ⇒ 空板无回流 ⇒ 灯不亮(现场现象: 有电池才看得到)
+          · 采样脚拉低(灌电流)   ⇒ 空板也有回流 ⇒ 灯亮
+        槽内AO3401是高边开关(源=VCC), 导通只会把节点抬到VCC而熄灭该槽LED, 所以
+        自检期必须让它保持关闭(见主循环说明).
+  安全: 灌电流 ≈ (5.1-1.9)V / (5.1k + 分压串联电阻) ⇒ 亚mA级, 远在引脚能力内;
+        分压网络把采样脚与电池隔离, 不会对电池形成低阻放电. 自检期不采样/不充电.
+========================================================================*/
+static void Sense_Pins_AsSink(void)
+{
+	/* RA4-7 = B6AD/B5AD/B12AD/B11AD */
+	ANSEL0 &= 0x0F;  TRISA &= 0x0F;  RA4 = 0; RA5 = 0; RA6 = 0; RA7 = 0;
+	/* RB4-5 = B3AD/B8AD */
+	ANSEL1 &= 0xCF;  TRISB &= 0xCF;  RB4 = 0; RB5 = 0;
+	/* RD2-5 = B10AD/B9AD/B7AD/B4AD */
+	ANSEL3 &= 0xC3;  TRISD &= 0xC3;  RD2 = 0; RD3 = 0; RD4 = 0; RD5 = 0;
+	/* RC0-1 = B2AD/B1AD (RC2=NTC 保持模拟输入不动) */
+	ANSEL2 &= 0xFC;  TRISC &= 0xFC;  RC0 = 0; RC1 = 0;
+}
+
+static void Sense_Pins_Restore(void)
+{
+	TRISA |= 0xF0;   /* RA4-7 回输入 */
+	TRISB |= 0x30;   /* RB4-5 回输入 */
+	TRISD |= 0xF0;   /* RD2-5 回输入 */
+	TRISC |= 0x07;   /* RC0-2 回输入 */
+	ANSEL0 = 0xF0;   /* RA4-7 模拟 */
+	ANSEL1 = 0x30;   /* RB4-5 模拟 */
+	ANSEL2 = 0x07;   /* RC0-1 + RC2(NTC) 模拟 */
+	ANSEL3 = 0x3C;   /* RD2-5 模拟 */
+}
+
+/*========================================================================
+  函数: Wait_Display_Idle / Display_Service
+  功能: 采样窗与显示窗的时分互斥握手(main.c主循环与ISR协作).
+    Wait_Display_Idle: 采样前调用. 置g_adcBusy阻止ISR新开显示窗; 若正处窗内,
+      等本窗(ISR在计数值回0时)结束, 再延时50µs让AD节点电平回稳.
+      (FULL槽已不下沉, 采样不受下沉扰动, 见 led.c pass2)
+    Display_Service:   采样后调用. 清g_adcBusy放开显示窗, 并等一个完整显示窗
+      过去, 保证LED刷新节拍(≈250Hz), 避免连续采样把显示窗饿死.
+========================================================================*/
+static void Wait_Display_Idle(void)
+{
+	g_adcBusy = 1;                       /* 先行置位, 阻止ISR在本轮采样期间开窗 */
+	while(g_dispWin)                     /* 若已在窗内, 等ISR收尾(计数值回0) */
+		asm("clrwdt");
+	/* 快速路径: 若当前帧没人点灯(mask==0), AD节点根本没被下沉扰动,
+	   跳过50µs稳定延时, 节省采样耗时 */
+	if(g_sinkMask != 0U)
+		__delay_us(50);                  /* 释放后50µs稳定延时 */
+}
+
+static void Display_Service(void)
+{
+	/* 快速路径: 若无槽下沉(全空闲 / 闪烁暗半周), 无需等显示窗过去,
+	   省掉每槽白等 4ms × 12槽 ≈ 48ms 的主循环轮速开销 */
+	g_adcBusy = 0;                       /* 放开: 允许ISR进入显示窗 */
+	if(g_sinkMask == 0U)
+		return;
+	while(!g_dispWin)                    /* 等本帧显示窗开始 */
+		asm("clrwdt");
+	while(g_dispWin)                     /* 等显示窗结束 */
+		asm("clrwdt");
+}
+
+/* 自检期整排下沉(Sense_Pins_AsSink)只需在退出自检时恢复一次,
+   之后引脚模式由ISR显示窗自行下沉/还原, 避免每轮全体恢复打断显示窗. */
+static bit s_senseRestored = 0;
+
 void main(void)
 {
 	unsigned char i;
@@ -431,7 +616,7 @@ void main(void)
 	uart_send_string("Init...\r\n");
 #endif
 
-	/* 主循环 */
+/* 主循环 */
 	while(1)
 	{
 		asm("clrwdt");
@@ -448,22 +633,58 @@ void main(void)
 		/* --- 每轮一次 VCC 采样: 作为归一化基准(VCC为慢变量) --- */
 		Get_Vcc();
 
-		/* --- 顺序处理12槽: 单槽内同步完成 采样+检测+充电+MOSFET --- */
-		for(i = 0; i < BATTERY_SLOTS; i++)
+		/* --- 自检相位0/1 与 正常运行 的分界 ---
+		   (V58W)空板可见自检的两个必要条件, 缺一不可:
+		     ① 12槽MOSFET必须全关 —— 槽内AO3401是P沟道高边开关(源=VCC), 导通会把
+		        槽节点抬到VCC, 与LED公共轨"LED VCC1/2"等电位 ⇒ 该槽LED两端压差≈0
+		        而熄灭. 所以自检期不扫描12槽(避免正在检测的槽其MOSFET被打开),
+		        更不能像V58T那样把12槽MOSFET全部打开"增亮"(那会让空板全黑);
+		     ② 12个槽采样引脚必须改为数字输出并拉低 —— 每槽LED第2脚经顶针压在该槽
+		        采样节点上, 有电池时回流走电池, 空板时该节点到GND的唯一通路就是
+		        MCU采样引脚本身; 若它保持模拟高阻, 空板就没有回流路径(现场现象:
+		        有电池才看得到灯). 自检结束必须恢复模拟输入, 否则无法采样电池电压.
+		   LED引脚由ISR的PowerOnLedSequence独占, 此处不驱动. */
+		if(g_powerOnPhase >= 2U)
 		{
-			Slot_Charge_Ctrl(i);
-		}
+			/* 退出自检: 仅首次把12槽采样脚恢复为模拟输入(自检期整排下沉的还原).
+			   此后引脚由ISR显示窗按掩码下沉并在窗口末尾还原, 不再整排恢复. */
+			if(!s_senseRestored)
+			{
+				Sense_Pins_Restore();
+				s_senseRestored = 1;
+			}
 
-		/* --- 全局PWM占空比调节 --- */
-		CCCV_Control();
+			/* --- 顺序处理12槽: 单槽内同步完成 采样+检测+充电+MOSFET ---
+			   每槽采样前先等显示窗结束(时分互斥), 采样后放开显示窗并等其完整过去,
+			   保证采样窗(模拟输入)与显示窗(AD脚下沉)严格错开且LED刷新不被饿死. */
+			for(i = 0; i < BATTERY_SLOTS; i++)
+			{
+				/* FULL槽周期熄灯采样: 点亮绿LED需下沉该槽AD脚, 下沉会把节点从~2937
+				   拉到~2732(<2800) → 同拍采样会被判"欠压"误触发FULL→CC补电. 故
+				   熄灭相位(节点已回稳)才采样推进状态机, 点亮相位跳过采样.
+				   (非FULL槽不受影响) */
+				if(S_STATE(i) == CHG_FULL && !g_fullSample)
+					continue;
+				Wait_Display_Idle();
+				Slot_Charge_Ctrl(i);
+				Display_Service();
+			}
 
-		/* --- 全局LED状态显示 ---
-		   (V58O修正)上电自检期间红/绿引脚由ISR的PowerOnLedSequence独占,
-		   主循环此处不得同时驱动(两个写者互相覆盖会破坏自检图案:
-		   自检期间槽状态多为"空槽在DETECT", 本函数会算出红灯常亮, 与自检图案冲突)
-		   (V58P诊断)自检扩为3段(相位0/1/2) → 门限由 2U 改为 3U */
-		if(g_powerOnPhase >= 3U)
+			/* --- 全局PWM占空比调节 --- */
+			CCCV_Control();
+
+			/* 占空比钳位: 保证PWM帧尾28~31恒为关断相, 供显示窗下沉使用 */
+			if(g_pwmDuty > PWM_DISPLAY_SAFE_MAX)
+				g_pwmDuty = PWM_DISPLAY_SAFE_MAX;
+
+			/* --- 全局LED状态显示(输出下沉掩码+全局配色供ISR显示窗使用) --- */
 			Update_LED_Global();
+		}
+		else
+		{
+			/* 自检期: 12槽采样脚拉低灌电流, 为空板LED提供回流; 12槽MOSFET保持关闭 */
+			Sense_Pins_AsSink();
+		}
 
 		/* --- NTC温度读取: ISR建立完成后触发 --- */
 		if(g_doNtcRead)
@@ -481,6 +702,19 @@ void main(void)
 			Print_NtcTemp();
 		}
 #endif
+
+		/* --- 慢循环节拍整形(V0.0.21-SLOW): 临时实验, 先给客户测试用 ---
+		   正式版(UART_PRINT_EN=0)主循环轮速快、无周期性阻塞; 调试版因每2秒UART打印
+		   会阻塞约0.65s. 此处人为加入等价的周期性延时, 使检测链采样节奏回到标定环境,
+		   线性锂恢复正常识别(详见记忆/调试记录). */
+		{
+			static unsigned int s_slowLastTick = 0;
+			if((unsigned int)(g_hwTick - s_slowLastTick) >= (2U * TICK_PER_SEC))
+			{
+				s_slowLastTick = g_hwTick;
+				__delay_ms(SLOW_BLOCK_MS);
+			}
+		}
 	}
 }
 

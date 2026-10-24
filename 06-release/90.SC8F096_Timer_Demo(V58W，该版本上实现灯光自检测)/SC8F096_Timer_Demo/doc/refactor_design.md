@@ -135,7 +135,7 @@ bat_mv     = (bat_mv_long + CAL_DEN/2UL) / CAL_DEN;
 | `CCCV_Control()` | 保留，每轮调用一次 |
 | `Update_LED_Slot(idx)` | 改名 `Update_LED_Global()`，每轮一次 |
 | `Detect_BatteryType()` | 保留，输入改归一化电压 |
-| `g_impData`/`g_impCheckSlot` | 保留（IMP/DIODE 跨轮仍需共享 pre 与串行锁） |
+| `g_impData`/`g_detectOwner` | 保留（IMP/DIODE 跨轮仍需共享 pre，令牌串行全检测链） |
 | `g_doAdcSample`/`g_adcBusy` | 删除 |
 
 ## 6. 时序与串扰说明

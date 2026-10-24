@@ -2,7 +2,7 @@
   L1211 12槽充电器 - 主程序
   MCU: SC8F096AD832 QFN32 @ 16MHz
   功能: 系统初始化 + Timer0 ISR(软件PWM/上电自检/NTC计时/UART计时) + 主循环轮询
-  版本: V57E
+  版本: V58C
   计时架构: 显式10ms硬件节拍(ISR维护g_hwTick), 状态机chargeTimer按真实经过的
   10ms数累加, 与主循环轮速/UART打印阻塞完全解耦; UART打印每2秒一次.
 -------------------------------------------*/
@@ -12,21 +12,22 @@
   全局变量定义 (符合config.h extern声明)
 ========================================================================*/
 /* 系统电压与PWM控制 */
-volatile unsigned int  g_vcc_mv = 5000;         /* 系统电压(mV), VREF反推, 每轮采样更新 */
+unsigned int  g_vcc_mv = 5000;                  /* 系统电压(mV), VREF反推, 每轮采样更新(仅主循环) */
 volatile unsigned char g_pwmDuty = 0;           /* PWM占空比(0~PWM_MAX) */
 volatile unsigned char g_pwmCounter = 0;        /* PWM计数器(ISR自增) */
 signed int g_cvIntegral = 0;                    /* CV PI积分累加器 */
 
 /* 系统计时 */
 volatile unsigned int  g_powerOnTimer = 0;      /* 上电自检计时器 */
-volatile unsigned char g_powerOnPhase = 0;      /* 上电自检阶段: 0→1→2 */
+volatile unsigned char g_powerOnPhase = 0;      /* 上电自检阶段: V58R=0→1→2(仅绿1s→仅红1s→正常)
+                                                   ⚠ 相位总数必须与 led.c/main.c 的门限一致 */
 
 /* 显式10ms节拍: ISR维护硬件节拍, 主循环每轮计算经过的节拍数,
    状态机chargeTimer按真实时间累加(charge_mgr.c), 与打印阻塞/轮速解耦 */
 volatile unsigned int  g_hwTick = 0;            /* 10ms硬件节拍(ISR递增) */
 volatile unsigned char g_hwTickDiv = 0;         /* 125us中断分频计数(80次=10ms) */
-volatile unsigned int  g_elapsedTicks = 1;      /* 主循环本轮经过的10ms节拍数 */
-volatile unsigned int  g_lastHwTick = 0;        /* 上一轮记录的g_hwTick快照 */
+unsigned int  g_elapsedTicks = 1;               /* 主循环本轮经过的10ms节拍数(仅主循环读写) */
+unsigned int  g_lastHwTick = 0;                 /* 上一轮记录的g_hwTick快照(仅主循环读写) */
 
 /* NTC温度读取状态机(ISR中计时, 主循环中执行ADC) */
 volatile unsigned char g_tempPhase = 0;         /* 0=等待间隔, 1=建立中 */
@@ -179,7 +180,7 @@ void interrupt Isr_Timer(void)
 		{
 			g_hwTickDiv = 0;
 			g_hwTick++;
-			if(g_powerOnPhase < 2U)
+			if(g_powerOnPhase < 2U)     /* (V58Q)自检2段: 相位0/1 */
 				g_powerOnTimer++;
 #if UART_PRINT_EN
 			if(++g_printTick >= PRINT_INTERVAL_TICKS)
@@ -190,7 +191,10 @@ void interrupt Isr_Timer(void)
 #endif
 		}
 
-		/* === 3. 上电自检序列(前2秒) === */
+		/* === 3. 上电自检序列 ===
+		   (V58Q)相位0 = 仅红3s → 相位1 = 仅绿3s → 正常显示(各3s便于目视)
+		   注意: LED为单槽两脚双色灯, 灯回路经该槽电池与MOSFET(见led.c/原理图),
+		         所以自检图案必须在"插有电池且该槽导通"的槽上才能看到. */
 		if(g_powerOnPhase < 2)
 		{
 			PowerOnLedSequence();   /* 仅延时稳定电路, 无其他功能 */
@@ -274,8 +278,8 @@ void Print_SystemStatus(void)
 	uart_send_number(g_temperature / 10U);
 	uart_send_string(".");
 	uart_send_number(g_temperature % 10U);
-	uart_send_string("C IMP_LOCK=");
-	uart_send_number(g_impCheckSlot == 0xFF ? 0xFFU : (unsigned int)g_impCheckSlot);
+	uart_send_string("C TOKEN=");
+	uart_send_number(g_detectOwner == 0xFF ? 0xFFU : (unsigned int)g_detectOwner);
 	uart_send_string("\r\n");
 
 #if PRINT_B1_B6
@@ -410,6 +414,45 @@ void Print_SystemStatus(void)
        - UART状态打印(g_printFlag标志)
        - 喂狗
 ========================================================================*/
+/*========================================================================
+  函数: Sense_Pins_AsSink / Sense_Pins_Restore   (V58W)
+  功能: 上电自检期(相位0/1)把12个槽采样引脚临时改为数字输出并驱动低电平, 自检
+        结束后恢复为模拟输入.
+  原因: 每槽双色LED(红管芯+绿管芯各一颗2脚LED)的"第2脚"经顶针压在该槽采样节点
+        上; 两条颜色公共轨"LED VCC1"/"LED VCC2"由Q11/Q8(P沟道, 源=VCC)供电.
+        有电池时LED回流走"电池+ → 电池- → GND"; 空板时该节点到GND的唯一通路
+        就是MCU采样引脚本身:
+          · 采样脚保持模拟高阻 ⇒ 空板无回流 ⇒ 灯不亮(现场现象: 有电池才看得到)
+          · 采样脚拉低(灌电流)   ⇒ 空板也有回流 ⇒ 灯亮
+        槽内AO3401是高边开关(源=VCC), 导通只会把节点抬到VCC而熄灭该槽LED, 所以
+        自检期必须让它保持关闭(见主循环说明).
+  安全: 灌电流 ≈ (5.1-1.9)V / (5.1k + 分压串联电阻) ⇒ 亚mA级, 远在引脚能力内;
+        分压网络把采样脚与电池隔离, 不会对电池形成低阻放电. 自检期不采样/不充电.
+========================================================================*/
+static void Sense_Pins_AsSink(void)
+{
+	/* RA4-7 = B6AD/B5AD/B12AD/B11AD */
+	ANSEL0 &= 0x0F;  TRISA &= 0x0F;  RA4 = 0; RA5 = 0; RA6 = 0; RA7 = 0;
+	/* RB4-5 = B3AD/B8AD */
+	ANSEL1 &= 0xCF;  TRISB &= 0xCF;  RB4 = 0; RB5 = 0;
+	/* RD2-5 = B10AD/B9AD/B7AD/B4AD */
+	ANSEL3 &= 0xC3;  TRISD &= 0xC3;  RD2 = 0; RD3 = 0; RD4 = 0; RD5 = 0;
+	/* RC0-1 = B2AD/B1AD (RC2=NTC 保持模拟输入不动) */
+	ANSEL2 &= 0xFC;  TRISC &= 0xFC;  RC0 = 0; RC1 = 0;
+}
+
+static void Sense_Pins_Restore(void)
+{
+	TRISA |= 0xF0;   /* RA4-7 回输入 */
+	TRISB |= 0x30;   /* RB4-5 回输入 */
+	TRISD |= 0xF0;   /* RD2-5 回输入 */
+	TRISC |= 0x07;   /* RC0-2 回输入 */
+	ANSEL0 = 0xF0;   /* RA4-7 模拟 */
+	ANSEL1 = 0x30;   /* RB4-5 模拟 */
+	ANSEL2 = 0x07;   /* RC0-1 + RC2(NTC) 模拟 */
+	ANSEL3 = 0x3C;   /* RD2-5 模拟 */
+}
+
 void main(void)
 {
 	unsigned char i;
@@ -426,33 +469,56 @@ void main(void)
 	uart_send_string("Init...\r\n");
 #endif
 
-	/* 主循环 */
+/* 主循环 */
 	while(1)
 	{
 		asm("clrwdt");
 
 		/* --- 显式节拍: 计算本轮到现在的真实经过时间(10ms节拍) ---
-		   打印阻塞期间GIE关ISR暂停→g_hwTick不增→elapsed=0, 状态机同步
-		   暂停; 恢复后按真实时间补回. */
+		   主循环一轮耗时<10ms时硬件节拍可能未跨越10ms边界,
+		   对0值兜底为1(每轮至少推进1tick), 保证状态机时间单调前进,
+		   与打印阻塞/主循环轮速解耦. */
 		g_elapsedTicks = g_hwTick - g_lastHwTick;
-		g_lastHwTick = g_hwTick;
 		if(g_elapsedTicks == 0U)
-			g_elapsedTicks = 1U;    /* 防0: 主循环一轮至少推进1tick(10ms) */
+			g_elapsedTicks = 1U;
+		g_lastHwTick = g_hwTick;
 
 		/* --- 每轮一次 VCC 采样: 作为归一化基准(VCC为慢变量) --- */
 		Get_Vcc();
 
-		/* --- 顺序处理12槽: 单槽内同步完成 采样+检测+充电+MOSFET --- */
-		for(i = 0; i < BATTERY_SLOTS; i++)
+		/* --- 自检相位0/1 与 正常运行 的分界 ---
+		   (V58W)空板可见自检的两个必要条件, 缺一不可:
+		     ① 12槽MOSFET必须全关 —— 槽内AO3401是P沟道高边开关(源=VCC), 导通会把
+		        槽节点抬到VCC, 与LED公共轨"LED VCC1/2"等电位 ⇒ 该槽LED两端压差≈0
+		        而熄灭. 所以自检期不扫描12槽(避免正在检测的槽其MOSFET被打开),
+		        更不能像V58T那样把12槽MOSFET全部打开"增亮"(那会让空板全黑);
+		     ② 12个槽采样引脚必须改为数字输出并拉低 —— 每槽LED第2脚经顶针压在该槽
+		        采样节点上, 有电池时回流走电池, 空板时该节点到GND的唯一通路就是
+		        MCU采样引脚本身; 若它保持模拟高阻, 空板就没有回流路径(现场现象:
+		        有电池才看得到灯). 自检结束必须恢复模拟输入, 否则无法采样电池电压.
+		   LED引脚由ISR的PowerOnLedSequence独占, 此处不驱动. */
+		if(g_powerOnPhase >= 2U)
 		{
-			Slot_Charge_Ctrl(i);
+			/* 恢复12个槽采样引脚为模拟输入(正常采样/检测/充电) */
+			Sense_Pins_Restore();
+
+			/* --- 顺序处理12槽: 单槽内同步完成 采样+检测+充电+MOSFET --- */
+			for(i = 0; i < BATTERY_SLOTS; i++)
+			{
+				Slot_Charge_Ctrl(i);
+			}
+
+			/* --- 全局PWM占空比调节 --- */
+			CCCV_Control();
+
+			/* --- 全局LED状态显示 --- */
+			Update_LED_Global();
 		}
-
-		/* --- 全局PWM占空比调节 --- */
-		CCCV_Control();
-
-		/* --- 全局LED状态显示 --- */
-		Update_LED_Global();
+		else
+		{
+			/* 自检期: 12槽采样脚拉低灌电流, 为空板LED提供回流; 12槽MOSFET保持关闭 */
+			Sense_Pins_AsSink();
+		}
 
 		/* --- NTC温度读取: ISR建立完成后触发 --- */
 		if(g_doNtcRead)

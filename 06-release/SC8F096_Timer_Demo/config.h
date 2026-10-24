@@ -7,7 +7,7 @@
   固件版本字符串(烧录后通过串口输出, 每次修改代码后迭代)
   格式: Vxx[字母], 例如 V48A, V48B, V49
 */
-#define FIRMWARE_VERSION  "V58P"
+#define FIRMWARE_VERSION  "V0.0.28-SLOW180"
 
 /*
   原理图参考: L1211 TOP V2.3 (20260624)
@@ -81,10 +81,8 @@
 #define ALPHA_NUM           124UL    /* α * 1000 */
 #define BETA_NUM            206UL    /* β * 1000 (注意: 公式改为加法, β为正) */
 #define CAL_DEN             1000UL
-#define UART_PRINT_EN       0       /* UART调试输出开关: 1=启用, 0=禁用
-                                       V2.3中RC4=LED_IO2(绿灯), 与UART TX冲突,
-                                       生产固件必须=0; 调试时置1会占用绿灯引脚 *///Justin
-#define SW_TX              RC4     /* 软件UART TX引脚(复用CLK, 9600bps) */
+#define UART_PRINT_EN       0       /* UART调试输出开关: 1=启用, 0=禁用 */
+#define SW_TX              RC4     /* 软件UART TX引脚(与红灯轨LED_IO2复用, 仅UART_PRINT_EN=1时占用) */
 #define BIT_TIME           104     /* 9600bps @16MHz */
 
 /* --- 充电槽位数量 --- */
@@ -187,7 +185,7 @@
 #define TIME_DETECT_WAIT    (240)                          /* 检测等待: 2.4秒 */
 #define TIME_DETECT_SETTLE  (800)                          /* 高内阻电池额外稳定等待: 8秒 */
 #define DETECT_SETTLE_DROP  50                             /* 稳定判定: ADC下降<50视为已稳定 */
-#define TIME_CV_HOLD        (600 * TICK_PER_SEC)           /* CV恒压保持: 600秒(10分钟) */
+#define TIME_CV_HOLD        (600 * TICK_PER_SEC)            /* CV恒压保持: 60秒(1分钟) *///Justin
 #define IDLE_POLL_TICKS     (2400)                          /* 空槽IDLE轮询停留: 24秒,
                                                                避免空槽DETECT红灯周期性常亮 */
 #define PRINT_INTERVAL_TICKS (200)  /* UART打印间隔: 200×10ms=2秒(与状态机节拍解耦,
@@ -233,6 +231,13 @@
    PWM周期 = 32 × 125us = 4ms, 频率 = 250Hz, 占空比分辨率: 3.125%/step */
 #define PWM_RESOLUTION      32     /* PWM分辨率(32级) */
 #define PWM_MAX             32     /* 100%占空比 */
+
+/* LED显示窗(AD脚时分下沉点灯)参数
+   PWM周期4ms(32×125µs), 取帧尾计数值28~31(合计4拍=0.5ms)为显示窗,
+   此时位于PWM关断相内, 下沉不影响充电电流. 为保证该段恒为关断相,
+   主循环把 g_pwmDuty 上限钳到 PWM_DISPLAY_SAFE_MAX(28), 留出≥0.5ms关断相. */
+#define PWM_DISPLAY_START   28     /* 显示窗起点(计数值), 窗外=采样窗 */
+#define PWM_DISPLAY_SAFE_MAX 28    /* 占空比钳位上限(保证帧尾28~31恒为关断相) */
 
 /* CC恒流阶段: 固定占空比(无电流检测时用电压监控替代闭环) */
 #define CC_DUTY_INITIAL     25     /* CC初始占空比(25/32≈78%), 软启动起点 */
@@ -352,8 +357,9 @@
 ========================================================================*/
 /* 总控引脚 */
 #define PIN_PWM             RB7     /* PWM总控输出(VT_PWM1, pin8=RB7/AN15) */
-#define PIN_LED_IO1         RC5     /* LED_IO1: 红灯全局驱动(经Q11 AO3401 P沟道, 低有效) */
-#define PIN_LED_IO2         RC4     /* LED_IO2: 绿灯全局驱动(经Q8 AO3401 P沟道, 低有效) */
+#define PIN_LED_IO1         RC4     /* LED_IO1: 红灯全局驱动(经Q11 AO3401 P沟道, 低有效)
+                                       注: 按实际硬件接线, 红色MOSFET栅接RC4, 绿色接RC5 */
+#define PIN_LED_IO2         RC5     /* LED_IO2: 绿灯全局驱动(经Q8 AO3401 P沟道, 低有效) */
 #define PIN_EN              RB6     /* 主电源使能(Q3 4435) */
 
 /* B1-B12 独立MOSFET栅极控制引脚
@@ -461,6 +467,21 @@ extern volatile unsigned int  g_tempReadRoundCnt; /* 温度读取间隔计数器
 extern volatile unsigned char g_pwmDuty;       /* 当前PWM占空比(0~PWM_MAX) */
 extern volatile unsigned char g_pwmCounter;    /* PWM计数器(ISR中递增, 0~31循环) */
 extern signed int g_cvIntegral;                /* CV PI积分累加器 */
+
+/* LED显示窗/按槽下沉(AD脚时分复用点灯)
+   g_sinkMask: led.c 每轮计算"该点亮的槽掩码"(全局配色由 led.c 直接驱动红/绿轨);
+   ISR 在显示窗内按掩码把对应槽的AD脚切为数字输出低(灌流点灯), 窗外恢复模拟输入;
+   g_adcBusy 由主循环在采样(稳定延时+ADC)期间置位, ISR 见其置位则不进入显示窗,
+   保证"采样窗(模拟输入)与显示窗(下沉)"时分互斥; g_dispWin 由ISR置位, 主循环避让. */
+extern volatile unsigned int g_sinkMask;   /* 12bit下沉掩码: bit0=B1 ... bit11=B12 */
+extern volatile bit  g_dispWin;        /* ISR: 1=显示窗进行中 */
+extern volatile bit  g_adcBusy;        /* 主循环: 1=采样进行中, ISR暂不进显示窗 */
+
+/* FULL槽周期熄灯采样(由 led.c 计算, 供主循环避让; 详见 led.c Update_LED_Global)
+   FULL槽下沉点亮绿灯会把AD节点从~2937拉到~2732(<2800) → 若同拍采样会被误判"欠压"
+   触发FULL→CC补电; 故点亮期不采样, 仅熄灭且回稳后的采样窗口才推进FULL状态机. */
+extern volatile bit  g_fullDark;       /* led.c: 1=FULL槽熄灭相位(回稳+采样) */
+extern volatile bit  g_fullSample;     /* led.c: 1=FULL槽可采样(节点已回稳且未下沉) */
 
 /* 显式10ms节拍: ISR维护硬件节拍, 状态机计时与打印/主循环轮速解耦 */
 extern volatile unsigned int  g_hwTick;        /* 10ms硬件节拍(ISR递增) */

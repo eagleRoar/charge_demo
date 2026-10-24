@@ -21,7 +21,6 @@
 void uart_init(void)
 {
 	TRISC &= (unsigned char)~0x10;  /* RC4=输出 */
-	ANSEL2 &= (unsigned char)~0x10; /* RC4=数字模式(非模拟) */
 	SW_TX = 1;                  /* 空闲态高电平 */
 }
 

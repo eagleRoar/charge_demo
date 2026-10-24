@@ -7,7 +7,7 @@
   固件版本字符串(烧录后通过串口输出, 每次修改代码后迭代)
   格式: Vxx[字母], 例如 V48A, V48B, V49
 */
-#define FIRMWARE_VERSION  "V57K"
+#define FIRMWARE_VERSION  "V58W"
 
 /*
   原理图参考: L1211 TOP V2.3 (20260624)
@@ -81,9 +81,9 @@
 #define ALPHA_NUM           124UL    /* α * 1000 */
 #define BETA_NUM            206UL    /* β * 1000 (注意: 公式改为加法, β为正) */
 #define CAL_DEN             1000UL
-#define UART_PRINT_EN      1       /* UART调试输出开关: 1=启用, 0=禁用
+#define UART_PRINT_EN       1       /* UART调试输出开关: 1=启用, 0=禁用
                                        V2.3中RC4=LED_IO2(绿灯), 与UART TX冲突,
-                                       生产固件必须=0; 调试时置1会占用绿灯引脚 */
+                                       生产固件必须=0; 调试时置1会占用绿灯引脚 *///Justin
 #define SW_TX              RC4     /* 软件UART TX引脚(复用CLK, 9600bps) */
 #define BIT_TIME           104     /* 9600bps @16MHz */
 
@@ -165,6 +165,14 @@
 #define BAT_MV_PRECHARGE     900    /* 0.90V: 低于此值进入预充电 [暂不可达] */
 #define BAT_MV_FULL         1520    /* 1.52V: 满电阈值(DETECT中检测到满电直接进CV) */
 
+/* (V58I/V58L)DETECT后锂电路由的"满电"ADC阈值: 由 BAT_MV_FULL(1520mV) 在上述两点线性
+   标定公式下离线穷举反解(穷举 slot_v 全域, 与 bat_mv>=1520 的等价失配数=0):
+       bat_mv >= 1520   ⟺   slot_v >= 3235
+   ⚠ 与 ADC_V_FULL(3100) 不是同一个阈值: 后者是CC阶段"电压达标进CV"的ADC阈值
+     (≈1499mV), 本值是DETECT路由"直接进CV"的mV标定等效值(1520mV), 语义与来源不同.
+   ⚠ ACTIVATE(100)/PRECHARGE(900) 分支不可达(bat_mv 恒 >=1030), 故未设对应ADC阈值. */
+#define ADC_V_ROUTE_FULL    3235    /* = BAT_MV_FULL(1520mV) 的ADC等效阈值 */
+
 /*========================================================================
   充电时间阈值
   说明: 状态机计时采用"显式10ms节拍"(ISR维护g_hwTick, chargeTimer
@@ -208,7 +216,7 @@
 /* CV崩溃循环上限: 漏洞B加固
    碳性/碱性误判进CV后电压崩溃下跌→PEAK_DROP回DET→再误判进CV的死循环.
    g_ccBlocks复用为CV崩溃计数(PEAK_DROP回DET时+1), 累计达此值后
-   DETECT_LI_ROUTE再进CV直接ERROR, 杜绝无限循环占用充电资源. */
+   Route_DetectLi再进CV直接ERROR, 杜绝无限循环占用充电资源. */
 #define CV_DROP_LOOP_MAX     2       /* CV崩溃→回DET循环次数上限 */
 
 #define OV_DEBOUNCE_CNT     5                      /* 过压消抖次数: 连续N次过压才报ERROR */
@@ -409,10 +417,10 @@ typedef struct {
   全局变量声明(extern)
   定义分散在各模块.c文件中, 避免单Bank内存不足
 ========================================================================*/
-extern volatile unsigned int adresult;      /* ADC采样结果(去极值平均后) */
-extern volatile unsigned char test_adc;     /* ADC采样状态标记 */
+extern unsigned int adresult;               /* ADC采样结果(去极值平均后); 仅主循环读写, 无需volatile */
+extern unsigned char test_adc;              /* ADC采样状态标记; 仅主循环读写, 无需volatile */
 
-extern volatile BatterySlot_t g_slot[12];
+extern BatterySlot_t g_slot[12];            /* 仅主循环读写(ISR不触碰), 无需volatile */
 
 #define S_STATE(i) g_slot[(unsigned char)(i)].state
 #define S_TYPE(i)  g_slot[(unsigned char)(i)].type
@@ -427,12 +435,20 @@ extern unsigned char g_ovCnt[12];           /* 过压消抖计数器 */
 
 /* g_slotRefV[12]: 槽位参考电压(DETECT初始值+CC/CV峰值), g_capFlag: 电容虚高标记, g_impData: IMP_CHECK共享数据 */
 extern unsigned int g_slotRefV[BATTERY_SLOTS];  /* 槽位参考电压(DETECT基准/CC-CV峰值, 打印ref用) */
-extern unsigned char g_impCheckSlot;        /* IMP_CHECK串行锁: 0xFF=空闲, 其他=持有锁的槽号 */
+extern unsigned char g_detectOwner;        /* 检测链令牌: 0xFF=空闲, 其他=持有令牌的槽号.
+                                              同一时间仅持令牌槽可执行 DETECT→IMP_CHECK→
+                                              DIODE_TEST 全链, 其余IDLE槽等待入链,
+                                              避免多槽共轨检测相互串扰 */
+extern unsigned char g_detectWaiter;       /* 检测链等待者: 0xFF=无, 其他=被冻结等待令牌的槽号.
+                                              有等待者时IDLE空槽不再抢令牌, 使等待槽优先
+                                              获令牌, 避免重判槽在连续空槽间长期饥饿 */
 extern unsigned int g_impData;              /* IMP_CHECK共享数据: 低12位脉冲前电压+高4位VCC编码 */
-extern unsigned char g_diodeTrace[4];  /* DIODE_TEST v偏移轨迹: 4点(ct=7,14,21,28), 每点1字节存(v-pre)/4+128 */
-extern unsigned char g_diodeTraceCnt;  /* DIODE_TEST v轨迹采样点数, 主循环打印后清零 */
+extern unsigned char g_diodeTrace[4];  /* DIODE_TEST共享轨迹缓冲(单槽独占, 复用不新增RAM):
+                                          4点(ct=7,14,21,28)槽压轨迹, 每点1字节存
+                                          (v-pre)/4+128; cnt=1~4 */
+extern unsigned char g_diodeTraceCnt;  /* DIODE_TEST轨迹点数(1~4), 主循环打印后清零 */
 extern unsigned char g_diodeTraceSlot; /* 轨迹归属槽号(打印时匹配) */
-extern volatile unsigned int  g_vcc_mv;       /* 系统电压(mV), 由VREF反推, 每轮采样更新 */
+extern unsigned int  g_vcc_mv;                /* 系统电压(mV), 由VREF反推, 每轮采样更新; 仅主循环读写 */
 extern volatile unsigned int  g_powerOnTimer;  /* 上电自检计时器 */
 extern volatile unsigned char g_powerOnPhase;  /* 上电自检阶段(0/1/2) */
 
@@ -448,7 +464,7 @@ extern signed int g_cvIntegral;                /* CV PI积分累加器 */
 
 /* 显式10ms节拍: ISR维护硬件节拍, 状态机计时与打印/主循环轮速解耦 */
 extern volatile unsigned int  g_hwTick;        /* 10ms硬件节拍(ISR递增) */
-extern volatile unsigned int  g_elapsedTicks;  /* 主循环本轮经过的10ms节拍数 */
+extern unsigned int  g_elapsedTicks;          /* 主循环本轮经过的10ms节拍数; 仅主循环读写 */
 
 /* UART通信变量 */
 extern volatile bit g_printFlag;
@@ -471,6 +487,11 @@ unsigned int Read_Temperature(void);        /* 读取NTC温度(0.1°C), 返回te
 unsigned char Detect_BatteryType(unsigned int voltage); /* 根据电压判断电池类型 */
 unsigned int Get_Vcc(void);                 /* 采样VREF反推实时VCC(mV), 写回g_vcc_mv */
 unsigned int Adc_Norm(unsigned char ch);    /* 采样ADC通道并归一化到VCC_REF_MV(5000) */
+unsigned char Route_DetectLi(unsigned char idx, unsigned int slot_v); /* 锂电DETECT后统一充电路由(原DETECT_LI_ROUTE宏) */
+unsigned char Route_LiIon(unsigned char idx);                       /* 恒压锂路由(原imp_li_ion共用尾块) */
+unsigned char Route_LinearLi(unsigned char idx, unsigned int pre);  /* 线性锂路由(原imp_linear_li共用尾块) */
+void Detect_Classify(unsigned char idx, unsigned char fromHighV);   /* DETECT类型分类路由(原amb_check尾块); fromHighV=1走原amb_shortcut */
+void Enter_DiodeTest(unsigned char idx);                            /* 进入DIODE_TEST(原imp_diode_test_entry尾块) */
 void Slot_Charge_Ctrl(unsigned char idx);   /* 单槽同步控制: 采样+检测+充电+MOSFET */
 void CCCV_Control(void);                    /* CC-CV恒流恒压PWM占空比调节 */
 
